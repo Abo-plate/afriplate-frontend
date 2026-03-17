@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 const FEATURED_ITEMS = [
   {
     title: 'HP Laptop for Sale',
@@ -125,9 +127,8 @@ export default function HomePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
+        const res = await fetch(`${API}/api/products`);
         const data = await res.json();
-        console.log('PRODUCT API DATA:', data);
         setLatestProducts(
           (data.products || []).map((product) => ({
             emoji: '📦',
@@ -136,9 +137,7 @@ export default function HomePage() {
             link: `/products/${product._id || product.id}`,
           }))
         );
-      } catch (err) {
-        console.log('PRODUCT FETCH ERROR:', err);
-      }
+      } catch (err) {}
     };
     fetchProducts();
   }, []);
@@ -146,12 +145,10 @@ export default function HomePage() {
   useEffect(() => {
     const fetchUniversityCounts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/universities`);
+        const res = await fetch(`${API}/api/universities`);
         const data = await res.json();
         setUniversityCounts(data.universities || []);
-      } catch (err) {
-        console.log('UNIVERSITY FETCH ERROR:', err);
-      }
+      } catch (err) {}
     };
     fetchUniversityCounts();
   }, []);
