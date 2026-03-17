@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -23,7 +23,7 @@ function Spinner() {
 }
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
-export default function CheckoutPage() {
+function CheckoutPageInner() {
   const searchParams = useSearchParams();
   const type       = searchParams.get('type');       // product | service
   const itemId     = searchParams.get('id');         // product/service id
@@ -387,5 +387,13 @@ function Nav() {
         Secured by Paystack
       </div>
     </nav>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Inter,sans-serif' }}><div style={{ width:32, height:32, border:'3px solid #e5e7eb', borderTopColor:'#1f8f43', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} /></div>}>
+      <CheckoutPageInner />
+    </Suspense>
   );
 }
