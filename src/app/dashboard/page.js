@@ -260,7 +260,7 @@ function SettingsTab() {
   };
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+    <div className="settings-grid">
       {/* Profile */}
       <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:24 }}>
         <div style={{ fontSize:'0.95rem', fontWeight:900, color:'#111', marginBottom:18 }}>Profile Info</div>
@@ -317,38 +317,52 @@ function BuyerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:24, maxWidth:1100, margin:'0 auto', padding:'32px 24px 80px' }}>
-      {/* SIDEBAR */}
-      <div>
-        <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, padding:20, marginBottom:16 }}>
-          <div style={{ textAlign:'center', marginBottom:16 }}>
-            <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} />
-            <div style={{ fontWeight:900, color:'#111', fontSize:'0.95rem', marginTop:10 }}>{user?.first_name} {user?.last_name}</div>
-            <div style={{ fontSize:'0.72rem', color:'#9ca3af', marginTop:3 }}>{user?.university || 'AfriPlate Buyer'}</div>
-            <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eef2ff', color:'#6366f1' }}>Buyer</span>
+    <div>
+      <div className="dash-grid">
+        {/* SIDEBAR — hidden on mobile */}
+        <div className="dash-sidebar">
+          <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, padding:20, marginBottom:16 }}>
+            <div style={{ textAlign:'center', marginBottom:16 }}>
+              <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} />
+              <div style={{ fontWeight:900, color:'#111', fontSize:'0.95rem', marginTop:10 }}>{user?.first_name} {user?.last_name}</div>
+              <div style={{ fontSize:'0.72rem', color:'#9ca3af', marginTop:3 }}>{user?.university || 'AfriPlate Buyer'}</div>
+              <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eef2ff', color:'#6366f1' }}>Buyer</span>
+            </div>
+            {BUYER_TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{
+                width:'100%', padding:'11px 14px', borderRadius:11, display:'flex', alignItems:'center', gap:10,
+                fontFamily:'Inter,sans-serif', fontSize:'0.84rem', fontWeight: tab === t.id ? 800 : 600,
+                background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
+                border:'none', cursor:'pointer', marginBottom:4, textAlign:'left', transition:'all 0.18s',
+              }}>
+                <span style={{ fontSize:'1rem' }}>{t.icon}</span> {t.label}
+              </button>
+            ))}
           </div>
+          <a href="/products" style={{ display:'block', textAlign:'center', padding:'11px', background:'#1f8f43', color:'#fff', borderRadius:12, fontSize:'0.84rem', fontWeight:800, marginBottom:8 }}>Browse Products</a>
+          <a href="/services" style={{ display:'block', textAlign:'center', padding:'11px', background:'#f3f4f6', color:'#374151', borderRadius:12, fontSize:'0.84rem', fontWeight:700 }}>Browse Services</a>
+        </div>
+
+        {/* CONTENT */}
+        <div>
+          {tab === 'overview'  && <BuyerOverview user={user} setTab={setTab} />}
+          {tab === 'orders'    && <BuyerOrders />}
+          {tab === 'messages'  && <MessagesTab />}
+          {tab === 'reviews'   && <BuyerReviews />}
+          {tab === 'settings'  && <SettingsTab />}
+        </div>
+      </div>
+
+      {/* BOTTOM TAB BAR — mobile only */}
+      <div className="bottom-tab-bar">
+        <div className="bottom-tab-bar-inner">
           {BUYER_TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              width:'100%', padding:'11px 14px', borderRadius:11, display:'flex', alignItems:'center', gap:10,
-              fontFamily:'Inter,sans-serif', fontSize:'0.84rem', fontWeight: tab === t.id ? 800 : 600,
-              background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
-              border:'none', cursor:'pointer', marginBottom:4, textAlign:'left', transition:'all 0.18s',
-            }}>
-              <span style={{ fontSize:'1rem' }}>{t.icon}</span> {t.label}
+            <button key={t.id} className={`btab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+              <span className="btab-icon">{t.icon}</span>
+              <span className="btab-label">{t.label}</span>
             </button>
           ))}
         </div>
-        <a href="/products" style={{ display:'block', textAlign:'center', padding:'11px', background:'#1f8f43', color:'#fff', borderRadius:12, fontSize:'0.84rem', fontWeight:800, marginBottom:8 }}>Browse Products</a>
-        <a href="/services" style={{ display:'block', textAlign:'center', padding:'11px', background:'#f3f4f6', color:'#374151', borderRadius:12, fontSize:'0.84rem', fontWeight:700 }}>Browse Services</a>
-      </div>
-
-      {/* CONTENT */}
-      <div>
-        {tab === 'overview'  && <BuyerOverview user={user} setTab={setTab} />}
-        {tab === 'orders'    && <BuyerOrders />}
-        {tab === 'messages'  && <MessagesTab />}
-        {tab === 'reviews'   && <BuyerReviews />}
-        {tab === 'settings'  && <SettingsTab />}
       </div>
     </div>
   );
@@ -397,12 +411,7 @@ function BuyerOverview({ user, setTab }) {
       </div>
 
       {/* Stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
-        <StatBox label="Total Orders"   value={stats.orders}                    sub="All time" />
-        <StatBox label="Active Orders"  value={stats.pending}                   sub={stats.pending > 0 ? 'In progress' : 'None pending'} color="#ff9d3f" />
-        <StatBox label="Total Spent"    value={`₦${fmt(stats.spent)}`}          sub="Completed orders" color="#6366f1" />
-        <StatBox label="Reviews Left"   value={stats.reviews}                   sub="Feedback given" color="#ec4899" />
-      </div>
+      <div className="stats-4">
 
       {/* Recent orders */}
       <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:22, marginBottom:20 }}>
@@ -570,41 +579,55 @@ function SellerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:24, maxWidth:1100, margin:'0 auto', padding:'32px 24px 80px' }}>
-      {/* SIDEBAR */}
-      <div>
-        <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, padding:20, marginBottom:16 }}>
-          <div style={{ textAlign:'center', marginBottom:16 }}>
-            <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} />
-            <div style={{ fontWeight:900, color:'#111', fontSize:'0.95rem', marginTop:10 }}>{user?.first_name} {user?.last_name}</div>
-            <div style={{ fontSize:'0.72rem', color:'#9ca3af', marginTop:3 }}>{user?.university || 'AfriPlate Seller'}</div>
-            <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eaf8ee', color:'#1f8f43' }}>Seller</span>
+    <div>
+      <div className="dash-grid">
+        {/* SIDEBAR — hidden on mobile */}
+        <div className="dash-sidebar">
+          <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, padding:20, marginBottom:16 }}>
+            <div style={{ textAlign:'center', marginBottom:16 }}>
+              <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} />
+              <div style={{ fontWeight:900, color:'#111', fontSize:'0.95rem', marginTop:10 }}>{user?.first_name} {user?.last_name}</div>
+              <div style={{ fontSize:'0.72rem', color:'#9ca3af', marginTop:3 }}>{user?.university || 'AfriPlate Seller'}</div>
+              <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eaf8ee', color:'#1f8f43' }}>Seller</span>
+            </div>
+            {SELLER_TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{
+                width:'100%', padding:'11px 14px', borderRadius:11, display:'flex', alignItems:'center', gap:10,
+                fontFamily:'Inter,sans-serif', fontSize:'0.84rem', fontWeight: tab === t.id ? 800 : 600,
+                background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
+                border:'none', cursor:'pointer', marginBottom:4, textAlign:'left', transition:'all 0.18s',
+              }}>
+                <span style={{ fontSize:'1rem' }}>{t.icon}</span> {t.label}
+              </button>
+            ))}
           </div>
+          <a href={`/sellers/${user?.id}`} style={{ display:'block', textAlign:'center', padding:'11px', background:'#f3f4f6', color:'#374151', borderRadius:12, fontSize:'0.84rem', fontWeight:700 }}>
+            View My Profile
+          </a>
+        </div>
+
+        {/* CONTENT */}
+        <div>
+          {tab === 'overview'   && <SellerOverview user={user} setTab={setTab} />}
+          {tab === 'listings'   && <SellerListings />}
+          {tab === 'received'   && <SellerOrders />}
+          {tab === 'wallet'     && <SellerWallet />}
+          {tab === 'purchases'  && <BuyerOrders />}
+          {tab === 'messages'   && <MessagesTab />}
+          {tab === 'settings'   && <SettingsTab />}
+        </div>
+      </div>
+
+      {/* BOTTOM TAB BAR — mobile only */}
+      <div className="bottom-tab-bar">
+        <div className="bottom-tab-bar-inner">
           {SELLER_TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              width:'100%', padding:'11px 14px', borderRadius:11, display:'flex', alignItems:'center', gap:10,
-              fontFamily:'Inter,sans-serif', fontSize:'0.84rem', fontWeight: tab === t.id ? 800 : 600,
-              background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
-              border:'none', cursor:'pointer', marginBottom:4, textAlign:'left', transition:'all 0.18s',
-            }}>
-              <span style={{ fontSize:'1rem' }}>{t.icon}</span> {t.label}
+            <button key={t.id} className={`btab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+              <span className="btab-icon">{t.icon}</span>
+              <span className="btab-label" style={{ color: tab === t.id ? '#1f8f43' : '#9ca3af' }}>{t.label}</span>
             </button>
           ))}
         </div>
-        <a href={`/sellers/${user?.id}`} style={{ display:'block', textAlign:'center', padding:'11px', background:'#f3f4f6', color:'#374151', borderRadius:12, fontSize:'0.84rem', fontWeight:700 }}>
-          View My Profile
-        </a>
-      </div>
-
-      {/* CONTENT */}
-      <div>
-        {tab === 'overview'   && <SellerOverview user={user} setTab={setTab} />}
-        {tab === 'listings'   && <SellerListings />}
-        {tab === 'received'   && <SellerOrders />}
-        {tab === 'wallet'     && <SellerWallet />}
-        {tab === 'purchases'  && <BuyerOrders />}
-        {tab === 'messages'   && <MessagesTab />}
-        {tab === 'settings'   && <SettingsTab />}
       </div>
     </div>
   );
@@ -678,7 +701,7 @@ function SellerOverview({ user, setTab }) {
       </div>
 
       {/* Stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
+      <div className="stats-4">
         <StatBox label="Active Listings"    value={stats.listings}                     sub="Products & services" />
         <StatBox label="Orders to Fulfil"   value={stats.orders}                       sub={stats.orders > 0 ? 'Needs attention' : 'All clear'} color="#ff9d3f" />
         <StatBox label="Available Balance"  value={`₦${fmt(stats.balance)}`}           sub="Ready to withdraw" color="#6366f1" />
@@ -686,7 +709,7 @@ function SellerOverview({ user, setTab }) {
       </div>
 
       {/* Chart + Activity */}
-      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:20, marginBottom:20 }}>
+      <div className="chart-row">
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:22 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
             <div>
@@ -715,13 +738,7 @@ function SellerOverview({ user, setTab }) {
       {/* Quick actions */}
       <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:22 }}>
         <div style={{ fontSize:'0.95rem', fontWeight:900, color:'#111', marginBottom:16 }}>Quick Actions</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
-          {[
-            { label:'List Product',    sub:'Sell items on campus',    tab:'listings',  color:'#1f8f43' },
-            { label:'Offer Service',   sub:'Share your skills',       tab:'listings',  color:'#6366f1' },
-            { label:'View Orders',     sub:'Orders from buyers',      tab:'received',  color:'#ff9d3f' },
-            { label:'Withdraw',        sub:'Move money to bank',      tab:'wallet',    color:'#ec4899' },
-          ].map(a => (
+        <div className="actions-4">
             <button key={a.label} onClick={() => setTab(a.tab)} style={{
               padding:'16px 14px', border:`1.5px solid ${a.color}22`, borderRadius:14,
               background:`${a.color}08`, cursor:'pointer', textAlign:'left', fontFamily:'Inter,sans-serif',
@@ -901,7 +918,7 @@ function SellerListings() {
           <p style={{ color:'#9ca3af', fontSize:'0.875rem' }}>Click "+ Add" above to create your first listing.</p>
         </div>
       ) : (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
+        <div className="listings-grid">
           {items.map(item => (
             <div key={item.id} style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:14, overflow:'hidden', boxShadow:'0 2px 8px rgba(15,23,42,0.04)' }}>
               <div style={{ height:110, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
@@ -1155,6 +1172,60 @@ export default function Dashboard() {
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
         .dash-wrap { animation:fadeUp 0.35s ease both; }
+
+        /* ── MOBILE BOTTOM TAB BAR ── */
+        .bottom-tab-bar {
+          display: none;
+          position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+          background: #fff; border-top: 1px solid #e5e7eb;
+          padding: 8px 0 env(safe-area-inset-bottom, 8px);
+          box-shadow: 0 -4px 20px rgba(15,23,42,0.08);
+        }
+        .bottom-tab-bar-inner {
+          display: flex; align-items: stretch; justify-content: space-around;
+        }
+        .btab {
+          flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: 3px; padding: 6px 4px; background: none; border: none; cursor: pointer;
+          font-family: Inter, sans-serif; transition: all 0.18s;
+        }
+        .btab-icon { font-size: 1.25rem; line-height: 1; }
+        .btab-label { font-size: 0.6rem; font-weight: 700; color: #9ca3af; }
+        .btab.active .btab-label { color: #1f8f43; }
+        .btab.active .btab-icon { transform: scale(1.15); }
+
+        /* ── RESPONSIVE DASHBOARD GRID ── */
+        .dash-grid { display: grid; grid-template-columns: 220px 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+        .dash-sidebar { display: block; }
+
+        /* ── RESPONSIVE STATS ── */
+        .stats-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+        .stats-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+        .chart-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .actions-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+        .actions-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+        .listings-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        @media (max-width: 768px) {
+          .bottom-tab-bar { display: block; }
+          .dash-grid { grid-template-columns: 1fr; padding: 16px 16px 90px; gap: 0; }
+          .dash-sidebar { display: none; }
+          .stats-4 { grid-template-columns: repeat(2,1fr); gap: 10px; }
+          .stats-3 { grid-template-columns: repeat(2,1fr); gap: 10px; }
+          .chart-row { grid-template-columns: 1fr; }
+          .actions-4 { grid-template-columns: repeat(2,1fr); }
+          .actions-3 { grid-template-columns: repeat(2,1fr); }
+          .listings-grid { grid-template-columns: repeat(2,1fr); }
+          .settings-grid { grid-template-columns: 1fr; }
+          .form-2col { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 400px) {
+          .stats-4 { grid-template-columns: 1fr 1fr; }
+          .listings-grid { grid-template-columns: 1fr 1fr; }
+          .actions-4 { grid-template-columns: 1fr 1fr; }
+        }
       `}</style>
 
       {/* TOP NAV */}
