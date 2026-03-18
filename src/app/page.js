@@ -1,8 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 const FEATURED_ITEMS = [
   {
     title: 'HP Laptop for Sale',
@@ -127,8 +125,9 @@ export default function HomePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${API}/api/products`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
         const data = await res.json();
+        console.log('PRODUCT API DATA:', data);
         setLatestProducts(
           (data.products || []).map((product) => ({
             emoji: '📦',
@@ -137,7 +136,9 @@ export default function HomePage() {
             link: `/products/${product._id || product.id}`,
           }))
         );
-      } catch (err) {}
+      } catch (err) {
+        console.log('PRODUCT FETCH ERROR:', err);
+      }
     };
     fetchProducts();
   }, []);
@@ -145,10 +146,12 @@ export default function HomePage() {
   useEffect(() => {
     const fetchUniversityCounts = async () => {
       try {
-        const res = await fetch(`${API}/api/universities`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/universities`);
         const data = await res.json();
         setUniversityCounts(data.universities || []);
-      } catch (err) {}
+      } catch (err) {
+        console.log('UNIVERSITY FETCH ERROR:', err);
+      }
     };
     fetchUniversityCounts();
   }, []);
@@ -511,27 +514,53 @@ export default function HomePage() {
           }
           .mobile-menu a { display: block; padding: 12px 10px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6; }
           .mobile-menu a:last-child { border-bottom: none; }
-          .hero { padding-left: 0; padding-right: 0; }
-          .hero-wrap, .hero-content { min-height: auto; }
-          .hero-content { padding: 42px 20px 30px; gap: 28px; }
-          .hero-title { font-size: 3rem; }
-          .hero-search { flex-direction: column; border-radius: 16px; }
-          .hero-search button { min-width: 100%; height: 58px; }
-          .featured-card { transform: none; width: 100%; }
-          .stats-inner { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .feed-grid { grid-template-columns: 1fr 1fr; }
-          .uni-grid { grid-template-columns: 1fr 1fr; }
-          .steps-grid { grid-template-columns: 1fr; }
+          .hero { padding: 80px 0 0; }
+          .hero-wrap { border-radius: 0; }
+          .hero-content { padding: 36px 20px 36px; gap: 24px; min-height: auto; }
+          .hero-title { font-size: 2.6rem; }
+          .hero-desc { font-size: 0.95rem; }
+          .hero-search { flex-direction: column; border-radius: 14px; overflow: hidden; }
+          .hero-search input { padding: 18px 16px; font-size: 1rem; }
+          .hero-search button { min-width: 100%; height: 52px; font-size: 1rem; }
+          .hero-right { display: none; }
+          .hero-tags { gap: 8px; }
+          .hero-tag { font-size: 0.78rem; padding: 7px 12px; }
+          .stats-inner { grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+          .stat-card { padding: 4px 8px; }
+          .stat-card h3 { font-size: 0.95rem; }
+          .stat-card p { font-size: 0.8rem; }
+          .feed-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+          .uni-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .steps-grid { grid-template-columns: 1fr; gap: 12px; }
+          .step-card { padding: 18px 16px; }
+          .testimonials-grid { grid-template-columns: 1fr; }
+          .section { padding: 48px 20px; }
+          .section-title { font-size: 1.8rem; }
+          .cta { padding: 52px 20px; }
+          .cta h2 { font-size: 1.8rem; }
+          .cta-actions { flex-direction: column; align-items: center; }
+          .cta-white, .cta-outline { width: 100%; max-width: 320px; text-align: center; }
+          .footer-top { grid-template-columns: 1fr 1fr; }
         }
 
         @media (max-width: 520px) {
-          .nav-inner { padding: 0 16px; height: 78px; }
-          .brand { font-size: 1.7rem; }
-          .hero-title { font-size: 2.55rem; }
+          .nav-inner { padding: 0 16px; height: 68px; }
+          .brand { font-size: 1.5rem; }
+          .hero { padding-top: 68px; }
+          .hero-title { font-size: 2.1rem; line-height: 1.05; }
+          .hero-content { padding: 28px 16px 28px; }
           .section, .cta, .footer { padding-left: 16px; padding-right: 16px; }
-          .feed-grid, .uni-grid, .footer-top, .testimonials-grid, .stats-inner { grid-template-columns: 1fr; }
-          .featured-image-wrap { height: 210px; }
-          .footer-bottom { flex-direction: column; }
+          .feed-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .uni-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+          .footer-top { grid-template-columns: 1fr; }
+          .footer-bottom { flex-direction: column; gap: 6px; }
+          .stats-inner { grid-template-columns: 1fr 1fr; }
+          .stat-icon { width: 36px; height: 36px; font-size: 1.1rem; }
+          .feed-card { padding: 10px; }
+          .feed-visual { height: 100px; font-size: 2.8rem; }
+          .uni-card { padding: 12px; }
+          .testimonial-card { padding: 16px; }
+          .featured-image-wrap { height: 190px; }
         }
       `}</style>
 
