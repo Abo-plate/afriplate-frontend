@@ -18,8 +18,12 @@ const PRICE_RANGES = [
   { label: '₦10k – ₦30k', min: 10000, max: 30000 },
   { label: 'Above ₦30k',  min: 30000, max: Infinity },
 ];
-
 const CATEGORY_ICONS = { Design:'🎨', Writing:'✍️', Tutoring:'📚', Tech:'💻', Beauty:'💇', Photography:'📸', Music:'🎵', Delivery:'🚴', Other:'🛠️', All:'⚡' };
+
+function getUser() {
+  if (typeof window === 'undefined') return null;
+  try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+}
 
 function SkeletonCard() {
   return (
@@ -48,7 +52,10 @@ export default function ServicesPage() {
   const [hasMore, setHasMore]         = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser]               = useState(null);
   const loaderRef = useRef(null);
+
+  useEffect(() => { setUser(getUser()); }, []);
 
   const fetchServices = useCallback(async (reset = true) => {
     if (reset) { setLoading(true); setError(''); setPage(1); }
@@ -108,39 +115,33 @@ export default function ServicesPage() {
         .nav-login  { background:#f3f4f6; color:#374151; }
         .nav-signup { background:#1f8f43; color:#fff; box-shadow:0 4px 14px rgba(31,143,67,0.22); }
 
-        /* HERO STRIP */
         .hero-strip { background:linear-gradient(135deg,#0d3320,#1f8f43); padding:32px 24px; }
         .hero-strip-inner { max-width:1320px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
         .hero-strip h1 { font-size:clamp(1.6rem,2.5vw,2.2rem); font-weight:900; color:#fff; letter-spacing:-0.04em; margin-bottom:4px; }
         .hero-strip p { color:rgba(255,255,255,0.7); font-size:0.9rem; }
-        .post-btn { padding:12px 24px; background:#ff9d3f; color:#fff; border-radius:12px; font-size:0.875rem; font-weight:800; box-shadow:0 4px 16px rgba(255,157,63,0.3); transition:all 0.2s; white-space:nowrap; }
-        .post-btn:hover { background:#e8892e; transform:translateY(-2px); }
+        .post-btn { padding:12px 24px; background:#fff; color:#1f8f43; border-radius:12px; font-size:0.875rem; font-weight:800; transition:all 0.2s; white-space:nowrap; }
+        .post-btn:hover { background:#eaf8ee; transform:translateY(-2px); }
 
         .page { max-width:1320px; margin:0 auto; padding:28px 24px; display:grid; grid-template-columns:260px 1fr; gap:24px; align-items:start; }
-
         .sidebar { background:#fff; border:1px solid #e5e7eb; border-radius:20px; padding:22px; position:sticky; top:90px; }
         .sidebar-title { font-size:0.72rem; font-weight:800; color:#9ca3af; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:16px; }
         .filter-group { margin-bottom:24px; }
         .filter-label { font-size:0.8rem; font-weight:700; color:#374151; margin-bottom:10px; display:block; }
-
         .cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
         .cat-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 6px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:0.72rem; font-weight:600; transition:all 0.18s; }
         .cat-btn:hover { border-color:#1f8f43; color:#1f8f43; }
         .cat-btn.active { background:#eaf8ee; border-color:#1f8f43; color:#1f8f43; }
         .cat-icon { font-size:1.2rem; }
-
         .price-options { display:flex; flex-direction:column; gap:6px; }
         .price-opt { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:0.8rem; font-weight:600; transition:all 0.18s; text-align:left; }
         .price-opt:hover { border-color:#1f8f43; color:#1f8f43; }
         .price-opt.active { background:#eaf8ee; border-color:#1f8f43; color:#1f8f43; }
         .price-dot { width:8px; height:8px; border-radius:50%; border:2px solid currentColor; flex-shrink:0; }
         .price-opt.active .price-dot { background:currentColor; }
-
         .uni-select { width:100%; padding:10px 12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:0.83rem; color:#374151; outline:none; background:#fff; appearance:none; }
         .uni-select:focus { border-color:#1f8f43; box-shadow:0 0 0 3px rgba(31,143,67,0.08); }
         .clear-btn { width:100%; padding:10px; border-radius:10px; background:#f3f4f6; color:#6b7280; font-size:0.82rem; font-weight:700; margin-top:4px; transition:all 0.18s; }
         .clear-btn:hover { background:#fee2e2; color:#dc2626; }
-
         .main { min-width:0; }
         .top-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
         .search-wrap { display:flex; gap:8px; flex:1; min-width:200px; }
@@ -152,11 +153,8 @@ export default function ServicesPage() {
         .sort-select { padding:9px 12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:0.82rem; color:#374151; outline:none; background:#fff; }
         .view-btn { width:36px; height:36px; border-radius:9px; border:1.5px solid #e5e7eb; background:#fff; display:flex; align-items:center; justify-content:center; font-size:1rem; transition:all 0.18s; }
         .view-btn.active { background:#1f8f43; border-color:#1f8f43; color:#fff; }
-
         .results-info { font-size:0.82rem; color:#6b7280; margin-bottom:16px; }
         .results-info span { color:#111; font-weight:700; }
-
-        /* SERVICE CARD */
         .services-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
         .svc-card { background:#fff; border:1px solid #eceff3; border-radius:20px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 2px 10px rgba(15,23,42,0.04); transition:transform 0.22s, box-shadow 0.22s; animation:fadeUp 0.4s ease both; }
         .svc-card:hover { transform:translateY(-5px); box-shadow:0 16px 36px rgba(15,23,42,0.09); }
@@ -177,8 +175,6 @@ export default function ServicesPage() {
         .btn-hire:hover { background:#187536; }
         .btn-view { padding:9px 12px; border-radius:10px; background:#eaf8ee; color:#1f8f43; font-size:0.8rem; font-weight:700; transition:all 0.18s; }
         .btn-view:hover { background:#1f8f43; color:#fff; }
-
-        /* LIST */
         .services-list { display:flex; flex-direction:column; gap:12px; }
         .svc-list-card { background:#fff; border:1px solid #eceff3; border-radius:16px; padding:16px; display:flex; gap:16px; align-items:center; transition:all 0.2s; animation:fadeUp 0.4s ease both; }
         .svc-list-card:hover { border-color:#d1fae5; box-shadow:0 8px 24px rgba(15,23,42,0.07); }
@@ -188,24 +184,20 @@ export default function ServicesPage() {
         .svc-list-sub { font-size:0.78rem; color:#9ca3af; }
         .svc-list-price { font-size:1rem; font-weight:900; color:#1f8f43; flex-shrink:0; }
         .list-actions { display:flex; gap:8px; flex-shrink:0; }
-
         .empty { text-align:center; padding:64px 24px; }
         .empty-icon { font-size:3rem; margin-bottom:14px; }
         .empty h3 { font-size:1.1rem; font-weight:800; color:#111; margin-bottom:6px; }
         .empty p { font-size:0.875rem; color:#6b7280; }
         .error-state { text-align:center; padding:64px 24px; }
         .retry-btn { margin-top:16px; padding:10px 24px; border-radius:10px; background:#1f8f43; color:#fff; font-weight:700; font-size:0.875rem; }
-
         .loader { text-align:center; padding:32px; color:#9ca3af; font-size:0.875rem; }
         .spinner { width:26px; height:26px; border:3px solid #e5e7eb; border-top-color:#1f8f43; border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 8px; }
-
         .filter-toggle { display:none; padding:10px 16px; background:#fff; border:1.5px solid #e5e7eb; border-radius:12px; font-size:0.875rem; font-weight:700; color:#374151; gap:6px; align-items:center; }
         .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
         .overlay.show { display:block; }
         .sidebar-mobile { display:none; position:fixed; left:0; top:0; bottom:0; width:280px; background:#fff; z-index:201; overflow-y:auto; padding:22px; transform:translateX(-100%); transition:transform 0.3s; }
         .sidebar-mobile.open { transform:translateX(0); }
         .close-sidebar { float:right; background:none; font-size:1.4rem; color:#6b7280; padding:4px; }
-
         @media (max-width:1024px) { .page { grid-template-columns:220px 1fr; } .services-grid { grid-template-columns:repeat(2,1fr); } }
         @media (max-width:768px) { .page { grid-template-columns:1fr; } .sidebar { display:none; } .filter-toggle { display:flex; } .services-grid { grid-template-columns:repeat(2,1fr); } .nav-links { display:none; } }
         @media (max-width:480px) { .services-grid { grid-template-columns:1fr; } .page { padding:16px; } }
@@ -220,8 +212,14 @@ export default function ServicesPage() {
             <li><a href="/jobs">Jobs</a></li>
           </ul>
           <div className="nav-right">
-            <a href="/login"    className="nav-btn nav-login">Login</a>
-            <a href="/register" className="nav-btn nav-signup">Sign Up</a>
+            {user ? (
+              <a href="/dashboard" className="nav-btn nav-signup">Dashboard</a>
+            ) : (
+              <>
+                <a href="/login"    className="nav-btn nav-login">Login</a>
+                <a href="/register" className="nav-btn nav-signup">Sign Up</a>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -229,10 +227,14 @@ export default function ServicesPage() {
       <div className="hero-strip">
         <div className="hero-strip-inner">
           <div>
-            <h1>Student Services 🛠️</h1>
+            <h1>Student Services</h1>
             <p>Hire talented students for design, tech, tutoring and more</p>
           </div>
-          <a href="/dashboard/services/create" className="post-btn">+ Offer a Service</a>
+          {user ? (
+            <a href="/dashboard" className="post-btn">+ Offer a Service</a>
+          ) : (
+            <a href="/register" className="post-btn">Get Started</a>
+          )}
         </div>
       </div>
 
