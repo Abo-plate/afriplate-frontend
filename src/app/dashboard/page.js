@@ -412,6 +412,11 @@ function BuyerOverview({ user, setTab }) {
 
       {/* Stats */}
       <div className="stats-4">
+        <StatBox label="Total Orders" value={stats.orders} sub="Orders placed so far" />
+        <StatBox label="Total Spent" value={`NGN ${fmt(stats.spent)}`} sub="Completed purchases" color="#2563eb" />
+        <StatBox label="Pending Orders" value={stats.pending} sub={stats.pending > 0 ? 'Needs attention' : 'All caught up'} color="#ff9d3f" />
+        <StatBox label="Reviews Left" value={stats.reviews} sub="Feedback shared" color="#ec4899" />
+      </div>
 
       {/* Recent orders */}
       <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:22, marginBottom:20 }}>
@@ -739,6 +744,12 @@ function SellerOverview({ user, setTab }) {
       <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:22 }}>
         <div style={{ fontSize:'0.95rem', fontWeight:900, color:'#111', marginBottom:16 }}>Quick Actions</div>
         <div className="actions-4">
+          {[
+            { label:'Add Listing', sub:'Create a new product or service', tab:'listings', color:'#1f8f43' },
+            { label:'View Orders', sub:'Track incoming sales', tab:'received', color:'#ff9d3f' },
+            { label:'Open Wallet', sub:'Check balance and withdraw', tab:'wallet', color:'#6366f1' },
+            { label:'Messages', sub:'Reply to buyers quickly', tab:'messages', color:'#ec4899' },
+          ].map(a => (
             <button key={a.label} onClick={() => setTab(a.tab)} style={{
               padding:'16px 14px', border:`1.5px solid ${a.color}22`, borderRadius:14,
               background:`${a.color}08`, cursor:'pointer', textAlign:'left', fontFamily:'Inter,sans-serif',

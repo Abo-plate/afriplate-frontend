@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { useStoredSession } from './lib/useStoredSession';
 
 const FEATURED_ITEMS = [
   {
@@ -107,6 +108,7 @@ const TESTIMONIALS = [
 ];
 
 export default function HomePage() {
+  const isAuthed = useStoredSession();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -577,8 +579,14 @@ export default function HomePage() {
             </ul>
 
             <div className="nav-actions">
-              <a href="/login" className="btn-login">Login</a>
-              <a href="/register" className="btn-signup">Sign Up</a>
+              {isAuthed ? (
+                <a href="/dashboard" className="btn-signup">Dashboard</a>
+              ) : (
+                <>
+                  <a href="/login" className="btn-login">Login</a>
+                  <a href="/register" className="btn-signup">Sign Up</a>
+                </>
+              )}
             </div>
 
             <button className="hamburger" onClick={() => setMenuOpen((v) => !v)} aria-label="Open menu">
@@ -593,8 +601,14 @@ export default function HomePage() {
             <a href="/services">Services</a>
             <a href="/jobs">Jobs</a>
             <a href="#how-it-works">How it Works</a>
-            <a href="/login">Login</a>
-            <a href="/register">Sign Up</a>
+            {isAuthed ? (
+              <a href="/dashboard">Dashboard</a>
+            ) : (
+              <>
+                <a href="/login">Login</a>
+                <a href="/register">Sign Up</a>
+              </>
+            )}
           </div>
         )}
 

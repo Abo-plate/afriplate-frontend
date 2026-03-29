@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { servicesAPI } from '../lib/services';
+import { useStoredSession } from '../lib/useStoredSession';
 
 const CATEGORIES = ['All', 'Design', 'Writing', 'Tutoring', 'Tech', 'Beauty', 'Photography', 'Music', 'Delivery', 'Other'];
 const UNIVERSITIES = ['All Universities', 'UNILAG', 'OAU', 'UI', 'FUTA', 'LASU', 'UNIBEN', 'ABU', 'BUK', 'UNIPORT', 'YABATECH', 'UNILORIN'];
@@ -20,11 +21,6 @@ const PRICE_RANGES = [
 ];
 const CATEGORY_ICONS = { Design:'🎨', Writing:'✍️', Tutoring:'📚', Tech:'💻', Beauty:'💇', Photography:'📸', Music:'🎵', Delivery:'🚴', Other:'🛠️', All:'⚡' };
 
-function getUser() {
-  if (typeof window === 'undefined') return null;
-  try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
-}
-
 function SkeletonCard() {
   return (
     <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, overflow:'hidden' }}>
@@ -38,6 +34,7 @@ function SkeletonCard() {
 }
 
 export default function ServicesPage() {
+  const isAuthed = useStoredSession();
   const [items, setItems]             = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState('');
@@ -52,10 +49,7 @@ export default function ServicesPage() {
   const [hasMore, setHasMore]         = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser]               = useState(null);
   const loaderRef = useRef(null);
-
-  useEffect(() => { setUser(getUser()); }, []);
 
   const fetchServices = useCallback(async (reset = true) => {
     if (reset) { setLoading(true); setError(''); setPage(1); }
@@ -212,7 +206,7 @@ export default function ServicesPage() {
             <li><a href="/jobs">Jobs</a></li>
           </ul>
           <div className="nav-right">
-            {user ? (
+            {isAuthed ? (
               <a href="/dashboard" className="nav-btn nav-signup">Dashboard</a>
             ) : (
               <>
@@ -230,7 +224,7 @@ export default function ServicesPage() {
             <h1>Student Services</h1>
             <p>Hire talented students for design, tech, tutoring and more</p>
           </div>
-          {user ? (
+          {isAuthed ? (
             <a href="/dashboard" className="post-btn">+ Offer a Service</a>
           ) : (
             <a href="/register" className="post-btn">Get Started</a>

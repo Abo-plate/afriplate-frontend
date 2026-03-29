@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { jobsAPI } from '../lib/services';
+import { useStoredSession } from '../lib/useStoredSession';
 
 const JOB_TYPES   = ['All', 'Full-time', 'Part-time', 'Remote', 'Freelance', 'Internship'];
 const CATEGORIES  = ['All', 'Tech', 'Design', 'Writing', 'Marketing', 'Finance', 'Teaching', 'Media', 'Admin', 'Other'];
@@ -38,6 +39,7 @@ function SkeletonJob() {
 }
 
 export default function JobsPage() {
+  const isAuthed = useStoredSession();
   const [items, setItems]             = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState('');
@@ -235,8 +237,14 @@ export default function JobsPage() {
             <li><a href="/jobs" className="active">Jobs</a></li>
           </ul>
           <div className="nav-right">
-            <a href="/login"    className="nav-btn nav-login">Login</a>
-            <a href="/register" className="nav-btn nav-signup">Sign Up</a>
+            {isAuthed ? (
+              <a href="/dashboard" className="nav-btn nav-signup">Dashboard</a>
+            ) : (
+              <>
+                <a href="/login" className="nav-btn nav-login">Login</a>
+                <a href="/register" className="nav-btn nav-signup">Sign Up</a>
+              </>
+            )}
           </div>
         </div>
       </nav>
