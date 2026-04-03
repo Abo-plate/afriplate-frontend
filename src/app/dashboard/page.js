@@ -639,7 +639,13 @@ function SellerDashboard({ user }) {
 }
 
 function SellerOverview({ user, setTab }) {
-  const [stats, setStats]     = useState({ listings:0, orders:0, balance:0, pending_balance:0 });
+  const [stats, setStats] = useState({
+  listings: 0,
+  orders: 0,
+  balance: 0,
+  pending_balance: 0,
+  weekly_sales: 0,
+});
   const [activity, setActivity] = useState([]);
   const [salesData, setSalesData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -648,24 +654,26 @@ function SellerOverview({ user, setTab }) {
     const load = async () => {
       try {
         const [wRes, oRes, lRes] = await Promise.allSettled([
-          authFetch('/api/wallet'),
+         authFetch('/api/orders/seller/dashboard-summary'),
           authFetch('/api/orders?role=seller&limit=6'),
           authFetch('/api/products?mine=true&limit=1'),
         ]);
-        const wallet   = wRes.status === 'fulfilled' ? await wRes.value.json() : {};
+        const wallet = wRes.status === 'fulfilled' ? await wRes.value.json() : {};
+        const summary = wallet.summary || {};
+        
         const orders   = oRes.status === 'fulfilled' ? await oRes.value.json() : {};
         const listings = lRes.status === 'fulfilled' ? await lRes.value.json() : {};
 
         const ordersArr = orders.orders || orders.data || [];
-        const walletData = wallet.wallet || wallet.data || wallet;
+       const summary = wallet.summary || {};
 
         setStats({
-          listings: listings.count || 0,
-          orders:   ordersArr.filter(o => o.status === 'processing').length,
-          balance:  walletData.balance || walletData.available_balance || 0,
-          pending_balance: walletData.pending_balance || 0,
-        });
-
+  listings: listings.count || 0,
+  orders: summary.processingOrders || 0,
+  balance: summary.walletBalance || 0,
+  pending_balance: summary.pendingBalance || 0,
+  weekly_sales: summary.weeklySales || 0,
+});
         setActivity(ordersArr.slice(0, 5).map(o => ({
           text: `New order: ${o.product_title || o.service_title || 'Item'}`,
           sub:  o.status,
@@ -673,15 +681,27 @@ function SellerOverview({ user, setTab }) {
           color: STATUS_COLOR[o.status] || '#9ca3af',
         })));
 
-        setSalesData([
-          { label:'Mon', value: 12000 },
-          { label:'Tue', value: 28000 },
-          { label:'Wed', value: 8000 },
-          { label:'Thu', value: 35000 },
-          { label:'Fri', value: 22000 },
-          { label:'Sat', value: 45000 },
-          { label:'Sun', value: 18000 },
-        ]);
+       const weeklyBars = [
+  { label:'Mon', value: 0 },
+  { label:'Tue', value: 0 },
+  { label:'Wed', value: 0 },
+  { label:'Thu', value: 0 },
+  { label:'Fri', value: 0 },
+  { label:'Sat', value: 0 },
+  { label:'Sun', value: 0 },
+];
+
+ordersArr.forEach((o) => {
+  if (!['processing', 'completed'].includes(o.status)) return;
+
+  const d = new Date(o.created_at);
+  const day = d.getDay();
+  const index = day === 0 ? 6 : day - 1;
+
+  weeklyBars[index].value += Number(o.seller_amount || 0);
+});
+
+setSalesData(weeklyBars);
       } catch {}
       setLoading(false);
     };
@@ -721,7 +741,7 @@ function SellerOverview({ user, setTab }) {
               <div style={{ fontSize:'0.95rem', fontWeight:900, color:'#111' }}>Weekly Sales</div>
               <div style={{ fontSize:'0.75rem', color:'#9ca3af' }}>Revenue this week</div>
             </div>
-            <div style={{ fontSize:'1.1rem', fontWeight:900, color:'#1f8f43' }}>₦{fmt(salesData.reduce((a,b) => a + b.value, 0))}</div>
+            <div style={{ fontSize:'1.1rem', fontWeight:900, color:'#1f8f43' }}>₦{fmt(stats.weekly_sales)}</div>
           </div>
           <BarChart data={salesData} color="#1f8f43" />
         </div>
@@ -1015,7 +1035,7 @@ function SellerWallet() {
     const load = async () => {
       try {
         const [wRes, tRes] = await Promise.allSettled([
-          authFetch('/api/wallet'),
+        authFetch('/api/orders/seller/dashboard-summary'),
           authFetch('/api/wallet/transactions'),
         ]);
         if (wRes.status === 'fulfilled' && wRes.value.ok) {
