@@ -1,0 +1,11 @@
+
+> afriplate-frontend@0.1.0 start
+> next start
+
+▲ Next.js 16.1.6
+- Local:         http://localhost:3000
+- Network:       http://10.84.49.8:3000
+
+✓ Starting...
+⚠ `images.domains` is deprecated in favor of `images.remotePatterns`. Please update next.config.mjs to protect your application from malicious users.
+✓ Ready in 713ms

@@ -26,3 +26,46 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  color: #9ca3af;
+  background: none;
+  border: none;
+}
+
+.nav-item.active {
+  color: #1f8f43;
+  font-weight: 600;
+}
+
+.nav-item span {
+  margin-top: 2px;
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+  .mobile-nav {
+    display: none;
+  }
+}
+body {
+  padding-bottom: 70px;
+}

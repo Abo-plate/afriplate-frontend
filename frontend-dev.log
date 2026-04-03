@@ -1,0 +1,20 @@
+
+> afriplate-frontend@0.1.0 dev
+> next dev
+
+⚠ `images.domains` is deprecated in favor of `images.remotePatterns`. Please update next.config.mjs to protect your application from malicious users.
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.84.49.8:3000
+- Environments: .env.local
+
+✓ Starting...
+Creating turbopack project {
+  dir: 'C:\\Users\\owner\\Documents\\AfriPlate\\afriplate-frontend',
+  testMode: true
+}
+✓ Ready in 2s
+○ Compiling /forgot-password ...
+ GET /forgot-password 200 in 9.8s (compile: 9.5s, render: 303ms)
+ GET /forgot-password 200 in 144ms (compile: 14ms, render: 130ms)
+ GET /reset-password?token=test-token 200 in 2.1s (compile: 1924ms, render: 134ms)
