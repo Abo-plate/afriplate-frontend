@@ -660,13 +660,11 @@ function SellerOverview({ user, setTab }) {
         ]);
         const wallet = wRes.status === 'fulfilled' ? await wRes.value.json() : {};
         const summary = wallet.summary || {};
-        
         const orders   = oRes.status === 'fulfilled' ? await oRes.value.json() : {};
         const listings = lRes.status === 'fulfilled' ? await lRes.value.json() : {};
 
         const ordersArr = orders.orders || orders.data || [];
-       const summary = wallet.summary || {};
-
+  
         setStats({
   listings: listings.count || 0,
   orders: summary.processingOrders || 0,
