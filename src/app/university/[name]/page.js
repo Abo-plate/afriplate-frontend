@@ -1,10 +1,6 @@
-export default function UniversityPage({ params }) {
-  const { name } = params;
+import { redirect } from 'next/navigation';
 
-  return (
-    <div style={{ padding: '40px', fontFamily: 'Inter, sans-serif' }}>
-      <h1>University Page</h1>
-      <p>Campus: {name}</p>
-    </div>
-  );
+export default async function UniversityPage({ params }) {
+  const { name } = await params;
+  redirect(`/products?university=${encodeURIComponent(name)}`);
 }

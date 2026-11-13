@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import ResendVerification from '@/components/ResendVerification';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -34,6 +35,7 @@ export default function RegisterPage() {
   const [step, setStep]         = useState(0);
   const [form, setForm]         = useState({ user_type:'buyer', first_name:'', last_name:'', email:'', password:'', confirm:'', phone:'', university:'', level:'' });
   const [success, setSuccess]   = useState(false);
+  const [verificationEmailSent, setVerificationEmailSent] = useState(false);
   const [errors, setErrors]     = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -75,6 +77,7 @@ export default function RegisterPage() {
   };
 
   const next = () => {
+    if (loading) return;
     setApiError('');
     if (!validateStep()) return;
     if (step < 2) { setStep(s => s + 1); return; }
@@ -82,6 +85,7 @@ export default function RegisterPage() {
   };
 
   const submit = async () => {
+    if (loading) return;
     setLoading(true); setApiError('');
     try {
       const res = await fetch(`${API}/api/auth/register`, {
@@ -101,6 +105,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) { setApiError(data.message || 'Registration failed. Please try again.'); setStep(0); return; }
       // Backend requires email verification before login
+      setVerificationEmailSent(data.verification_email_sent === true);
       setSuccess(true);
     } catch {
       setApiError('Cannot connect to server. Make sure the backend is running on port 5000.');
@@ -117,14 +122,14 @@ export default function RegisterPage() {
       <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f7f8fa', fontFamily:'Inter,sans-serif' }}>
         <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:24, padding:'48px 40px', maxWidth:440, width:'100%', textAlign:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.06)' }}>
           <div style={{ width:64, height:64, borderRadius:'50%', background:'#eaf8ee', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.8rem' }}>✓</div>
-          <h1 style={{ fontSize:'1.5rem', fontWeight:900, color:'#111', marginBottom:10, letterSpacing:'-0.04em' }}>Check your email!</h1>
-          <p style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:24 }}>
-            We sent a verification link to <strong style={{ color:'#111' }}>{form.email}</strong>.<br />
-            Click the link in the email to verify your account, then come back to log in.
+          <h1 style={{ fontSize:'1.5rem', fontWeight:900, color:'#111', marginBottom:10, letterSpacing:'-0.04em' }}>{verificationEmailSent ? 'Check your email!' : 'Account created'}</h1>
+          <p role="status" style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:24 }}>
+            {verificationEmailSent ? <>Your account was created and a verification email was sent to <strong style={{ color:'#111' }}>{form.email}</strong>. Check your inbox and spam folder, then follow the link before logging in.</> : <>Your account was created, but we could not confirm that a verification email was sent to <strong style={{ color:'#111' }}>{form.email}</strong>. Request a new email below. You do not need to register again.</>}
           </p>
           <a href="/login" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem', textDecoration:'none' }}>
             Go to Login
           </a>
+          <ResendVerification email={form.email} />
         </div>
       </div>
     );
@@ -135,104 +140,104 @@ export default function RegisterPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; background:#f7f8fa; }
+        body { font-family:var(--ap-font); background:var(--ap-color-background); }
         a { color:inherit; text-decoration:none; }
-        button { font-family:'Inter',sans-serif; cursor:pointer; border:none; }
-        input, select { font-family:'Inter',sans-serif; }
+        button { font-family:var(--ap-font); cursor:pointer; border:none; }
+        input, select { font-family:var(--ap-font); }
 
         .page { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
 
         .left {
-          background:linear-gradient(160deg,#0d3320 0%,#1f8f43 60%,#2aad55 100%);
+          background:linear-gradient(160deg,#0d3320 0%,var(--ap-color-primary) 60%,#2aad55 100%);
           padding:48px; display:flex; flex-direction:column;
           justify-content:space-between; position:relative; overflow:hidden;
         }
         .left::before { content:''; position:absolute; width:500px; height:500px; border-radius:50%; background:rgba(255,255,255,0.04); top:-150px; right:-150px; }
         .left::after  { content:''; position:absolute; width:300px; height:300px; border-radius:50%; background:rgba(31,143,67,0.08); bottom:-80px; left:-80px; }
 
-        .brand { font-size:1.9rem; font-weight:900; color:#fff; letter-spacing:-0.04em; position:relative; z-index:1; }
-        .brand span { color:#1f8f43; }
+        .brand { font-size:1.9rem; font-weight:var(--ap-weight-heading); color:#fff; letter-spacing:-0.04em; position:relative; z-index:1; }
+        .brand span { color:var(--ap-color-primary); }
 
         .left-body { position:relative; z-index:1; }
-        .left-body h2 { font-size:clamp(1.9rem,2.6vw,2.8rem); font-weight:900; color:#fff; line-height:1.05; letter-spacing:-0.05em; margin-bottom:14px; }
+        .left-body h2 { font-size:clamp(1.9rem,2.6vw,2.8rem); font-weight:var(--ap-weight-heading); color:#fff; line-height:1.05; letter-spacing:-0.05em; margin-bottom:14px; }
         .left-body h2 em { font-style:normal; color:#a9e68a; }
         .left-body p { color:rgba(255,255,255,0.65); font-size:0.95rem; line-height:1.65; }
 
         .perks { display:flex; flex-direction:column; gap:12px; position:relative; z-index:1; }
         .perk { display:flex; align-items:flex-start; gap:12px; }
-        .perk-check { width:22px; height:22px; border-radius:50%; background:#1f8f43; display:flex; align-items:center; justify-content:center; font-size:0.65rem; flex-shrink:0; margin-top:2px; color:#fff; font-weight:900; }
+        .perk-check { width:22px; height:22px; border-radius:50%; background:var(--ap-color-primary); display:flex; align-items:center; justify-content:center; font-size:0.65rem; flex-shrink:0; margin-top:2px; color:#fff; font-weight:var(--ap-weight-heading); }
         .perk-text { font-size:0.84rem; color:rgba(255,255,255,0.75); line-height:1.5; }
 
         .right { background:#fff; display:flex; align-items:center; justify-content:center; padding:40px 52px; overflow-y:auto; }
         .form-box { width:100%; max-width:400px; }
 
-        .eyebrow { font-size:0.72rem; font-weight:700; color:#1f8f43; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:10px; }
-        .form-title { font-size:2.2rem; font-weight:900; color:#111; letter-spacing:-0.05em; margin-bottom:6px; }
-        .form-sub { font-size:0.88rem; color:#6b7280; margin-bottom:24px; }
-        .form-sub a { color:#1f8f43; font-weight:700; }
+        .eyebrow { font-size:0.72rem; font-weight:var(--ap-weight-label); color:var(--ap-color-primary); text-transform:uppercase; letter-spacing:1.8px; margin-bottom:10px; }
+        .form-title { font-size:2.2rem; font-weight:var(--ap-weight-heading); color:#111; letter-spacing:-0.05em; margin-bottom:6px; }
+        .form-sub { font-size:0.88rem; color:var(--ap-color-muted); margin-bottom:24px; }
+        .form-sub a { color:var(--ap-color-primary); font-weight:var(--ap-weight-label); }
 
         .stepper { display:flex; align-items:center; margin-bottom:26px; }
-        .s-circle { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; flex-shrink:0; border:2px solid #e5e7eb; background:#fff; color:#9ca3af; transition:all 0.25s; }
-        .s-circle.done   { background:#1f8f43; border-color:#1f8f43; color:#fff; }
-        .s-circle.active { background:#fff; border-color:#1f8f43; color:#1f8f43; }
+        .s-circle { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:var(--ap-weight-button); flex-shrink:0; border:2px solid var(--ap-color-border); background:#fff; color:#9ca3af; transition:all 0.25s; }
+        .s-circle.done   { background:var(--ap-color-primary); border-color:var(--ap-color-primary); color:#fff; }
+        .s-circle.active { background:#fff; border-color:var(--ap-color-primary); color:var(--ap-color-primary); }
         .s-label { font-size:0.74rem; font-weight:600; color:#9ca3af; white-space:nowrap; margin-left:7px; }
-        .s-label.active { color:#1f8f43; }
-        .s-line { flex:1; height:2px; background:#e5e7eb; margin:0 8px; min-width:20px; transition:background 0.25s; }
-        .s-line.done { background:#1f8f43; }
+        .s-label.active { color:var(--ap-color-primary); }
+        .s-line { flex:1; height:2px; background:var(--ap-color-border); margin:0 8px; min-width:20px; transition:background 0.25s; }
+        .s-line.done { background:var(--ap-color-primary); }
 
         .field { margin-bottom:15px; }
-        .field label { display:block; font-size:0.82rem; font-weight:700; color:#374151; margin-bottom:6px; }
+        .field label { display:block; font-size:0.82rem; font-weight:var(--ap-weight-label); color:var(--ap-color-label); margin-bottom:6px; }
         .input-wrap { position:relative; }
         .input-wrap input,
         .input-wrap select {
-          width:100%; padding:13px 16px; border:1.5px solid #e5e7eb;
-          border-radius:12px; font-size:0.91rem; color:#111; outline:none;
-          background:#fafafa; transition:border-color 0.2s, box-shadow 0.2s, background 0.2s;
+          width:100%; padding:13px 16px; border:1.5px solid var(--ap-color-border);
+          border-radius:var(--ap-radius-control); font-size:0.91rem; color:#111; outline:none;
+          background:var(--ap-color-input); transition:border-color 0.2s, box-shadow 0.2s, background 0.2s;
           appearance:none;
         }
         .input-wrap input:focus,
-        .input-wrap select:focus { border-color:#1f8f43; box-shadow:0 0 0 3px rgba(31,143,67,0.1); background:#fff; }
+        .input-wrap select:focus { border-color:var(--ap-color-primary); box-shadow:0 0 0 3px rgba(31,143,67,0.1); background:#fff; }
         .input-wrap input.err,
         .input-wrap select.err { border-color:#ef4444; background:#fef2f2; }
         .field-error { color:#ef4444; font-size:0.75rem; font-weight:600; margin-top:5px; display:block; }
 
-        .pw-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; color:#9ca3af; font-size:0.78rem; font-weight:700; padding:4px 6px; border-radius:6px; }
-        .pw-toggle:hover { color:#374151; }
+        .pw-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; color:#9ca3af; font-size:0.78rem; font-weight:var(--ap-weight-label); padding:4px 6px; border-radius:6px; }
+        .pw-toggle:hover { color:var(--ap-color-label); }
 
         .pw-bar-wrap { height:4px; background:#f3f4f6; border-radius:2px; overflow:hidden; margin-top:7px; margin-bottom:4px; }
         .pw-bar { height:100%; border-radius:2px; transition:width 0.35s, background 0.35s; }
-        .pw-label { font-size:0.72rem; font-weight:700; }
+        .pw-label { font-size:0.72rem; font-weight:var(--ap-weight-label); }
 
         .type-toggle { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
         .type-card {
-          border:2px solid #e5e7eb; border-radius:14px; padding:16px 14px;
-          cursor:pointer; background:#fafafa; transition:all 0.2s; text-align:center;
+          border:2px solid var(--ap-color-border); border-radius:14px; padding:16px 14px;
+          cursor:pointer; background:var(--ap-color-input); transition:all 0.2s; text-align:center;
         }
-        .type-card:hover { border-color:#1f8f43; background:#f0fdf4; }
-        .type-card.selected { border-color:#1f8f43; background:#eaf8ee; }
-        .type-card.selected .tc-icon { background:#1f8f43; color:#fff; }
+        .type-card:hover { border-color:var(--ap-color-primary); background:#f0fdf4; }
+        .type-card.selected { border-color:var(--ap-color-primary); background:#eaf8ee; }
+        .type-card.selected .tc-icon { background:var(--ap-color-primary); color:#fff; }
         .tc-icon { width:40px; height:40px; border-radius:10px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; font-size:1.2rem; transition:all 0.2s; }
-        .tc-title { font-size:0.88rem; font-weight:800; color:#111; margin-bottom:3px; }
-        .tc-sub   { font-size:0.72rem; color:#6b7280; line-height:1.4; }
+        .tc-title { font-size:0.88rem; font-weight:var(--ap-weight-button); color:#111; margin-bottom:3px; }
+        .tc-sub   { font-size:0.72rem; color:var(--ap-color-muted); line-height:1.4; }
 
 
 
         .btn-row { display:flex; gap:10px; margin-top:10px; }
-        .back-btn { padding:13px 18px; border:1.5px solid #e5e7eb; border-radius:12px; background:#fff; color:#374151; font-size:0.9rem; font-weight:700; transition:all 0.2s; }
+        .back-btn { padding:13px 18px; border:1.5px solid var(--ap-color-border); border-radius:var(--ap-radius-control); background:#fff; color:var(--ap-color-label); font-size:0.9rem; font-weight:var(--ap-weight-label); transition:all 0.2s; }
         .back-btn:hover { background:#f9fafb; }
         .next-btn {
-          flex:1; padding:13px; background:#1f8f43; color:#fff;
-          font-size:0.95rem; font-weight:800; border-radius:12px;
+          flex:1; padding:13px; background:var(--ap-color-primary); color:#fff;
+          font-size:0.95rem; font-weight:var(--ap-weight-button); border-radius:var(--ap-radius-control);
           box-shadow:0 8px 24px rgba(31,143,67,0.22); transition:all 0.22s;
           display:flex; align-items:center; justify-content:center; gap:8px;
         }
-        .next-btn:hover:not(:disabled) { background:#187536; transform:translateY(-2px); }
+        .next-btn:hover:not(:disabled) { background:var(--ap-color-primary-hover); transform:translateY(-2px); }
         .next-btn:disabled { opacity:0.65; cursor:not-allowed; }
         .btn-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.35); border-top-color:#fff; border-radius:50%; animation:spin 0.65s linear infinite; flex-shrink:0; }
         @keyframes spin { to { transform:rotate(360deg); } }
 
-        .switch-text { text-align:center; font-size:0.875rem; color:#6b7280; margin-top:18px; }
-        .switch-text a { color:#1f8f43; font-weight:700; }
+        .switch-text { text-align:center; font-size:0.875rem; color:var(--ap-color-muted); margin-top:18px; }
+        .switch-text a { color:var(--ap-color-primary); font-weight:var(--ap-weight-label); }
 
         @media (max-width:768px) {
           .page { grid-template-columns:1fr; }
@@ -243,6 +248,9 @@ export default function RegisterPage() {
           .form-title { font-size:1.9rem; }
         }
         @media (max-width:400px) { .s-label { display:none; } }
+        .submit-btn:focus-visible, .next-btn:focus-visible, .back-btn:focus-visible, .pw-toggle:focus-visible {
+          outline:3px solid var(--ap-color-primary); outline-offset:4px;
+        }
       `}</style>
 
       <div className="page">
@@ -280,7 +288,7 @@ export default function RegisterPage() {
               ))}
             </div>
 
-            {apiError && <div className="api-error">{apiError}</div>}
+            {apiError && <div className="api-error" role="alert">{apiError}</div>}
 
             {step === 0 && (
               <>

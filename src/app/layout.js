@@ -1,5 +1,5 @@
 import "./globals.css";
-import MobileBottomNav from "@/components/MobileBottomNav";
+import MobileBottomNav from "../../components/MobileBottomNav";
 
 export const metadata = {
   title: "AfriPlate",
@@ -10,7 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        {children}
+        <div className="app-content">{children}</div>
         <MobileBottomNav />
       </body>
     </html>

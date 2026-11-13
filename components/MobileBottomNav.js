@@ -1,37 +1,30 @@
-'use client';
-
-import { usePathname, useRouter } from 'next/navigation';
-import { Home, Package, Briefcase, MessageCircle, User } from 'lucide-react';
-
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Icon } from "../src/components/Marketplace";
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const navItems = [
-    { label: 'Home', icon: Home, path: '/' },
-    { label: 'Products', icon: Package, path: '/products' },
-    { label: 'Jobs', icon: Briefcase, path: '/jobs' },
-    { label: 'Messages', icon: MessageCircle, path: '/messages' },
-    { label: 'Profile', icon: User, path: '/dashboard' },
+  const items = [
+    { label: "Home", icon: "home", path: "/" },
+    { label: "Products", icon: "bag", path: "/products" },
+    { label: "Services", icon: "book", path: "/services" },
+    { label: "Jobs", icon: "work", path: "/jobs" },
+    { label: "Messages", icon: "chat", path: "/messages" },
+    { label: "Profile", icon: "user", path: "/dashboard" },
   ];
-
   return (
-    <div className="mobile-nav">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = pathname === item.path;
-
-        return (
-          <button
-            key={item.label}
-            onClick={() => router.push(item.path)}
-            className={`nav-item ${active ? 'active' : ''}`}
-          >
-            <Icon size={20} />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <nav className="mobile-nav" aria-label="Quick navigation">
+      {items.map((item) => (
+        <Link
+          key={item.path}
+          href={item.path}
+          aria-current={pathname === item.path ? "page" : undefined}
+          className={`nav-item ${pathname === item.path ? "active" : ""}`}
+        >
+          <Icon name={item.icon} />
+          <span>{item.label}</span>
+        </Link>
+      ))}
+    </nav>
   );
 }

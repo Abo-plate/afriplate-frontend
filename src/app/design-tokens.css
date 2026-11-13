@@ -1,0 +1,105 @@
+/* Values extracted from the existing login and registration pages. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+:root {
+  --ap-font: "Inter", sans-serif;
+  --ap-color-primary: #1f8f43;
+  --ap-color-primary-hover: #187536;
+  --ap-color-deep: #0d3320;
+  --ap-color-accent: #2aad55;
+  --ap-color-mint: #eaf8ee;
+  --ap-color-background: #f7f8fa;
+  --ap-color-surface: #fff;
+  --ap-color-input: #fafafa;
+  --ap-color-border: #e5e7eb;
+  --ap-color-heading: #111;
+  --ap-color-label: #374151;
+  --ap-color-muted: #6b7280;
+  --ap-color-placeholder: #9ca3af;
+  --ap-weight-heading: 900;
+  --ap-weight-button: 800;
+  --ap-weight-label: 700;
+  --ap-weight-body: 400;
+  --ap-radius-control: 12px;
+  --ap-radius-card: 14px;
+  --ap-input-padding: 14px 16px;
+  --ap-input-size: 0.94rem;
+  --ap-input-border: 1.5px solid var(--ap-color-border);
+  --ap-focus-ring: 0 0 0 3px rgba(31, 143, 67, 0.1);
+  --ap-button-shadow: 0 8px 24px rgba(31, 143, 67, 0.28);
+  --ap-button-padding: 15px;
+  --ap-button-size: 1rem;
+}
+
+.ap-verification-form {
+  margin-top: 16px;
+  font-family: var(--ap-font);
+  text-align: left;
+}
+.ap-verification-field {
+  margin-bottom: 18px;
+}
+.ap-verification-field label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ap-color-label);
+  margin-bottom: 7px;
+}
+.ap-verification-field input {
+  width: 100%;
+  padding: var(--ap-input-padding);
+  border: var(--ap-input-border);
+  border-radius: var(--ap-radius-control);
+  font-family: var(--ap-font);
+  font-size: var(--ap-input-size);
+  color: var(--ap-color-heading);
+  background: var(--ap-color-input);
+  outline: none;
+}
+.ap-verification-field input:focus {
+  border-color: var(--ap-color-primary);
+  box-shadow: var(--ap-focus-ring);
+  background: #fff;
+}
+.ap-verification-button {
+  width: 100%;
+  padding: 13px;
+  background: var(--ap-color-primary);
+  color: #fff;
+  font-family: var(--ap-font);
+  font-size: 0.95rem;
+  font-weight: 800;
+  border: none;
+  border-radius: var(--ap-radius-control);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(31, 143, 67, 0.22);
+  transition: all 0.22s;
+}
+.ap-verification-button:hover:not(:disabled) {
+  background: var(--ap-color-primary-hover);
+  transform: translateY(-2px);
+}
+.ap-verification-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.ap-verification-button:focus-visible {
+  outline: 3px solid var(--ap-color-primary);
+  outline-offset: 4px;
+}
+.ap-verification-feedback {
+  padding: 12px 14px;
+  margin-top: 12px;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--ap-color-primary-hover);
+  background: var(--ap-color-mint);
+  border: 1px solid var(--ap-color-border);
+}
+.ap-verification-feedback.error {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecaca;
+}

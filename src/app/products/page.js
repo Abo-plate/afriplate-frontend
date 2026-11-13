@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { productsAPI } from '../lib/services';
+import { CAMPUS_DIRECTORY } from '../lib/campuses';
 import { useStoredSession } from '../lib/useStoredSession';
 
 const CATEGORIES = ['All', 'Electronics', 'Textbooks', 'Fashion', 'Food', 'Beauty', 'Furniture', 'Sports', 'Other'];
-const UNIVERSITIES = ['All Universities', 'UNILAG', 'OAU', 'UI', 'FUTA', 'LASU', 'UNIBEN', 'ABU', 'BUK', 'UNIPORT', 'YABATECH', 'UNILORIN'];
+const UNIVERSITIES = ['All Universities', ...CAMPUS_DIRECTORY.map(c => c.abbr)];
 const SORT_OPTIONS = [
   { value: 'newest',   label: 'Newest First' },
   { value: 'oldest',   label: 'Oldest First' },
@@ -51,6 +52,17 @@ export default function ProductsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const loaderRef = useRef(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q') || '';
+    const selectedCategory = params.get('category');
+    const selectedUniversity = params.get('university');
+    setSearch(q);
+    setSearchInput(q);
+    if (CATEGORIES.includes(selectedCategory)) setCategory(selectedCategory);
+    if (UNIVERSITIES.includes(selectedUniversity)) setUniversity(selectedUniversity);
+  }, []);
 
   const fetchProducts = useCallback(async (reset = true) => {
     if (reset) { setLoading(true); setError(''); setPage(1); }

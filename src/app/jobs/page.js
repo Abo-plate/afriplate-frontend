@@ -119,12 +119,13 @@ export default function JobsPage() {
         .nav-signup { background:#1f8f43; color:#fff; box-shadow:0 4px 14px rgba(31,143,67,0.22); }
 
         /* HERO */
-        .hero-strip { background:linear-gradient(135deg,#1e1b4b,#3730a3); padding:32px 24px; }
+        .hero-strip { background:var(--ap-color-background); border-bottom:1px solid var(--ap-color-border); padding:32px 24px; font-family:var(--ap-font); }
         .hero-strip-inner { max-width:1320px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-        .hero-strip h1 { font-size:clamp(1.6rem,2.5vw,2.2rem); font-weight:900; color:#fff; letter-spacing:-0.04em; margin-bottom:4px; }
-        .hero-strip p { color:rgba(255,255,255,0.7); font-size:0.9rem; }
-        .post-btn { padding:12px 24px; background:#ff9d3f; color:#fff; border-radius:12px; font-size:0.875rem; font-weight:800; box-shadow:0 4px 16px rgba(255,157,63,0.3); transition:all 0.2s; white-space:nowrap; }
-        .post-btn:hover { background:#e8892e; transform:translateY(-2px); }
+        .hero-strip h1 { font-size:clamp(1.6rem,2.5vw,2.2rem); font-weight:var(--ap-weight-heading); color:var(--ap-color-heading); letter-spacing:-0.05em; margin-bottom:4px; }
+        .hero-strip p { color:var(--ap-color-muted); font-size:0.9rem; }
+        .post-btn { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:var(--ap-button-padding); background:var(--ap-color-primary); color:var(--ap-color-surface); border-radius:var(--ap-radius-control); font-size:var(--ap-button-size); font-weight:var(--ap-weight-button); box-shadow:var(--ap-button-shadow); transition:all 0.22s; white-space:nowrap; }
+        .post-btn:hover { background:var(--ap-color-primary-hover); transform:translateY(-2px); }
+        .post-btn:focus-visible { outline:3px solid var(--ap-color-primary); outline-offset:4px; }
 
         /* TYPE PILLS (horizontal scroll) */
         .type-bar { background:#fff; border-bottom:1px solid #e5e7eb; padding:12px 24px; }
