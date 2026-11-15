@@ -1,4 +1,5 @@
 'use client';
+import { listingCampus } from '../lib/listingCampus';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { servicesAPI } from '../lib/services';
 import AccountLinks from '@/components/AccountLinks';
@@ -349,7 +350,7 @@ function ServiceCard({ item, delay }) {
           <div className="meta-avatar">{item.seller_name?.[0]?.toUpperCase() || 'S'}</div>
           <div>
             <div className="meta-name">{item.seller_name || 'Provider'}</div>
-            <div className="meta-uni">{item.university || ''}</div>
+            <div className="meta-uni">{listingCampus(item) || 'Campus not provided'}</div>
           </div>
         </div>
         <div className="svc-footer">
@@ -368,7 +369,7 @@ function ServiceListCard({ item, delay }) {
       <div className="svc-list-icon">{icon}</div>
       <div className="svc-list-info">
         <div className="svc-list-title">{item.title}</div>
-        <div className="svc-list-sub">{item.seller_name} · {item.university} · {item.category}</div>
+        <div className="svc-list-sub">{item.seller_name} · {listingCampus(item) || 'Campus not provided'} · {item.category}</div>
       </div>
       <div className="svc-list-price">₦{Number(item.price).toLocaleString()}</div>
       <div className="list-actions">

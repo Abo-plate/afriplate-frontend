@@ -1,0 +1,10 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../src/app/lib/listingCampus.js'),'utf8').replace('export function','function')+';module.exports=listingCampus;';
+const context={module:{exports:{}}};vm.runInNewContext(source,context);const campus=context.module.exports;
+test('explicit listing location wins over seller and resolved campus',()=>assert.equal(campus({university:' Listing campus ',campus:'Other campus',seller_university:'Seller campus'}),'Listing campus'));
+test('canonical response and legacy seller/poster fallback are supported',()=>{assert.equal(campus({campus:'Resolved campus'}),'Resolved campus');assert.equal(campus({university:'  ',seller_university:'Seller campus'}),'Seller campus');assert.equal(campus({poster_university:'Poster campus'}),'Poster campus');});
+test('missing or invalid campus remains honestly missing',()=>{for(const item of [{},{university:null},{university:42,seller_university:' '}])assert.equal(campus(item),'');});

@@ -1,4 +1,5 @@
 'use client';
+import { listingCampus } from '../../lib/listingCampus';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -242,6 +243,7 @@ export default function JobPage() {
             <div className="job-card">
               <div className="job-header">
                 <h1 className="job-title">{job.title}</h1>
+                <p>Listing campus: {listingCampus(job) || "Campus not provided"}</p>
 
                 <div className="job-badges">
                   {job.type && (

@@ -1,4 +1,5 @@
 'use client';
+import { listingCampus } from '../../lib/listingCampus';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -348,6 +349,7 @@ export default function ProductPage() {
             <div className="product-card">
               {product.category && <div className="prod-category">{product.category}</div>}
               <h1 className="prod-title">{product.title}</h1>
+              <p style={{color:"#52665a",fontSize:14,lineHeight:1.6}}>Listing campus: {listingCampus(product) || "Campus not provided"}</p>
 
               <div className="prod-meta">
                 <span className="prod-price">₦{fmt(product.price)}</span>

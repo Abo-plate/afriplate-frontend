@@ -1,4 +1,5 @@
 'use client';
+import { listingCampus } from '../../lib/listingCampus';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -362,6 +363,7 @@ export default function ServicePage() {
             <div className="order-card">
               {service.category && <div style={{ fontSize:'0.72rem', fontWeight:800, color:'#6366f1', textTransform:'uppercase', letterSpacing:'1.5px', marginBottom:10 }}>{service.category}</div>}
               <h1 className="svc-title">{service.title}</h1>
+              <p style={{color:"#52665a",fontSize:14,lineHeight:1.6}}>Listing campus: {listingCampus(service) || "Campus not provided"}</p>
 
               <div className="svc-meta">
                 <span className="svc-price">₦{fmt(service.price)}</span>

@@ -1,5 +1,6 @@
 "use client";
 import AccountLinks from "./AccountLinks";
+import { listingCampus } from "../app/lib/listingCampus";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -92,7 +93,7 @@ export function ListingCard({ item, type = "products" }) {
     item.seller_name ||
     [item.seller_first_name, item.seller_last_name].filter(Boolean).join(" ") ||
     (type === "jobs" ? item.company || item.poster_name : "");
-  const campus = item.seller_university || item.university;
+  const campus = listingCampus(item);
   const price = type === "jobs" ? item.budget : item.price;
   return (
     <Link

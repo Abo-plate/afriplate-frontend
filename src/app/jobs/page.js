@@ -1,4 +1,5 @@
 'use client';
+import { listingCampus } from '../lib/listingCampus';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { jobsAPI } from '../lib/services';
 import AccountLinks from '@/components/AccountLinks';
@@ -378,7 +379,7 @@ function JobCard({ job, delay }) {
         <div className="job-top">
           <div>
             <div className="job-title">{job.title}</div>
-            <div className="job-company">{job.company || job.poster_name} · {job.university || job.location}</div>
+            <div className="job-company">{job.company || job.poster_name} · {listingCampus(job) || job.location || 'Campus not provided'}</div>
           </div>
           {job.budget && <div className="job-budget">₦{Number(job.budget).toLocaleString()}</div>}
         </div>

@@ -1,4 +1,5 @@
 'use client';
+import { listingCampus } from '../lib/listingCampus';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { productsAPI } from '../lib/services';
 import { CAMPUS_DIRECTORY } from '../lib/campuses';
@@ -418,7 +419,7 @@ function ProductCard({ item, delay }) {
           <div className="meta-avatar">{item.seller_name?.[0]?.toUpperCase() || 'S'}</div>
           <div>
             <div className="meta-name">{item.seller_name || 'Seller'}</div>
-            <div className="meta-uni">{item.university || ''}</div>
+            <div className="meta-uni">{listingCampus(item) || 'Campus not provided'}</div>
           </div>
         </div>
         <div className="card-footer">
@@ -438,7 +439,7 @@ function ProductListCard({ item, delay }) {
       </div>
       <div className="list-info">
         <div className="list-title">{item.title}</div>
-        <div className="list-sub">{item.seller_name} · {item.university} · {item.condition || 'Used'}</div>
+        <div className="list-sub">{item.seller_name} · {listingCampus(item) || 'Campus not provided'} · {item.condition || 'Used'}</div>
       </div>
       <div className="list-price">₦{Number(item.price).toLocaleString()}</div>
       <div className="list-actions">
