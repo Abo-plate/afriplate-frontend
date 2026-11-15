@@ -22,7 +22,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthed) {
       const next = new URLSearchParams(window.location.search).get('next');
-      router.replace(next && /^\/messages(?:[?#]|$)/.test(next) ? next : '/dashboard');
+      router.replace(next && /^\/(?:messages(?:[?#]|$)|dashboard#sell-(?:product|service)$)/.test(next) ? next : '/dashboard');
     }
   }, [isAuthed, router]);
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
       }
       completeLogin(data.token, data.user);
       const next = new URLSearchParams(window.location.search).get('next');
-      router.replace(next && /^\/messages(?:[?#]|$)/.test(next) ? next : data.user?.role === 'admin' ? '/admin' : '/dashboard');
+      router.replace(next && /^\/(?:messages(?:[?#]|$)|dashboard#sell-(?:product|service)$)/.test(next) ? next : data.user?.role === 'admin' ? '/admin' : '/dashboard');
     } catch {
       setApiError('Cannot connect to server. Make sure the backend is running on port 5000.');
     } finally { setLoading(false); }

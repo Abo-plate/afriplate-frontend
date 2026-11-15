@@ -34,7 +34,7 @@ async function main() {
   const messagePosts=[];
   const chatMessages=[{id:9501,conversation_id:9301,sender_id:9003,receiver_id:9001,content:'Private fixture message',created_at:'2026-11-15T12:00:00Z',attachments:[],is_read:true}];
   const conversation={id:9301,buyer_id:9001,seller_id:9003,user_id:9003,product_id:9302,name:'Fixture Seller',product_title:'Fixture listing',unread:1};
-  let rejectNextMessage=false,emailMode='normal';
+  let rejectNextMessage=false,emailMode='normal', unreadCount=4;
   function send(method, params = {}) {
     return new Promise((resolve, reject) => {
       const id = ++sequence;
@@ -65,9 +65,12 @@ async function main() {
           else data = { status: 'success', user: { ...user, role, user_type: role } };
         }
         if (url.pathname === '/api/auth/login') data = { status: 'success', token: 'navigation-test-session', user: { ...user, role, user_type: role } };
+        if (url.pathname === '/api/messages/unread-count') data={status:'success',unread:unreadCount};
         if (url.pathname === '/api/orders') data = { status: 'success', orders: [order] };
         if (url.pathname === '/api/orders/seller/dashboard-summary') data = { status: 'success', summary: {}, recentOrders: [] };
         if(url.pathname==='/api/products/9302')data={status:'success',product:{id:9302,seller_id:9003,title:'Fixture listing',description:'Only a test fixture',price:'1500.00',images:[],category:'other'}};
+        if(url.pathname==='/api/services/9304')data={status:'success',service:{id:9304,seller_id:9003,title:'Fixture service',description:'Only a test fixture',price:'2500.00',delivery_days:3,revisions:1,images:[],category:'Design'}};
+        if(url.pathname==='/api/jobs/9305')data={status:'success',job:{id:9305,poster_id:9003,title:'Fixture job',description:'Only a test fixture',budget:5000,type:'Freelance',category:'Tech',requirements:[],skills:[]}};
         if(url.pathname==='/api/messages'||url.pathname==='/api/messages/conversations'){
           if(request.method==='POST'&&url.pathname.endsWith('/conversations'))data={status:'success',conversation};
           else if(request.method==='POST'){
@@ -99,6 +102,7 @@ async function main() {
   };
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('Emulation.setFocusEmulationEnabled',{enabled:true});
   await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   async function evaluate(expression) {
@@ -115,86 +119,94 @@ async function main() {
     await until('document.readyState === "complete"', 'page load');
     await sleep(200);
   }
-  async function check(name, fn) { await fn(); passed.push(name); console.log('PASS ' + name); }
+  async function check(name, fn) { try { await fn(); } catch(error) { await screenshot('failure'); console.log('Failure route: '+await evaluate('location.pathname+location.hash')); console.log('SCREENSHOTS '+profile); throw error; } passed.push(name); console.log('PASS ' + name); }
+  const tab = label => `Array.from(document.querySelectorAll('.mobile-nav .nav-item')).find(item=>item.textContent.trim()===${JSON.stringify(label)} || item.textContent.trim().endsWith(${JSON.stringify(label)}))`;
+  async function screenshot(name) { const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(profile,name+'.png'),Buffer.from(shot.data,'base64')); }
+  async function layout(width,active,name) {
+    await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:true});
+    await until(`getComputedStyle(document.querySelector('.mobile-navigation')).display !== 'none'`,'shared navigation');
+    const result=await evaluate(`(()=>{const bar=document.querySelector('.mobile-nav'),r=bar.getBoundingClientRect();return {count:document.querySelectorAll('.mobile-nav').length,old:document.querySelectorAll('.bottom-tab-bar').length,bottom:r.bottom,height:r.height,viewport:innerHeight,padding:parseFloat(getComputedStyle(document.querySelector('.app-content')).paddingBottom),overflow:document.documentElement.scrollWidth>innerWidth,active:bar.querySelector('[aria-current=page]')?.textContent.trim(),widths:Array.from(bar.children).map(item=>item.getBoundingClientRect().width),font:getComputedStyle(bar).fontFamily}})()`);
+    assert.equal(result.count,1);assert.equal(result.old,0);assert.ok(Math.abs(result.bottom-result.viewport)<2);assert.ok(result.padding>=result.height);assert.equal(result.overflow,false,name+' horizontal overflow');
+    if(active)assert.ok(result.active?.endsWith(active),name+' active '+JSON.stringify(result));
+    assert.ok(Math.max(...result.widths)-Math.min(...result.widths)<1);assert.match(result.font,/Inter/);
+    await screenshot(name+'-'+width);
+  }
   await navigate('/');
-  await check('guest mobile menu has Login and Sign up', async () => {
-    await until('document.querySelector(".mobile-nav")?.innerText.includes("Sign up") && !document.querySelector(".account-loading")', 'hydrated guest navigation');
-    assert.ok(await evaluate('document.querySelector(".mobile-nav").innerText.includes("Login")'));
+  await check('five shared tabs and guest account destination',async()=>{
+    await until(`!!document.querySelector('.mobile-nav a[href="/login"]') && !document.querySelector('.account-loading')`,'guest');
+    assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.mobile-nav .nav-item')).map(item=>item.textContent.trim())`),['Home','Explore','Sell','Messages','Account']);
+    assert.equal(await evaluate('document.querySelectorAll(".mobile-unread").length'),0);
+    for(const width of [320,390,768])await layout(width,'Home','guest-home');
+    await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   });
-  await check('invalid stored token is rejected by server validation', async () => {
-    await evaluate('localStorage.setItem("token", "invalid-test-session"); localStorage.setItem("user", JSON.stringify({id:1})); window.dispatchEvent(new StorageEvent("storage", {key:"token"}))');
-    await until('localStorage.getItem("token") === null', 'invalid token cleared');
-    assert.ok(await evaluate('document.querySelector(".mobile-nav").innerText.includes("Login")'));
+  await check('guest Sell preserves listing intent through login',async()=>{
+    await evaluate(tab('Sell')+'.click()');
+    await until(`!!document.querySelector('.mobile-nav-panel a[href*="sell-product"]')`,'guest Sell');
+    await evaluate(`document.querySelector('.mobile-nav-panel a[href*="sell-product"]').click()`);
+    await until(`location.pathname==='/login'`,'login');
+    assert.equal(await evaluate(`new URLSearchParams(location.search).get('next')`),'/dashboard#sell-product');
   });
-  await navigate('/login');
-  await check('successful login updates navigation without document reload', async () => {
-    await evaluate('window.__navigationMarker = 123; for (const [id, value] of [["email","navigation@example.test"],["password","fixture-password"]]) { const input=document.getElementById(id); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(input,value); input.dispatchEvent(new Event("input",{bubbles:true})); }');
-    await sleep(100);
-    await evaluate('document.querySelector(".submit-btn").click()');
-    await until('location.pathname === "/dashboard" && !!document.querySelector(".bottom-tab-bar")', 'authenticated dashboard');
-    await until('getComputedStyle(document.querySelector(".dash-wrap")).transform === "none"', 'dashboard animation releases fixed navigation');
-    assert.equal(await evaluate('window.__navigationMarker'), 123);
-    assert.equal(await evaluate('document.querySelectorAll(".mobile-nav").length'), 0);
-    await until('document.body.innerText.includes("Awaiting payment")', 'readable activity status');
-    assert.equal(await evaluate('document.querySelector("[data-order-id]").dataset.orderId'), '9002');
+  await check('invalid stored token cannot authenticate Account',async()=>{
+    await evaluate('localStorage.setItem("token","invalid-test-session");window.dispatchEvent(new StorageEvent("storage",{key:"token"}))');
+    await until('localStorage.getItem("token")===null','invalid cleared');
+    assert.ok(await evaluate(`!!document.querySelector('.mobile-nav a[href="/login"]')`));
   });
-  await check('seller mobile dashboard has one bar and safe content clearance', async () => {
-    for (const width of [320, 390, 768]) {
-      await send('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: true });
-      const layout = await evaluate('({bars:document.querySelectorAll(".bottom-tab-bar").length,visible:getComputedStyle(document.querySelector(".bottom-tab-bar")).display, padding:parseFloat(getComputedStyle(document.querySelector(".dash-grid")).paddingBottom),height:document.querySelector(".bottom-tab-bar").getBoundingClientRect().height,bottom:document.querySelector(".bottom-tab-bar").getBoundingClientRect().bottom,viewport:innerHeight,overflow:document.documentElement.scrollWidth > innerWidth})');
-      assert.ok(Math.abs(layout.bottom - layout.viewport) < 2, 'bar anchored to viewport at ' + width); assert.equal(layout.bars, 1); assert.notEqual(layout.visible, 'none'); assert.ok(layout.padding >= layout.height); assert.equal(layout.overflow, false, 'no horizontal overflow at ' + width);
-      if (width === 390) { const shot = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(profile, 'seller-mobile.png'), Buffer.from(shot.data, 'base64')); }
+  await check('login immediately updates account and opens existing product form',async()=>{
+    await evaluate('window.__navigationMarker=123;for(const [id,value] of [["email","navigation@example.test"],["password","fixture-password"]]){const input=document.getElementById(id);Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(input,value);input.dispatchEvent(new Event("input",{bubbles:true}));}');
+    await sleep(100);await evaluate('document.querySelector(".submit-btn").click()');
+    await until(`location.hash==='#sell-product' && document.body.innerText.includes('New Product')`,'product creation');
+    assert.equal(await evaluate('window.__navigationMarker'),123);
+    assert.ok(await evaluate(`!!document.querySelector('.mobile-nav a[href="/dashboard"]')`));
+    await layout(390,'Sell','sell-product');
+  });
+  await check('seller internal menu and product/service Sell routes',async()=>{
+    await evaluate(`document.activeElement?.blur();${tab('Sell')}.click()`);
+    await evaluate(`document.querySelector('.mobile-nav-panel a[href$="#sell-service"]').click()`);
+    await until(`document.body.innerText.includes('New Service')`,'service creation');
+    for(const width of [320,390,768])await layout(width,'Sell','sell-service');
+    const input = `document.querySelector('.form-2col input')`;
+    await evaluate(input+'.focus()');await until(`getComputedStyle(document.querySelector('.mobile-navigation')).display==='none'`,'listing input keyboard');
+    await evaluate(input+'.blur()');await until(`getComputedStyle(document.querySelector('.mobile-navigation')).display!=='none'`,'listing input blur');
+    await evaluate(`const select=document.querySelector('select[aria-label="Dashboard section"]');select.value='settings';select.dispatchEvent(new Event('change',{bubbles:true}));`);
+    await until(`document.body.innerText.includes('Profile Info')`,'internal settings');
+  });
+  await check('public routes, listings, dashboards and messages at 320/390/768',async()=>{
+    for (const [route,name,active] of [['/','home','Home'],['/products','products','Explore'],['/services','services','Explore'],['/jobs','jobs','Explore'],['/products/9302','listing','Explore'],['/services/9304','service-listing','Explore'],['/jobs/9305','job-listing','Explore'],['/dashboard','seller-dashboard','Account'],['/messages?to=9003&product_id=9302','messages','Messages']]) {
+      await navigate(route);await until(`!!document.querySelector('.mobile-nav a[href="/dashboard"]')`,'validated account');
+      if(name==='messages')await until(`!!document.querySelector('textarea')`,'message composer');
+      for(const width of [320,390,768])await layout(width,active,name);
     }
+    role='buyer';await navigate('/dashboard');await until(`document.body.innerText.includes('My Orders')`,'buyer dashboard');
+    for(const width of [320,390,768])await layout(width,'Account','buyer-dashboard');
+    await evaluate(tab('Sell')+'.click()');await until(`document.querySelector('.mobile-nav-panel')?.textContent.includes('active seller account')`,'buyer seller check');
+    assert.equal(await evaluate(`document.querySelectorAll('.mobile-nav-panel a[href*="#sell-"]').length`),0);
+    await screenshot('buyer-sell-guidance');role='seller';
   });
-  await check('buyer mobile dashboard also has only its own navigation', async () => {
-    role = 'buyer'; await navigate('/dashboard');
-    await until('!!document.querySelector(".bottom-tab-bar")', 'buyer dashboard');
-    assert.equal(await evaluate('document.querySelectorAll(".mobile-nav").length'), 0);
-    assert.equal(await evaluate('document.querySelectorAll(".bottom-tab-bar").length'), 1);
+  await check('Explore exposes all marketplace routes and closes accessibly',async()=>{
+    await evaluate(`document.querySelector('.mobile-nav-panel button').click();${tab('Explore')}.click()`);
+    assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.mobile-panel-links a')).map(a=>a.getAttribute('href'))`),['/products','/services','/jobs']);
+    assert.equal(await evaluate(`document.querySelectorAll('.mobile-nav .nav-item.active').length`),1);
+    await screenshot('explore-menu');await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await screenshot('explore-menu-390');await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape'});
+    await until(`!document.querySelector('.mobile-nav-panel')`,'Escape closes');
   });
-  role = 'seller';
-  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  await check('marketplace pages restore validated account links and logout immediately', async () => {
-    for (const route of ['/', '/products', '/services', '/jobs']) {
-      await navigate(route);
-      await until('document.querySelector(".mobile-nav")?.innerText.includes("Log out")', 'account links on ' + route);
-      const clearance = await evaluate('({nav:document.querySelector(".mobile-nav").getBoundingClientRect().height,padding:parseFloat(getComputedStyle(document.body).paddingBottom),home:!!document.querySelector(".ap-home"),contentBottom:document.querySelector(".app-content").getBoundingClientRect().bottom,navTop:document.querySelector(".mobile-nav").getBoundingClientRect().top})');
-      assert.ok(clearance.home ? clearance.contentBottom <= clearance.navTop + 1 : clearance.padding >= clearance.nav, 'public content clearance on ' + route);
-      const label = route === '/' ? '.ap-header-actions' : '.nav-right';
-      assert.ok(await evaluate('document.querySelector(' + JSON.stringify(label) + ').innerText.includes("Dashboard")'));
-      assert.ok(await evaluate('document.querySelector(' + JSON.stringify(label) + ').textContent.includes("Profile")'));
-      await evaluate('document.querySelector(".mobile-nav button").click()');
-      await until('document.querySelector(".mobile-nav")?.innerText.includes("Login")', 'logout update');
-      assert.equal(await evaluate('localStorage.getItem("token")'), null);
-      await evaluate('localStorage.setItem("token","navigation-test-session");window.dispatchEvent(new StorageEvent("storage",{key:"token"}))');
-      await until('document.querySelector(".mobile-nav")?.innerText.includes("Log out")', 'revalidate session');
-    }
+  await check('badges come only from unread API and disappear on logout',async()=>{
+    await navigate('/');await until(`document.querySelector('.mobile-unread')?.textContent==='4'`,'real contract unread fixture');
+    await evaluate(`document.querySelector('.ap-header-actions .account-logout').click()`);
+    await until(`!!document.querySelector('.mobile-nav a[href="/login"]')`,'logout account');
+    assert.equal(await evaluate('document.querySelectorAll(".mobile-unread").length'),0);
+    await evaluate('localStorage.setItem("token","navigation-test-session");window.dispatchEvent(new StorageEvent("storage",{key:"token"}))');
+    await until(`!!document.querySelector('.mobile-nav a[href="/dashboard"]')`,'login sync');
   });
-  await check('mobile homepage menu and desktop navigation match session', async () => {
-    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-    await navigate('/');
-    await until('!!document.querySelector(".mobile-nav button")', 'validated home');
-    await evaluate('document.querySelector(".ap-menu-button").click()');
-    assert.ok(await evaluate('document.querySelector(".ap-mobile-menu").innerText.includes("Log out")'));
-    await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
-    assert.equal(await evaluate('getComputedStyle(document.querySelector(".mobile-nav")).display'), 'none');
-    assert.ok(await evaluate('document.querySelector(".ap-header-actions").innerText.includes("Log out")'));
+  await check('zero or unavailable unread counts never produce demo badges',async()=>{
+    for(const count of [0,null]){unreadCount=count;await navigate('/');await until(`!!document.querySelector('.mobile-nav a[href="/dashboard"]')`,'validated count');await sleep(100);assert.equal(await evaluate(`document.querySelectorAll('.mobile-unread').length`),0);}
+    unreadCount=4;
   });
-  await check('profile opens settings and dashboard logout preserves unrelated browser storage', async () => {
-    await navigate('/dashboard#settings');
-    await until('document.body.innerText.includes("Profile Info")', 'profile settings');
-    await evaluate('localStorage.setItem("navigation-unrelated","keep");document.querySelector(".dashboard-logout").click()');
-    await until('location.pathname === "/login"', 'dashboard logout redirect');
-    assert.equal(await evaluate('localStorage.getItem("navigation-unrelated")'), 'keep');
-    await evaluate('localStorage.setItem("token","navigation-test-session")');
-  });
-  await check('session outage does not authenticate cached user or delete token', async () => {
-    apiMode = 'offline'; await navigate('/dashboard');
-    await until('document.body.innerText.includes("could not verify your session")', 'session outage state');
-    assert.equal(await evaluate('document.querySelectorAll(".bottom-tab-bar").length'), 0);
-    assert.equal(await evaluate('localStorage.getItem("token")'), 'navigation-test-session');
-    apiMode = 'normal'; await evaluate('document.querySelector("[role=alert] button").click()');
-    await until('!!document.querySelector(".bottom-tab-bar")', 'retry session validation');
+  await check('desktop hides mobile component and session outage stays unvalidated',async()=>{
+    await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+    assert.equal(await evaluate('getComputedStyle(document.querySelector(".mobile-navigation")).display'),'none');
+    apiMode='offline';await navigate('/dashboard');await until(`document.body.innerText.includes('could not verify your session')`,'outage');
+    assert.equal(await evaluate('localStorage.getItem("token")'),'navigation-test-session');
+    apiMode='normal';await evaluate(`document.querySelector('[role=alert] button').click()`);await until(`!!document.querySelector('select[aria-label="Dashboard section"]')`,'retry');
   });
   await check('listing Message opens the correct seller and product without auto-sending',async()=>{
     await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -206,6 +218,19 @@ async function main() {
     assert.equal(await evaluate('new URLSearchParams(location.search).get("product_id")'),'9302');
     assert.equal(messagePosts.length,0);
     await until('document.body.innerText.includes("Private fixture message")','message history');
+  });
+  await check('focused message input hides bar and restores it on blur',async()=>{
+    const field='document.querySelector("textarea[aria-label=Message]")';
+    await evaluate(field+'.focus()');await until(`getComputedStyle(document.querySelector('.mobile-navigation')).display==='none'`,'keyboard focus hides bar');
+    await send('Emulation.setDeviceMetricsOverride',{width:390,height:460,deviceScaleFactor:1,mobile:true});
+    await until(`document.querySelector('.chat-input-wrap').getBoundingClientRect().bottom<=innerHeight+1`,'viewport resize positions composer');
+    const r=await evaluate(`(()=>{const r=document.querySelector('.chat-input-wrap').getBoundingClientRect();return {bottom:r.bottom,viewport:innerHeight}})()`);
+    assert.ok(r.bottom<=r.viewport+1,'composer visible in resized keyboard viewport');await screenshot('messages-keyboard');
+    await evaluate(`Object.defineProperty(window.visualViewport,'height',{configurable:true,value:320});window.visualViewport.dispatchEvent(new Event('resize'))`);
+    assert.ok(await evaluate(`document.querySelector('.chat-input-wrap').getBoundingClientRect().bottom<=321`),'composer respects visual-only keyboard viewport');
+    await evaluate(`delete window.visualViewport.height;window.visualViewport.dispatchEvent(new Event('resize'))`);
+    await evaluate(field+'.blur()');await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await until(`getComputedStyle(document.querySelector('.mobile-navigation')).display!=='none'`,'blur restores nav');
   });
   await check('failed sends retain the draft and retry identifier; attachments stay private',async()=>{
     rejectNextMessage=true;

@@ -1,3 +1,8 @@
+> Updated mobile navigation: the earlier separate dashboard bar is now replaced
+> by one shared five-tab bar. See [MOBILE_NAVIGATION_REVIEW.md](MOBILE_NAVIGATION_REVIEW.md)
+> for the latest behaviour, 15-check results and 320/390/768px screenshots.
+> Earlier entries below describe the previous Phase 1 baseline.
+
 # Navigation and activity investigation
 
 The frontend lives in this repository, separately from afriplate-backend.

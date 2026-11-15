@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, Suspense } from 'react';
+import { Icon } from '@/components/Marketplace';
 import PrivateMessages from '@/components/PrivateMessages';
 import { useRouter } from 'next/navigation';
 import { useSession } from '../lib/SessionProvider';
@@ -216,17 +217,18 @@ function SettingsTab() {
 // BUYER DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
 const BUYER_TABS = [
-  { id:'overview',  label:'Overview',  icon:'▦' },
-  { id:'orders',    label:'My Orders', icon:'◎' },
-  { id:'messages',  label:'Messages',  icon:'○' },
-  { id:'reviews',   label:'Reviews',   icon:'★' },
-  { id:'settings',  label:'Settings',  icon:'◐' },
+  { id:'overview',  label:'Overview',  icon:'home' },
+  { id:'orders',    label:'My Orders', icon:'bag' },
+  { id:'messages',  label:'Messages',  icon:'chat' },
+  { id:'reviews',   label:'Reviews',   icon:'book' },
+  { id:'settings',  label:'Settings',  icon:'user' },
 ];
 
 function BuyerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
+  const [sellRequested, setSellRequested] = useState(false);
   useEffect(() => {
-    const sync = () => { if (window.location.hash === '#settings') setTab('settings'); };
+    const sync = () => { const id = window.location.hash.slice(1); setSellRequested(id.startsWith('sell-')); if (BUYER_TABS.some(item => item.id === id)) setTab(id); };
     sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
@@ -234,6 +236,8 @@ function BuyerDashboard({ user }) {
 
   return (
     <div>
+      {sellRequested && <p role="status" style={{padding:16,color:"#183d28"}}>You need an active seller account to create listings. <a href="/dashboard#settings">View account settings</a></p>}
+      <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { setTab(event.target.value); window.location.hash = event.target.value; }}>{BUYER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <div className="dash-grid">
         {/* SIDEBAR — hidden on mobile */}
         <div className="dash-sidebar">
@@ -251,7 +255,7 @@ function BuyerDashboard({ user }) {
                 background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
                 border:'none', cursor:'pointer', marginBottom:4, textAlign:'left', transition:'all 0.18s',
               }}>
-                <span style={{ fontSize:'1rem' }}>{t.icon}</span> {t.label}
+                <Icon name={t.icon} /> {t.label}
               </button>
             ))}
           </div>
@@ -269,17 +273,7 @@ function BuyerDashboard({ user }) {
         </div>
       </div>
 
-      {/* BOTTOM TAB BAR — mobile only */}
-      <div className="bottom-tab-bar">
-        <div className="bottom-tab-bar-inner">
-          {BUYER_TABS.map(t => (
-            <button key={t.id} className={`btab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-              <span className="btab-icon">{t.icon}</span>
-              <span className="btab-label">{t.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 }
@@ -487,19 +481,19 @@ function BuyerReviews() {
 // SELLER DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
 const SELLER_TABS = [
-  { id:'overview',   label:'Overview',       icon:'▦' },
-  { id:'listings',   label:'My Listings',    icon:'□' },
-  { id:'received',   label:'Orders Received',icon:'◎' },
-  { id:'wallet',     label:'Wallet',         icon:'◇' },
-  { id:'purchases',  label:'My Purchases',   icon:'🛍' },
-  { id:'messages',   label:'Messages',       icon:'○' },
-  { id:'settings',   label:'Settings',       icon:'◐' },
+  { id:'overview',   label:'Overview',       icon:'home' },
+  { id:'listings',   label:'My Listings',    icon:'bag' },
+  { id:'received',   label:'Orders Received',icon:'work' },
+  { id:'wallet',     label:'Wallet',         icon:'bag' },
+  { id:'purchases',  label:'My Purchases',   icon:'bag' },
+  { id:'messages',   label:'Messages',       icon:'chat' },
+  { id:'settings',   label:'Settings',       icon:'user' },
 ];
 
 function SellerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
   useEffect(() => {
-    const sync = () => { if (window.location.hash === '#settings') setTab('settings'); };
+    const sync = () => { const id = window.location.hash.slice(1); if (id.startsWith('sell-')) setTab('listings'); else if (SELLER_TABS.some(item => item.id === id)) setTab(id); };
     sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
@@ -507,6 +501,7 @@ function SellerDashboard({ user }) {
 
   return (
     <div>
+      <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { setTab(event.target.value); window.location.hash = event.target.value; }}>{SELLER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <div className="dash-grid">
         {/* SIDEBAR — hidden on mobile */}
         <div className="dash-sidebar">
@@ -524,7 +519,7 @@ function SellerDashboard({ user }) {
                 background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
                 border:'none', cursor:'pointer', marginBottom:4, textAlign:'left', transition:'all 0.18s',
               }}>
-                <span style={{ fontSize:'1rem' }}>{t.icon}</span> {t.label}
+                <Icon name={t.icon} /> {t.label}
               </button>
             ))}
           </div>
@@ -545,17 +540,7 @@ function SellerDashboard({ user }) {
         </div>
       </div>
 
-      {/* BOTTOM TAB BAR — mobile only */}
-      <div className="bottom-tab-bar">
-        <div className="bottom-tab-bar-inner">
-          {SELLER_TABS.map(t => (
-            <button key={t.id} className={`btab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-              <span className="btab-icon">{t.icon}</span>
-              <span className="btab-label" style={{ color: tab === t.id ? '#1f8f43' : '#9ca3af' }}>{t.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 }
@@ -707,6 +692,7 @@ setSalesData(weeklyBars);
 
 function SellerListings() {
   const [listingTab, setListingTab] = useState('products');
+  useEffect(() => { const sync = () => { if (window.location.hash === '#sell-product' || window.location.hash === '#sell-service') { setListingTab(window.location.hash === '#sell-product' ? 'products' : 'services'); setShowForm(true); } }; sync(); window.addEventListener('hashchange',sync); return () => window.removeEventListener('hashchange',sync); }, []);
   const [items, setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -794,7 +780,7 @@ function SellerListings() {
       {showForm && (
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:24, marginBottom:22 }}>
           <div style={{ fontSize:'0.95rem', fontWeight:900, color:'#111', marginBottom:18 }}>New {listingTab === 'products' ? 'Product' : 'Service'}</div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+          <div className="form-2col" style={{ display:'grid', gap:14 }}>
             <Field label="Title" error={errors.title}><Input value={form.title} onChange={set('title')} placeholder={listingTab === 'products' ? 'e.g. HP Laptop Core i5' : 'e.g. Logo Design'} err={errors.title} /></Field>
             <Field label="Price (₦)" error={errors.price}><Input value={form.price} onChange={set('price')} placeholder="e.g. 15000" type="number" err={errors.price} /></Field>
             <Field label="Category" error={errors.category}>
@@ -1033,7 +1019,7 @@ function SellerWallet() {
         </div>
         {showForm && (
           <div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+            <div className="form-2col" style={{ display:'grid', gap:14 }}>
               <Field label="Amount (₦)"><Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 5000" /></Field>
               <Field label="Bank">
                 <Sel value={bankCode} onChange={e => setBankCode(e.target.value)}>
@@ -1114,26 +1100,6 @@ export default function Dashboard() {
         .dash-wrap { animation:fadeUp 0.35s ease; }
 
         /* ── MOBILE BOTTOM TAB BAR ── */
-        .bottom-tab-bar {
-          display: none;
-          position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-          background: #fff; border-top: 1px solid #e5e7eb;
-          padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
-          box-shadow: 0 -4px 20px rgba(15,23,42,0.08);
-        }
-        .bottom-tab-bar-inner {
-          display: flex; align-items: stretch; justify-content: space-around;
-        }
-        .btab {
-          flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 3px; padding: 6px 4px; background: none; border: none; cursor: pointer;
-          font-family: Inter, sans-serif; transition: all 0.18s;
-        }
-        .btab-icon { font-size: 1.25rem; line-height: 1; }
-        .btab-label { font-size: 0.6rem; font-weight: 700; color: #9ca3af; }
-        .btab.active .btab-label { color: #1f8f43; }
-        .btab.active .btab-icon { transform: scale(1.15); }
-
         /* ── RESPONSIVE DASHBOARD GRID ── */
         .dash-grid { display: grid; grid-template-columns: 220px 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
         .dash-sidebar { display: block; }
@@ -1149,8 +1115,7 @@ export default function Dashboard() {
         .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
         @media (max-width: 768px) {
-          .bottom-tab-bar { display: block; }
-          .dash-grid { grid-template-columns: 1fr; padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px)); gap: 0; }
+          .dash-grid { grid-template-columns: 1fr; padding: 16px 16px 24px; gap: 0; }
           .dash-sidebar { display: none; }
           .stats-4 { grid-template-columns: repeat(2,1fr); gap: 10px; }
           .stats-3 { grid-template-columns: repeat(2,1fr); gap: 10px; }

@@ -5,6 +5,7 @@ import Link from "next/link";
 
 export function Icon({ name = "arrow", ...props }) {
   const paths = {
+    plus: "M12 5v14M5 12h14",
     arrow: "M5 12h14m-6-6 6 6-6 6",
     search: "m21 21-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
     pin: "M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0ZM12 7v6m-3-3h6",
