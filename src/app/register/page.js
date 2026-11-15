@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from '../lib/SessionProvider';
 import ResendVerification from '@/components/ResendVerification';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_ORIGIN as API } from '../lib/endpoints';
 
 const UNIVERSITIES = [
   'University of Lagos (UNILAG)', 'Obafemi Awolowo University (OAU)',
@@ -32,6 +34,8 @@ function pwStrength(pw) {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { isAuthed } = useSession();
   const [step, setStep]         = useState(0);
   const [form, setForm]         = useState({ user_type:'buyer', first_name:'', last_name:'', email:'', password:'', confirm:'', phone:'', university:'', level:'' });
   const [success, setSuccess]   = useState(false);
@@ -42,8 +46,8 @@ export default function RegisterPage() {
   const [showPw, setShowPw]     = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('token')) window.location.href = '/dashboard';
-  }, []);
+    if (isAuthed) router.replace('/dashboard');
+  }, [isAuthed, router]);
 
   const set = (k) => (e) => {
     setForm(p => ({ ...p, [k]: e.target.value }));
@@ -58,7 +62,7 @@ export default function RegisterPage() {
       if (!form.email.trim())              e.email    = 'Email address is required';
       else if (!isValidEmail(form.email))  e.email    = 'Enter a valid email address (e.g. name@mail.com)';
       if (!form.password)                  e.password = 'Password is required';
-      else if (form.password.length < 6)   e.password = 'Password must be at least 6 characters';
+      else if (form.password.length < 8)   e.password = 'Password must be at least 8 characters';
       if (!form.confirm)                   e.confirm  = 'Please confirm your password';
       else if (form.confirm !== form.password) e.confirm = 'Passwords do not match';
     }
@@ -124,7 +128,7 @@ export default function RegisterPage() {
           <div style={{ width:64, height:64, borderRadius:'50%', background:'#eaf8ee', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.8rem' }}>✓</div>
           <h1 style={{ fontSize:'1.5rem', fontWeight:900, color:'#111', marginBottom:10, letterSpacing:'-0.04em' }}>{verificationEmailSent ? 'Check your email!' : 'Account created'}</h1>
           <p role="status" style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:24 }}>
-            {verificationEmailSent ? <>Your account was created and a verification email was sent to <strong style={{ color:'#111' }}>{form.email}</strong>. Check your inbox and spam folder, then follow the link before logging in.</> : <>Your account was created, but we could not confirm that a verification email was sent to <strong style={{ color:'#111' }}>{form.email}</strong>. Request a new email below. You do not need to register again.</>}
+            {verificationEmailSent ? <>Your account was created and a verification email was requested for <strong style={{ color:'#111' }}>{form.email}</strong>. Check your inbox and spam folder, then follow the link before logging in.</> : <>Your account was created, but we could not confirm that a verification email was sent to <strong style={{ color:'#111' }}>{form.email}</strong>. Request a new email below. You do not need to register again.</>}
           </p>
           <a href="/login" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem', textDecoration:'none' }}>
             Go to Login

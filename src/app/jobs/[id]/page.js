@@ -1,4 +1,5 @@
 'use client';
+import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
@@ -53,7 +54,7 @@ export default function JobPage() {
   const [applyMsg, setApplyMsg]     = useState('');
   const [coverLetter, setCoverLetter] = useState('');
   const [hasApplied, setHasApplied] = useState(false);
-  const user = getUser();
+  const { user } = useSession();
 
   useEffect(() => {
     if (!id) return;
@@ -111,8 +112,7 @@ export default function JobPage() {
   };
 
   const messagesPoster = () => {
-    if (!getToken()) { window.location.href = '/login'; return; }
-    window.location.href = `/dashboard?tab=messages&to=${job?.poster_id}`;
+    window.location.href = `/messages?to=${job?.poster_id}`;
   };
 
   if (loading) return (
@@ -472,7 +472,7 @@ export default function JobPage() {
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
 function Nav() {
-  const user = getUser();
+  const { user } = useSession();
   return (
     <nav style={{
       background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px',

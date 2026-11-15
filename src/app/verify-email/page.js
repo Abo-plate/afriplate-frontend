@@ -1,24 +1,26 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_ORIGIN as API } from '../lib/endpoints';
 
 function VerifyEmailInner() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-  const [status, setStatus] = useState('loading'); // loading | success | error | no-token
+  const verification = useRef(null);
+  const [requestStatus, setStatus] = useState('loading'); // loading | success | error | no-token
 
+  const status = token ? requestStatus : 'no-token';
   useEffect(() => {
-    if (!token) { setStatus('no-token'); return; }
+    if (!token) return;
 
-    fetch(`${API}/api/auth/verify-email/${token}`, { method: 'GET' })
-      .then(r => r.json())
-      .then(d => {
-        if (d.status === 'success') setStatus('success');
-        else setStatus('error');
-      })
-      .catch(() => setStatus('error'));
+    if (!verification.current || verification.current.token !== token) {
+      verification.current = { token, promise: fetch(`${API}/api/auth/verify-email/${encodeURIComponent(token)}`, { method: 'GET', cache: 'no-store' }).then(response => response.json()) };
+    }
+    let current = true;
+    verification.current.promise.then(data => { if (current) setStatus(data.status === 'success' ? 'success' : 'error'); }).catch(() => { if (current) setStatus('error'); });
+    return () => { current = false; };
   }, [token]);
 
   return (
@@ -35,9 +37,9 @@ function VerifyEmailInner() {
       <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', fontFamily:'Inter,sans-serif', background:'#f7f8fa' }}>
 
         {/* Brand */}
-        <a href="/" style={{ fontSize:'1.8rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em', marginBottom:40 }}>
+        <Link href="/" style={{ fontSize:'1.8rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em', marginBottom:40 }}>
           Afri<span style={{ color:'#1f8f43' }}>Plate</span>
-        </a>
+        </Link>
 
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:24, padding:'48px 40px', maxWidth:440, width:'100%', textAlign:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.06)', animation:'fadeUp 0.4s ease both' }}>
 
@@ -56,9 +58,9 @@ function VerifyEmailInner() {
               <p style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:28 }}>
                 Your AfriPlate account is now active. You can log in and start buying or selling on campus.
               </p>
-              <a href="/login" style={{ display:'block', padding:'14px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
+              <Link href="/login" style={{ display:'block', padding:'14px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
                 Go to Login
-              </a>
+              </Link>
             </>
           )}
 
@@ -69,12 +71,12 @@ function VerifyEmailInner() {
               <p style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:28 }}>
                 The link may have expired or already been used. Request a new verification email below.
               </p>
-              <a href="/login" style={{ display:'block', padding:'14px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem', marginBottom:12 }}>
+              <Link href="/login" style={{ display:'block', padding:'14px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem', marginBottom:12 }}>
                 Go to Login
-              </a>
-              <a href="/resend-verification" style={{ display:'block', padding:'14px', background:'#f3f4f6', color:'#374151', borderRadius:12, fontWeight:700, fontSize:'0.875rem' }}>
+              </Link>
+              <Link href="/resend-verification" style={{ display:'block', padding:'14px', background:'#f3f4f6', color:'#374151', borderRadius:12, fontWeight:700, fontSize:'0.875rem' }}>
                 Resend verification email
-              </a>
+              </Link>
             </>
           )}
 
@@ -85,9 +87,9 @@ function VerifyEmailInner() {
               <p style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:28 }}>
                 This verification link is invalid. Please use the link sent to your email.
               </p>
-              <a href="/" style={{ display:'block', padding:'14px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
+              <Link href="/" style={{ display:'block', padding:'14px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
                 Go to Homepage
-              </a>
+              </Link>
             </>
           )}
         </div>

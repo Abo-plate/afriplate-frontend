@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { productsAPI } from '../lib/services';
 import { CAMPUS_DIRECTORY } from '../lib/campuses';
+import AccountLinks from '@/components/AccountLinks';
 import { useStoredSession } from '../lib/useStoredSession';
 
 const CATEGORIES = ['All', 'Electronics', 'Textbooks', 'Fashion', 'Food', 'Beauty', 'Furniture', 'Sports', 'Other'];
@@ -268,14 +269,7 @@ export default function ProductsPage() {
             <li><a href="/jobs">Jobs</a></li>
           </ul>
           <div className="nav-right">
-            {isAuthed ? (
-              <a href="/dashboard" className="nav-btn nav-signup">Dashboard</a>
-            ) : (
-              <>
-                <a href="/login" className="nav-btn nav-login">Login</a>
-                <a href="/register" className="nav-btn nav-signup">Sign Up</a>
-              </>
-            )}
+            <AccountLinks />
           </div>
         </div>
       </nav>
@@ -429,7 +423,7 @@ function ProductCard({ item, delay }) {
         </div>
         <div className="card-footer">
           <a href={`/products/${item.id}`} className="btn-view">View →</a>
-          <a href={`/messages?to=${item.seller_id}`} className="btn-chat">💬</a>
+          <a href={`/messages?to=${item.seller_id}&product_id=${item.id}`} className="btn-chat">💬</a>
         </div>
       </div>
     </div>
@@ -449,7 +443,7 @@ function ProductListCard({ item, delay }) {
       <div className="list-price">₦{Number(item.price).toLocaleString()}</div>
       <div className="list-actions">
         <a href={`/products/${item.id}`} className="btn-view" style={{ padding:'8px 14px' }}>View</a>
-        <a href={`/messages?to=${item.seller_id}`} className="btn-chat" style={{ padding:'8px 12px' }}>💬</a>
+        <a href={`/messages?to=${item.seller_id}&product_id=${item.id}`} className="btn-chat" style={{ padding:'8px 12px' }}>💬</a>
       </div>
     </div>
   );

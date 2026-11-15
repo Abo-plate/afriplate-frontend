@@ -2,15 +2,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "../src/components/Marketplace";
+import { useSession } from "../src/app/lib/SessionProvider";
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const { isAuthed, logout } = useSession();
+  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) return null;
   const items = [
     { label: "Home", icon: "home", path: "/" },
     { label: "Products", icon: "bag", path: "/products" },
     { label: "Services", icon: "book", path: "/services" },
     { label: "Jobs", icon: "work", path: "/jobs" },
-    { label: "Messages", icon: "chat", path: "/messages" },
-    { label: "Profile", icon: "user", path: "/dashboard" },
+    ...(isAuthed ? [
+      { label: "Messages", icon: "chat", path: "/messages" },
+      { label: "Profile", icon: "user", path: "/dashboard#settings" },
+    ] : [
+      { label: "Login", icon: "user", path: "/login" },
+      { label: "Sign up", icon: "user", path: "/register" },
+    ]),
   ];
   return (
     <nav className="mobile-nav" aria-label="Quick navigation">
@@ -25,6 +33,7 @@ export default function MobileBottomNav() {
           <span>{item.label}</span>
         </Link>
       ))}
+      {isAuthed && <button type="button" className="nav-item" onClick={logout}><Icon name="arrow" /><span>Log out</span></button>}
     </nav>
   );
 }

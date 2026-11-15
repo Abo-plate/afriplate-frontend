@@ -1,5 +1,9 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import PrivateMessages from '@/components/PrivateMessages';
+import { useRouter } from 'next/navigation';
+import { useSession } from '../lib/SessionProvider';
+import { statusLabel } from '../lib/statusLabel';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -125,104 +129,10 @@ const STATUS_COLOR = {
 };
 
 // ── SHARED: MESSAGES TAB ──────────────────────────────────────────────────────
-function MessagesTab() {
-  const [convos, setConvos]       = useState([]);
-  const [active, setActive]       = useState(null);
-  const [messages, setMessages]   = useState([]);
-  const [newMsg, setNewMsg]       = useState('');
-  const [loading, setLoading]     = useState(true);
-  const [sending, setSending]     = useState(false);
-  const bottomRef = useRef(null);
-  const user = getUser();
+function MessagesTab(){return <Suspense fallback={<Spinner />}><PrivateMessages embedded /></Suspense>;}
 
-  useEffect(() => {
-    authFetch('/api/messages/conversations')
-      .then(r => r.json())
-      .then(d => { setConvos(d.conversations || d.data || []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    if (!active) return;
-    authFetch(`/api/messages/${active.user_id}`)
-      .then(r => r.json())
-      .then(d => setMessages(d.messages || d.data || []))
-      .catch(() => {});
-  }, [active]);
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
-
-  const send = async () => {
-    if (!newMsg.trim() || !active) return;
-    setSending(true);
-    const optimistic = { id: Date.now(), sender_id: user?.id, content: newMsg, created_at: new Date().toISOString() };
-    setMessages(p => [...p, optimistic]);
-    setNewMsg('');
-    try {
-      await authFetch('/api/messages', { method:'POST', body: JSON.stringify({ receiver_id: active.user_id, content: newMsg }) });
-    } catch {}
-    setSending(false);
-  };
-
-  if (loading) return <Spinner />;
-
-  return (
-    <div style={{ display:'grid', gridTemplateColumns:'280px 1fr', gap:0, height:560, border:'1px solid #eceff3', borderRadius:18, overflow:'hidden', background:'#fff' }}>
-      {/* Convo list */}
-      <div style={{ borderRight:'1px solid #f3f4f6', overflowY:'auto' }}>
-        <div style={{ padding:'16px 18px', borderBottom:'1px solid #f3f4f6', fontSize:'0.82rem', fontWeight:800, color:'#374151' }}>Conversations</div>
-        {convos.length === 0 ? <Empty text="No conversations" /> : convos.map(c => (
-          <div key={c.user_id} onClick={() => setActive(c)} style={{
-            padding:'14px 18px', cursor:'pointer', borderBottom:'1px solid #f9fafb',
-            background: active?.user_id === c.user_id ? '#f0fdf4' : 'transparent',
-            borderLeft: active?.user_id === c.user_id ? '3px solid #1f8f43' : '3px solid transparent',
-          }}>
-            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <Avatar name={c.name || c.first_name} size={36} />
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:'0.83rem', fontWeight:800, color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim()}</div>
-                <div style={{ fontSize:'0.72rem', color:'#9ca3af', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', marginTop:2 }}>{c.last_message || '...'}</div>
-              </div>
-              {c.unread > 0 && <span style={{ width:18, height:18, borderRadius:'50%', background:'#1f8f43', color:'#fff', fontSize:'0.6rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' }}>{c.unread}</span>}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Chat area */}
-      {!active ? (
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', color:'#9ca3af', fontSize:'0.875rem', fontWeight:600 }}>Select a conversation</div>
-      ) : (
-        <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-          <div style={{ padding:'14px 18px', borderBottom:'1px solid #f3f4f6', display:'flex', alignItems:'center', gap:10 }}>
-            <Avatar name={active.name || active.first_name} size={34} />
-            <div style={{ fontWeight:800, color:'#111', fontSize:'0.9rem' }}>{active.name || `${active.first_name || ''} ${active.last_name || ''}`.trim()}</div>
-          </div>
-          <div style={{ flex:1, overflowY:'auto', padding:'16px 18px', display:'flex', flexDirection:'column', gap:10 }}>
-            {messages.map(m => {
-              const mine = m.sender_id === user?.id;
-              return (
-                <div key={m.id} style={{ display:'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                  <div style={{ maxWidth:'70%', padding:'10px 14px', borderRadius: mine ? '16px 16px 4px 16px' : '16px 16px 16px 4px', background: mine ? '#1f8f43' : '#f3f4f6', color: mine ? '#fff' : '#111', fontSize:'0.875rem', lineHeight:1.5 }}>
-                    {m.content}
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={bottomRef} />
-          </div>
-          <div style={{ padding:'12px 16px', borderTop:'1px solid #f3f4f6', display:'flex', gap:10 }}>
-            <input value={newMsg} onChange={e => setNewMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Type a message..." style={{ flex:1, padding:'10px 14px', border:'1.5px solid #e5e7eb', borderRadius:10, fontFamily:'Inter,sans-serif', fontSize:'0.875rem', outline:'none' }} />
-            <GreenBtn onClick={send} disabled={sending || !newMsg.trim()} style={{ padding:'10px 18px' }}>Send</GreenBtn>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── SHARED: SETTINGS TAB ──────────────────────────────────────────────────────
 function SettingsTab() {
+  const { logout } = useSession();
   const [form, setForm] = useState({ first_name:'', last_name:'', university:'', level:'', phone:'', bio:'' });
   const [pw, setPw]     = useState({ current:'', next:'', confirm:'' });
   const [saving, setSaving] = useState(false);
@@ -293,7 +203,7 @@ function SettingsTab() {
         {/* Danger zone */}
         <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid #fee2e2' }}>
           <div style={{ fontSize:'0.82rem', fontWeight:800, color:'#ef4444', marginBottom:10 }}>Danger Zone</div>
-          <button onClick={() => { localStorage.clear(); window.location.href = '/login'; }} style={{ padding:'9px 18px', background:'#fef2f2', color:'#ef4444', border:'1px solid #fecaca', borderRadius:9, fontSize:'0.82rem', fontWeight:700, cursor:'pointer' }}>
+          <button onClick={() => { logout(); }} style={{ padding:'9px 18px', background:'#fef2f2', color:'#ef4444', border:'1px solid #fecaca', borderRadius:9, fontSize:'0.82rem', fontWeight:700, cursor:'pointer' }}>
             Log Out
           </button>
         </div>
@@ -315,6 +225,12 @@ const BUYER_TABS = [
 
 function BuyerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
+  useEffect(() => {
+    const sync = () => { if (window.location.hash === '#settings') setTab('settings'); };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
 
   return (
     <div>
@@ -435,7 +351,7 @@ function BuyerOverview({ user, setTab }) {
             </div>
             <div style={{ textAlign:'right', flexShrink:0 }}>
               <div style={{ fontSize:'0.88rem', fontWeight:900, color:'#111' }}>₦{fmt(o.buyer_total)}</div>
-              <Badge color={STATUS_COLOR[o.status] || '#9ca3af'}>{o.status}</Badge>
+              <Badge color={STATUS_COLOR[o.status] || '#9ca3af'}>{statusLabel(o.status)}</Badge>
             </div>
           </div>
         ))}
@@ -508,7 +424,7 @@ function BuyerOrders() {
               <div style={{ fontSize:'0.75rem', color:'#9ca3af', marginBottom:8 }}>
                 Order #{o.id} · {o.created_at ? new Date(o.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }) : 'Recent'}
               </div>
-              <Badge color={STATUS_COLOR[o.status] || '#9ca3af'}>{o.status}</Badge>
+              <Badge color={STATUS_COLOR[o.status] || '#9ca3af'}>{statusLabel(o.status)}</Badge>
             </div>
             <div style={{ textAlign:'right', flexShrink:0 }}>
               <div style={{ fontSize:'1rem', fontWeight:900, color:'#1f8f43', marginBottom:8 }}>₦{fmt(o.buyer_total)}</div>
@@ -582,6 +498,12 @@ const SELLER_TABS = [
 
 function SellerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
+  useEffect(() => {
+    const sync = () => { if (window.location.hash === '#settings') setTab('settings'); };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
 
   return (
     <div>
@@ -674,7 +596,8 @@ function SellerOverview({ user, setTab }) {
 });
         setActivity(ordersArr.slice(0, 5).map(o => ({
           text: `New order: ${o.product_title || o.service_title || 'Item'}`,
-          sub:  o.status,
+          id: o.id,
+          sub: statusLabel(o.status),
           time: o.created_at ? new Date(o.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short' }) : 'Recent',
           color: STATUS_COLOR[o.status] || '#9ca3af',
         })));
@@ -746,7 +669,7 @@ setSalesData(weeklyBars);
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:22 }}>
           <div style={{ fontSize:'0.95rem', fontWeight:900, color:'#111', marginBottom:16 }}>Recent Activity</div>
           {activity.length === 0 ? <Empty text="No activity yet" /> : activity.map((a, i) => (
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'9px 0', borderBottom: i < activity.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+            <div key={a.id} data-order-id={a.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'9px 0', borderBottom: i < activity.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
               <div style={{ width:8, height:8, borderRadius:'50%', background:a.color, flexShrink:0 }} />
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:'0.8rem', fontWeight:700, color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{a.text}</div>
@@ -1005,7 +928,7 @@ function SellerOrders() {
               <div style={{ fontSize:'0.75rem', color:'#9ca3af', marginBottom:6 }}>
                 From: {o.buyer_name || o.buyer_first_name || 'Buyer'} · {o.created_at ? new Date(o.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }) : 'Recent'}
               </div>
-              <Badge color={STATUS_COLOR[o.status] || '#9ca3af'}>{o.status}</Badge>
+              <Badge color={STATUS_COLOR[o.status] || '#9ca3af'}>{statusLabel(o.status)}</Badge>
             </div>
             <div style={{ textAlign:'right', flexShrink:0 }}>
               <div style={{ fontSize:'0.75rem', color:'#9ca3af', marginBottom:2 }}>You receive</div>
@@ -1162,25 +1085,13 @@ function SellerWallet() {
 // MAIN DASHBOARD — routes to buyer or seller based on user_type
 // ══════════════════════════════════════════════════════════════════════════════
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+  const { user, status, logout, refresh } = useSession();
+  const router = useRouter();
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { window.location.href = '/login'; return; }
-    authFetch('/api/auth/me')
-      .then(r => r.json())
-      .then(d => {
-        const u = d.user || d.data || d;
-        setUser(u);
-        // keep localStorage in sync
-        localStorage.setItem('user', JSON.stringify(u));
-      })
-      .catch(() => { window.location.href = '/login'; })
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return (
+    if (status === 'guest') router.replace('/login');
+  }, [status, router]);
+  if (status === 'unavailable') return <div role="alert" style={{ padding: 32 }}>We could not verify your session. <button onClick={refresh}>Try again</button></div>;
+  if (status !== 'authenticated') return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Inter,sans-serif', background:'#f7f8fa' }}>
       <style>{`@keyframes spin { to { transform:rotate(360deg); } }`}</style>
       <div style={{ textAlign:'center' }}>
@@ -1200,14 +1111,14 @@ export default function Dashboard() {
         button { font-family:'Inter',sans-serif; }
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        .dash-wrap { animation:fadeUp 0.35s ease both; }
+        .dash-wrap { animation:fadeUp 0.35s ease; }
 
         /* ── MOBILE BOTTOM TAB BAR ── */
         .bottom-tab-bar {
           display: none;
           position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
           background: #fff; border-top: 1px solid #e5e7eb;
-          padding: 8px 0 env(safe-area-inset-bottom, 8px);
+          padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
           box-shadow: 0 -4px 20px rgba(15,23,42,0.08);
         }
         .bottom-tab-bar-inner {
@@ -1239,7 +1150,7 @@ export default function Dashboard() {
 
         @media (max-width: 768px) {
           .bottom-tab-bar { display: block; }
-          .dash-grid { grid-template-columns: 1fr; padding: 16px 16px 90px; gap: 0; }
+          .dash-grid { grid-template-columns: 1fr; padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px)); gap: 0; }
           .dash-sidebar { display: none; }
           .stats-4 { grid-template-columns: repeat(2,1fr); gap: 10px; }
           .stats-3 { grid-template-columns: repeat(2,1fr); gap: 10px; }
@@ -1258,7 +1169,7 @@ export default function Dashboard() {
       `}</style>
 
       {/* TOP NAV */}
-      <nav style={{ background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px', height:62, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 }}>
+      <nav className="dashboard-top-nav" style={{ background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px', height:62, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 }}>
         <a href="/" style={{ fontSize:'1.45rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em' }}>
           Afri<span style={{ color:'#1f8f43' }}>Plate</span>
         </a>
@@ -1267,6 +1178,7 @@ export default function Dashboard() {
           <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Services</a>
           <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Jobs</a>
           <a href="/notifications" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>🔔</a>
+          <button type="button" onClick={logout} className="dashboard-logout">Log out</button>
           <Avatar name={`${user?.first_name || ''}`} size={34} />
         </div>
       </nav>

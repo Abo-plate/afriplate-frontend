@@ -1,4 +1,5 @@
 'use client';
+import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
@@ -94,8 +95,7 @@ export default function SellerProfilePage() {
   }, [id]);
 
   const messageSeller = () => {
-    if (!getToken()) { window.location.href = '/login'; return; }
-    window.location.href = `/dashboard?tab=messages&to=${id}`;
+    window.location.href = `/messages?to=${id}`;
   };
 
   if (loading) return (
@@ -466,7 +466,7 @@ function EmptyState({ icon, text }) {
 }
 
 function Nav() {
-  const user = getUser();
+  const { user } = useSession();
   return (
     <nav style={{
       background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px',

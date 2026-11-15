@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_ORIGIN as API } from '../lib/endpoints';
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -16,6 +16,7 @@ export default function ForgotPasswordPage() {
 
   const submit = async (event) => {
     event?.preventDefault();
+    if (status === 'loading') return;
 
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -76,10 +77,10 @@ export default function ForgotPasswordPage() {
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:24, padding:'48px 40px', maxWidth:420, width:'100%', boxShadow:'0 8px 32px rgba(0,0,0,0.06)', animation:'fadeUp 0.4s ease both' }}>
           {status === 'success' ? (
             <div style={{ textAlign:'center' }}>
-              <div style={{ width:64, height:64, borderRadius:'50%', background:'#eaf8ee', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'0.95rem', fontWeight:900, color:'#1f8f43', letterSpacing:'0.08em' }}>SENT</div>
+              <div style={{ width:64, height:64, borderRadius:'50%', background:'#eaf8ee', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'0.95rem', fontWeight:900, color:'#1f8f43', letterSpacing:'0.08em' }}>EMAIL</div>
               <h2 style={{ fontSize:'1.4rem', fontWeight:900, color:'#111', marginBottom:10 }}>Check your email</h2>
               <p style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:12 }}>
-                If an account exists for <strong style={{ color:'#111' }}>{submittedEmail}</strong>, we&apos;ve sent a password reset link there.
+                If an account exists for <strong style={{ color:'#111' }}>{submittedEmail}</strong>, reset instructions have been requested. Check your inbox and spam folder.
               </p>
               {msg && (
                 <p style={{ color:'#6b7280', fontSize:'0.83rem', lineHeight:1.6, marginBottom:28 }}>

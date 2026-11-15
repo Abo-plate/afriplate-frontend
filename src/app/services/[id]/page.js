@@ -1,4 +1,5 @@
 'use client';
+import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
@@ -69,7 +70,7 @@ export default function ServicePage() {
   const [tab, setTab]               = useState('description');
   const [orderState, setOrderState] = useState('idle'); // idle | loading | success | error
   const [orderMsg, setOrderMsg]     = useState('');
-  const user = getUser();
+  const { user } = useSession();
 
   useEffect(() => {
     if (!id) return;
@@ -108,8 +109,7 @@ export default function ServicePage() {
   };
 
   const messageSeller = () => {
-    if (!getToken()) { window.location.href = '/login'; return; }
-    window.location.href = `/dashboard?tab=messages&to=${service?.seller_id}`;
+    window.location.href = `/messages?to=${service?.seller_id}&service_id=${service?.id}`;
   };
 
   if (loading) return (
@@ -524,7 +524,7 @@ export default function ServicePage() {
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
 function Nav() {
-  const user = getUser();
+  const { user } = useSession();
   return (
     <nav style={{
       background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px',

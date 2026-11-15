@@ -1,33 +1,34 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_ORIGIN as API } from '../lib/endpoints';
 
 function ResetPasswordInner() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [form, setForm]       = useState({ password: '', confirm: '' });
   const [show, setShow]       = useState(false);
-  const [status, setStatus]   = useState('idle'); // idle | loading | success | error
+  const [requestStatus, setStatus]   = useState('idle'); // idle | loading | success | error
   const [msg, setMsg]         = useState('');
 
-  useEffect(() => {
-    if (!token) setStatus('no-token');
-  }, [token]);
+  const status = token ? requestStatus : 'no-token';
 
   const submit = async () => {
+    if (status === 'loading' || !token) return;
     if (!form.password || form.password.length < 8) { setMsg('Password must be at least 8 characters.'); return; }
     if (form.password !== form.confirm) { setMsg('Passwords do not match.'); return; }
     setStatus('loading'); setMsg('');
     try {
-      const res  = await fetch(`${API}/api/auth/reset-password/${token}`, {
+      const res  = await fetch(`${API}/api/auth/reset-password/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: form.password }),
       });
       const data = await res.json();
       if (!res.ok) { setMsg(data.message || 'Reset failed. Link may have expired.'); setStatus('error'); return; }
+      window.dispatchEvent(new Event('afriplate:session-cleared'));
       setStatus('success');
     } catch {
       setMsg('Cannot connect to server. Try again.');
@@ -47,9 +48,9 @@ function ResetPasswordInner() {
       `}</style>
 
       <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', fontFamily:'Inter,sans-serif', background:'#f7f8fa' }}>
-        <a href="/" style={{ fontSize:'1.8rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em', marginBottom:40 }}>
+        <Link href="/" style={{ fontSize:'1.8rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em', marginBottom:40 }}>
           Afri<span style={{ color:'#1f8f43' }}>Plate</span>
-        </a>
+        </Link>
 
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:24, padding:'48px 40px', maxWidth:420, width:'100%', boxShadow:'0 8px 32px rgba(0,0,0,0.06)', animation:'fadeUp 0.4s ease both' }}>
 
@@ -60,9 +61,9 @@ function ResetPasswordInner() {
               <p style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:28 }}>
                 Your password has been changed successfully. You can now log in with your new password.
               </p>
-              <a href="/login" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
+              <Link href="/login" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
                 Go to Login
-              </a>
+              </Link>
             </div>
           )}
 
@@ -71,9 +72,9 @@ function ResetPasswordInner() {
               <div style={{ width:64, height:64, borderRadius:'50%', background:'#fef2f2', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.8rem' }}>✗</div>
               <h2 style={{ fontSize:'1.4rem', fontWeight:900, color:'#111', marginBottom:10 }}>Invalid link</h2>
               <p style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:28 }}>This reset link is invalid or has expired. Request a new one.</p>
-              <a href="/forgot-password" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
+              <Link href="/forgot-password" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem' }}>
                 Request New Link
-              </a>
+              </Link>
             </div>
           )}
 
@@ -128,7 +129,7 @@ function ResetPasswordInner() {
               </button>
 
               <div style={{ textAlign:'center', fontSize:'0.875rem', color:'#6b7280' }}>
-                <a href="/login" style={{ color:'#1f8f43', fontWeight:700 }}>Back to Login</a>
+                <Link href="/login" style={{ color:'#1f8f43', fontWeight:700 }}>Back to Login</Link>
               </div>
             </>
           )}

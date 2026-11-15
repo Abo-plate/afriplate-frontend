@@ -1,9 +1,7 @@
 import axios from 'axios';
+import { API_BASE } from './endpoints';
 
-const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const normalizedApiUrl = rawApiUrl.endsWith('/api')
-  ? rawApiUrl
-  : `${rawApiUrl.replace(/\/$/, '')}/api`;
+const normalizedApiUrl = API_BASE;
 
 const api = axios.create({
   baseURL: normalizedApiUrl,
@@ -31,7 +29,7 @@ api.interceptors.response.use(
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        window.dispatchEvent(new Event('afriplate:session-cleared'));
       }
     }
     return Promise.reject(error);

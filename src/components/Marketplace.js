@@ -1,4 +1,5 @@
 "use client";
+import AccountLinks from "./AccountLinks";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -44,7 +45,7 @@ export function Brand() {
     </Link>
   );
 }
-export function MarketplaceHeader({ isAuthed }) {
+export function MarketplaceHeader() {
   const [open, setOpen] = useState(false);
   return (
     <header className="ap-header">
@@ -56,15 +57,7 @@ export function MarketplaceHeader({ isAuthed }) {
           <Link href="/jobs">Jobs</Link>
         </nav>
         <div className="ap-header-actions">
-          <Link className="ap-login" href={isAuthed ? "/dashboard" : "/login"}>
-            {isAuthed ? "My dashboard" : "Log in"}
-          </Link>
-          <Link
-            className="ap-button ap-button-green"
-            href={isAuthed ? "/dashboard" : "/register"}
-          >
-            Start selling <Icon name="arrow" />
-          </Link>
+          <AccountLinks variant="home" />
           <button
             className="ap-menu-button"
             aria-label={open ? "Close navigation" : "Open navigation"}
@@ -85,9 +78,7 @@ export function MarketplaceHeader({ isAuthed }) {
           <Link href="/products">Products</Link>
           <Link href="/services">Services</Link>
           <Link href="/jobs">Jobs</Link>
-          <Link href={isAuthed ? "/dashboard" : "/login"}>
-            {isAuthed ? "My dashboard" : "Log in"}
-          </Link>
+          <AccountLinks variant="menu" onNavigate={() => setOpen(false)} />
         </nav>
       )}
     </header>

@@ -1,4 +1,5 @@
 import "./globals.css";
+import { SessionProvider } from "./lib/SessionProvider";
 import MobileBottomNav from "../../components/MobileBottomNav";
 
 export const metadata = {
@@ -10,8 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <div className="app-content">{children}</div>
-        <MobileBottomNav />
+        <SessionProvider>
+          <div className="app-content">{children}</div>
+          <MobileBottomNav />
+        </SessionProvider>
       </body>
     </html>
   );

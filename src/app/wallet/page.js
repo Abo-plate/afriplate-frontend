@@ -1,4 +1,5 @@
 'use client';
+import { statusLabel } from '../lib/statusLabel';
 import { useState, useEffect } from 'react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -356,7 +357,7 @@ export default function WalletPage() {
                           <span className="status-pill" style={{
                             background: txn.status === 'pending' ? '#fef3c7' : '#fef2f2',
                             color: txn.status === 'pending' ? '#d97706' : '#ef4444',
-                          }}>{txn.status}</span>
+                          }}>{statusLabel(txn.status)}</span>
                         )}
                       </div>
                       <div className="txn-date">{date}</div>

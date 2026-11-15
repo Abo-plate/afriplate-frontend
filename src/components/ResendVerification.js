@@ -38,7 +38,7 @@ export default function ResendVerification({ email = "" }) {
           "Your account exists, but we could not confirm the verification email was sent. Please try again.",
         );
       setStatus("success");
-      setMessage("Verification email sent. Check your inbox and spam folder.");
+      setMessage("Verification email requested. Check your inbox and spam folder; delivery is not yet confirmed.");
     } catch (error) {
       setStatus("error");
       setMessage(

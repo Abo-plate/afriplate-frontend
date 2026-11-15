@@ -99,3 +99,21 @@ body {
     font-family: var(--ap-font);
   }
 }
+
+/* Keep account actions in the existing navigation styles. */
+.account-logout { cursor: pointer; border: 0; font: inherit; }
+.account-loading { font-size: .8rem; color: #6b7280; }
+.dashboard-logout { background: #fef2f2; color: #dc2626; border: 0; border-radius: 9px; padding: 8px 10px; cursor: pointer; font-size: .8rem; font-weight: 700; }
+@media (max-width: 768px) {
+  body:has(.dashboard-top-nav) { padding-bottom: 0; }
+  .dashboard-top-nav { padding: 0 12px !important; gap: 8px; }
+  .dashboard-top-nav > a { font-size: 1.1rem !important; }
+  .dashboard-top-nav > div { gap: 4px !important; }
+  .dashboard-top-nav > div > a { padding: 8px 6px !important; font-size: .7rem !important; }
+  .dashboard-top-nav > div > a[href="/notifications"] { display: none; }
+  .dashboard-top-nav > div > div { display: none !important; }
+  .nav-right { gap: 5px; flex-wrap: wrap; }
+  .nav-right .nav-btn { padding: 8px 10px; font-size: .75rem; }
+  .ap-header-actions .account-logout { display: none; }
+  .ap-mobile-menu .account-logout { padding: 8px 0; background: none; }
+}

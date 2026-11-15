@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { jobsAPI } from '../lib/services';
+import AccountLinks from '@/components/AccountLinks';
 import { useStoredSession } from '../lib/useStoredSession';
 
 const JOB_TYPES   = ['All', 'Full-time', 'Part-time', 'Remote', 'Freelance', 'Internship'];
@@ -238,14 +239,7 @@ export default function JobsPage() {
             <li><a href="/jobs" className="active">Jobs</a></li>
           </ul>
           <div className="nav-right">
-            {isAuthed ? (
-              <a href="/dashboard" className="nav-btn nav-signup">Dashboard</a>
-            ) : (
-              <>
-                <a href="/login" className="nav-btn nav-login">Login</a>
-                <a href="/register" className="nav-btn nav-signup">Sign Up</a>
-              </>
-            )}
+            <AccountLinks />
           </div>
         </div>
       </nav>

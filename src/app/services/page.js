@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { servicesAPI } from '../lib/services';
+import AccountLinks from '@/components/AccountLinks';
 import { useStoredSession } from '../lib/useStoredSession';
 
 const CATEGORIES = ['All', 'Design', 'Writing', 'Tutoring', 'Tech', 'Beauty', 'Photography', 'Music', 'Delivery', 'Other'];
@@ -206,14 +207,7 @@ export default function ServicesPage() {
             <li><a href="/jobs">Jobs</a></li>
           </ul>
           <div className="nav-right">
-            {isAuthed ? (
-              <a href="/dashboard" className="nav-btn nav-signup">Dashboard</a>
-            ) : (
-              <>
-                <a href="/login"    className="nav-btn nav-login">Login</a>
-                <a href="/register" className="nav-btn nav-signup">Sign Up</a>
-              </>
-            )}
+            <AccountLinks />
           </div>
         </div>
       </nav>
@@ -359,7 +353,7 @@ function ServiceCard({ item, delay }) {
           </div>
         </div>
         <div className="svc-footer">
-          <a href={`/messages?to=${item.seller_id}`} className="btn-hire">Hire Now</a>
+          <a href={`/messages?to=${item.seller_id}&service_id=${item.id}`} className="btn-hire">Hire Now</a>
           <a href={`/services/${item.id}`} className="btn-view">Details</a>
         </div>
       </div>
@@ -378,7 +372,7 @@ function ServiceListCard({ item, delay }) {
       </div>
       <div className="svc-list-price">₦{Number(item.price).toLocaleString()}</div>
       <div className="list-actions">
-        <a href={`/messages?to=${item.seller_id}`} className="btn-hire" style={{ padding:'8px 14px' }}>Hire</a>
+        <a href={`/messages?to=${item.seller_id}&service_id=${item.id}`} className="btn-hire" style={{ padding:'8px 14px' }}>Hire</a>
         <a href={`/services/${item.id}`} className="btn-view" style={{ padding:'8px 12px' }}>View</a>
       </div>
     </div>

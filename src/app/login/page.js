@@ -1,14 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from '../lib/SessionProvider';
 import ResendVerification from '@/components/ResendVerification';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_ORIGIN as API } from '../lib/endpoints';
 
 function isValidEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { isAuthed, completeLogin } = useSession();
   const [form, setForm]     = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
@@ -16,8 +20,11 @@ export default function LoginPage() {
   const [show, setShow]         = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('token')) window.location.href = '/dashboard';
-  }, []);
+    if (isAuthed) {
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.replace(next && /^\/messages(?:[?#]|$)/.test(next) ? next : '/dashboard');
+    }
+  }, [isAuthed, router]);
 
   const set = (k) => (e) => {
     setForm(p => ({ ...p, [k]: e.target.value }));
@@ -53,9 +60,9 @@ export default function LoginPage() {
         }
         return;
       }
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user',  JSON.stringify(data.user));
-      window.location.href = data.user?.role === 'admin' ? '/admin' : '/dashboard';
+      completeLogin(data.token, data.user);
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.replace(next && /^\/messages(?:[?#]|$)/.test(next) ? next : data.user?.role === 'admin' ? '/admin' : '/dashboard');
     } catch {
       setApiError('Cannot connect to server. Make sure the backend is running on port 5000.');
     } finally { setLoading(false); }
