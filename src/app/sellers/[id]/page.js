@@ -1,9 +1,11 @@
 'use client';
+import {API_ORIGIN} from '../../lib/endpoints';
+import PortfolioSection from '@/components/PortfolioSection';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API = API_ORIGIN;
 
 function getToken() {
   if (typeof window === 'undefined') return null;
@@ -34,7 +36,7 @@ function Stars({ rating = 0, size = 14 }) {
     <span style={{ display:'inline-flex', gap:2 }}>
       {[1,2,3,4,5].map(i => (
         <svg key={i} width={size} height={size} viewBox="0 0 20 20"
-          fill={i <= Math.round(rating) ? '#ff9d3f' : '#e5e7eb'}>
+          fill={i <= Math.round(rating) ? '#1f8f43' : '#e5e7eb'}>
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
         </svg>
       ))}
@@ -56,9 +58,10 @@ export default function SellerProfilePage() {
   const [products, setProducts]   = useState([]);
   const [services, setServices]   = useState([]);
   const [reviews, setReviews]     = useState([]);
+  const [reviewsError,setReviewsError]=useState(false);
   const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState('products');
-  const currentUser = getUser();
+  const {user:currentUser} = useSession();
   const isOwnProfile = currentUser?.id === Number(id);
 
   useEffect(() => {
@@ -86,9 +89,9 @@ export default function SellerProfilePage() {
         }
         if (rRes.status === 'fulfilled' && rRes.value.ok) {
           const d = await rRes.value.json();
-          setReviews(d.reviews || d.data || []);
-        }
-      } catch {}
+          setReviews(d.reviews || d.data || []);setReviewsError(false);
+        } else {setReviewsError(true);}
+      } catch {setReviewsError(true);}
       setLoading(false);
     };
     load();
@@ -119,7 +122,7 @@ export default function SellerProfilePage() {
 
   const fullName = `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || 'AfriPlate User';
   const avgRating = reviews.length
-    ? (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length).toFixed(1)
     : null;
   const memberSince = seller.created_at
     ? new Date(seller.created_at).toLocaleDateString('en-NG', { month:'long', year:'numeric' })
@@ -128,6 +131,7 @@ export default function SellerProfilePage() {
   const tabItems = [
     { key:'products', label:'Products', count:products.length },
     { key:'services', label:'Services', count:services.length },
+    { key:'portfolio',label:'Portfolio' },
     { key:'reviews',  label:'Reviews',  count:reviews.length  },
   ];
 
@@ -253,7 +257,7 @@ export default function SellerProfilePage() {
 
               <div className="profile-actions">
                 {isOwnProfile ? (
-                  <a href="/dashboard?tab=profile" style={{ padding:'10px 20px', borderRadius:11, background:'#f3f4f6', color:'#374151', fontSize:'0.88rem', fontWeight:700 }}>
+                  <a href="/dashboard#settings" style={{ padding:'10px 20px', borderRadius:11, background:'#f3f4f6', color:'#374151', fontSize:'0.88rem', fontWeight:700 }}>
                     Edit Profile
                   </a>
                 ) : (
@@ -350,17 +354,18 @@ export default function SellerProfilePage() {
                     </div>
               )}
 
+              {activeTab === 'portfolio' && <PortfolioSection sellerId={id}/>}
               {/* REVIEWS TAB */}
               {activeTab === 'reviews' && (
-                reviews.length === 0
+                reviewsError ? <p role="alert">Purchase reviews are unavailable. <button onClick={()=>window.location.reload()}>Retry</button></p> : reviews.length === 0
                   ? <EmptyState icon="⭐" text="No reviews yet" />
                   : <div>
                       {reviews.map(r => (
                         <div key={r.id} className="review-card">
                           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
-                            <Avatar name={r.reviewer_name || r.user_name} size={38} />
+                            <Avatar name={r.buyer_name || r.reviewer_name || r.user_name} size={38} />
                             <div style={{ flex:1 }}>
-                              <div style={{ fontSize:'0.85rem', fontWeight:800, color:'#111' }}>{r.reviewer_name || r.user_name || 'Student'}</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:800, color:'#111' }}>{r.buyer_name || r.reviewer_name || r.user_name || 'Student'}</div>
                               <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:2 }}>
                                 <Stars rating={r.rating} />
                                 <span style={{ fontSize:'0.72rem', color:'#9ca3af' }}>
@@ -374,7 +379,7 @@ export default function SellerProfilePage() {
                               </span>
                             ) : null}
                           </div>
-                          {r.comment && <p style={{ fontSize:'0.875rem', color:'#374151', lineHeight:1.7 }}>{r.comment}</p>}
+                          {(r.review_text || r.comment) && <p style={{ fontSize:'0.875rem', color:'#374151', lineHeight:1.7 }}>{r.review_text || r.comment}</p>}
                         </div>
                       ))}
                     </div>
@@ -427,9 +432,9 @@ export default function SellerProfilePage() {
                     return (
                       <div key={star} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
                         <span style={{ fontSize:'0.75rem', fontWeight:700, color:'#374151', width:8 }}>{star}</span>
-                        <svg width="12" height="12" viewBox="0 0 20 20" fill="#ff9d3f"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="#1f8f43"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                         <div style={{ flex:1, height:6, background:'#f3f4f6', borderRadius:3, overflow:'hidden' }}>
-                          <div style={{ height:'100%', width:`${pct}%`, background:'#ff9d3f', borderRadius:3, transition:'width 0.4s' }} />
+                          <div style={{ height:'100%', width:`${pct}%`, background:'#1f8f43', borderRadius:3, transition:'width 0.4s' }} />
                         </div>
                         <span style={{ fontSize:'0.72rem', color:'#9ca3af', fontWeight:600, width:24, textAlign:'right' }}>{count}</span>
                       </div>

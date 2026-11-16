@@ -5,7 +5,7 @@ import { servicesAPI } from '../lib/services';
 import AccountLinks from '@/components/AccountLinks';
 import { useStoredSession } from '../lib/useStoredSession';
 
-const CATEGORIES = ['All', 'Design', 'Writing', 'Tutoring', 'Tech', 'Beauty', 'Photography', 'Music', 'Delivery', 'Other'];
+const CATEGORIES = ['All', 'Design', 'Writing', 'Tutoring', 'Tutoring & Lessons', 'Tech', 'Beauty', 'Photography', 'Music', 'Delivery', 'Other'];
 const UNIVERSITIES = ['All Universities', 'UNILAG', 'OAU', 'UI', 'FUTA', 'LASU', 'UNIBEN', 'ABU', 'BUK', 'UNIPORT', 'YABATECH', 'UNILORIN'];
 const SORT_OPTIONS = [
   { value: 'newest',    label: 'Newest First' },
@@ -344,7 +344,7 @@ function ServiceCard({ item, delay }) {
         <div className="svc-title">{item.title}</div>
         <div className="svc-price-row">
           <div className="svc-price">₦{Number(item.price).toLocaleString()} <span>/ service</span></div>
-          <div className="stars">{'★'.repeat(Math.min(5, Math.round(item.rating || 5)))}</div>
+          <div className="stars">Purchase reviews on service details</div>
         </div>
         <div className="svc-meta">
           <div className="meta-avatar">{item.seller_name?.[0]?.toUpperCase() || 'S'}</div>

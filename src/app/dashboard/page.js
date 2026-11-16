@@ -1,5 +1,7 @@
 'use client';
 import CartEntry from '@/components/CartEntry';
+import PurchaseReview from '@/components/PurchaseReview';
+import ProfilePhotoEditor from '@/components/ProfilePhotoEditor';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { Icon } from '@/components/Marketplace';
 import PrivateMessages from '@/components/PrivateMessages';
@@ -25,7 +27,8 @@ function getUser() {
 // ── SHARED HELPERS ────────────────────────────────────────────────────────────
 function fmt(n) { return Number(n || 0).toLocaleString('en-NG'); }
 
-function Avatar({ name = '', size = 40 }) {
+function Avatar({ name = '', size = 40, img }) {
+  if(img)return <img src={img} alt={name} style={{width:size,height:size,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>;
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
@@ -176,6 +179,7 @@ function SettingsTab() {
       {/* Profile */}
       <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:24 }}>
         <div style={{ fontSize:'0.95rem', fontWeight:900, color:'#111', marginBottom:18 }}>Profile Info</div>
+        <ProfilePhotoEditor/>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
           <Field label="First Name"><Input value={form.first_name} onChange={set('first_name')} placeholder="First name" /></Field>
           <Field label="Last Name"><Input value={form.last_name} onChange={set('last_name')} placeholder="Last name" /></Field>
@@ -244,7 +248,7 @@ function BuyerDashboard({ user }) {
         <div className="dash-sidebar">
           <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, padding:20, marginBottom:16 }}>
             <div style={{ textAlign:'center', marginBottom:16 }}>
-              <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} />
+              <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} img={user?.avatar}/>
               <div style={{ fontWeight:900, color:'#111', fontSize:'0.95rem', marginTop:10 }}>{user?.first_name} {user?.last_name}</div>
               <div style={{ fontSize:'0.72rem', color:'#9ca3af', marginTop:3 }}>{user?.university || 'AfriPlate Buyer'}</div>
               <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eef2ff', color:'#6366f1' }}>Buyer</span>
@@ -377,10 +381,13 @@ function BuyerOverview({ user, setTab }) {
 
 function BuyerOrders() {
   const [orders, setOrders]   = useState([]);
+  const [reviewDecisions,setReviewDecisions]=useState({});
+  const loadReviewDecisions=()=>authFetch('/api/reviews/eligibility').then(r=>{if(!r.ok)throw Error();return r.json();}).then(data=>setReviewDecisions(Object.fromEntries(data.items.map(item=>[item.order_id,item])))).catch(()=>setReviewDecisions({}));
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(null);
 
   useEffect(() => {
+    loadReviewDecisions();
     authFetch('/api/orders?role=buyer')
       .then(r => r.json())
       .then(d => { setOrders(d.orders || d.data || []); setLoading(false); })
@@ -431,9 +438,7 @@ function BuyerOrders() {
                   {confirming === o.id ? 'Confirming...' : 'Confirm Delivery'}
                 </button>
               )}
-              {o.status === 'completed' && (
-                <a href={`/products/${o.product_id || ''}`} style={{ fontSize:'0.75rem', color:'#1f8f43', fontWeight:700 }}>Leave review →</a>
-              )}
+              <PurchaseReview order={o} decision={reviewDecisions[o.id]} onSaved={loadReviewDecisions}/>
             </div>
           </div>
         </div>
@@ -444,16 +449,18 @@ function BuyerOrders() {
 
 function BuyerReviews() {
   const [reviews, setReviews] = useState([]);
+  const [loadError,setLoadError]=useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     authFetch('/api/reviews/mine')
-      .then(r => r.json())
+      .then(r => {if(!r.ok)throw Error();return r.json();})
       .then(d => { setReviews(d.reviews || d.data || []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => {setLoadError(true);setLoading(false);});
   }, []);
 
   if (loading) return <Spinner />;
+  if (loadError) return <p role="alert">Your reviews are unavailable. Refresh the page to retry.</p>;
 
   return (
     <div>
@@ -463,9 +470,9 @@ function BuyerReviews() {
           <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:'0.875rem', fontWeight:800, color:'#111', marginBottom:4 }}>{r.product_title || r.service_title || 'Item'}</div>
-              <div style={{ display:'flex', gap:4, marginBottom:6 }}>
+              <p style={{fontSize:12,color:"#53655a"}}>{r.purchase_verified ? "Purchase review" : "Previous review - payment verification not established"}</p><div style={{ display:'flex', gap:4, marginBottom:6 }}>
                 {[1,2,3,4,5].map(s => (
-                  <svg key={s} width="13" height="13" viewBox="0 0 20 20" fill={s <= r.rating ? '#ff9d3f' : '#e5e7eb'}><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                  <svg key={s} width="13" height="13" viewBox="0 0 20 20" fill={s <= r.rating ? '#1f8f43' : '#e5e7eb'}><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                 ))}
               </div>
               {r.comment && <p style={{ fontSize:'0.85rem', color:'#374151', lineHeight:1.6 }}>{r.comment}</p>}
@@ -508,7 +515,7 @@ function SellerDashboard({ user }) {
         <div className="dash-sidebar">
           <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, padding:20, marginBottom:16 }}>
             <div style={{ textAlign:'center', marginBottom:16 }}>
-              <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} />
+              <Avatar name={`${user?.first_name || ''} ${user?.last_name || ''}`} size={64} img={user?.avatar}/>
               <div style={{ fontWeight:900, color:'#111', fontSize:'0.95rem', marginTop:10 }}>{user?.first_name} {user?.last_name}</div>
               <div style={{ fontSize:'0.72rem', color:'#9ca3af', marginTop:3 }}>{user?.university || 'AfriPlate Seller'}</div>
               <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eaf8ee', color:'#1f8f43' }}>Seller</span>
@@ -764,7 +771,7 @@ function SellerListings() {
   };
 
   const PRODUCT_CATS = ['Electronics','Textbooks','Fashion','Food','Beauty','Furniture','Sports','Other'];
-  const SERVICE_CATS = ['Design','Writing','Tutoring','Tech','Beauty','Photography','Music','Delivery','Other'];
+  const SERVICE_CATS = ['Design','Writing','Tutoring','Tutoring & Lessons','Tech','Beauty','Photography','Music','Delivery','Other'];
 
   return (
     <div>
@@ -1155,7 +1162,7 @@ export default function Dashboard() {
           <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Jobs</a>
           <a href="/notifications" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>🔔</a>
           <button type="button" onClick={logout} className="dashboard-logout">Log out</button>
-          <Avatar name={`${user?.first_name || ''}`} size={34} />
+          <Avatar name={`${user?.first_name || ''}`} size={34} img={user?.avatar}/>
         </div>
       </nav>
 

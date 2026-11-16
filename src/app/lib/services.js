@@ -65,7 +65,7 @@ export const cartAPI = {
 // ─────────────────────────────────────────────
 export const reviewsAPI = {
   create:         (data)    => api.post('/reviews', data),
-  getForListing:  (id)      => api.get(`/reviews/listing/${id}`),
+  getForListing:  (id, type) => api.get(`/reviews/listing/${id}`, {params:{type}}),
   getForSeller:   (id)      => api.get(`/reviews/seller/${id}`),
 };
 

@@ -1,10 +1,11 @@
 'use client';
+import {API_ORIGIN} from '../../lib/endpoints';
 import { listingCampus } from '../../lib/listingCampus';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API = API_ORIGIN;
 
 function getToken() {
   if (typeof window === 'undefined') return null;
@@ -22,7 +23,7 @@ function Stars({ rating = 0, size = 14 }) {
   return (
     <span style={{ display:'inline-flex', gap:2 }}>
       {[1,2,3,4,5].map(i => (
-        <svg key={i} width={size} height={size} viewBox="0 0 20 20" fill={i <= Math.round(rating) ? '#ff9d3f' : '#e5e7eb'}>
+        <svg key={i} width={size} height={size} viewBox="0 0 20 20" fill={i <= Math.round(rating) ? '#1f8f43' : '#e5e7eb'}>
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
         </svg>
       ))}
@@ -65,6 +66,7 @@ export default function ServicePage() {
   const { id } = useParams();
   const [service, setService]       = useState(null);
   const [reviews, setReviews]       = useState([]);
+  const [reviewsError,setReviewsError]=useState(false);
   const [related, setRelated]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [activeImg, setActiveImg]   = useState(0);
@@ -88,9 +90,9 @@ export default function ServicePage() {
         }
         if (rRes.status === 'fulfilled' && rRes.value.ok) {
           const d = await rRes.value.json();
-          setReviews(d.reviews || d.data || []);
-        }
-      } catch {}
+          setReviews(d.reviews || d.data || []);setReviewsError(false);
+        } else {setReviewsError(true);}
+      } catch {setReviewsError(true);}
       setLoading(false);
     };
     load();
@@ -134,7 +136,7 @@ export default function ServicePage() {
   );
 
   const images = service.images?.length ? service.images : [null];
-  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1) : null;
+  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length).toFixed(1) : null;
 
   // fee breakdown — service: buyer pays +2%
   const BUYER_FEE_RATE = 0.02;
@@ -329,7 +331,7 @@ export default function ServicePage() {
 
               {tab === 'reviews' && (
                 <div>
-                  {reviews.length === 0 ? (
+                  {reviewsError ? <p role="alert">Purchase reviews are unavailable. <button onClick={()=>window.location.reload()}>Retry</button></p> : reviews.length === 0 ? (
                     <div style={{ textAlign:'center', padding:'32px 0', color:'#9ca3af' }}>
                       <div style={{ fontSize:'2rem', marginBottom:8 }}>★</div>
                       <p style={{ fontWeight:600, fontSize:'0.875rem' }}>No reviews yet</p>
@@ -337,9 +339,9 @@ export default function ServicePage() {
                   ) : reviews.map(r => (
                     <div key={r.id} className="review-item">
                       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-                        <Avatar name={r.reviewer_name || r.user_name} size={36} />
+                        <Avatar name={r.buyer_name || r.reviewer_name || r.user_name} size={36} />
                         <div>
-                          <div style={{ fontSize:'0.85rem', fontWeight:800, color:'#111' }}>{r.reviewer_name || r.user_name || 'Student'}</div>
+                          <div style={{ fontSize:'0.85rem', fontWeight:800, color:'#111' }}>{r.buyer_name || r.reviewer_name || r.user_name || 'Student'}</div>
                           <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
                             <Stars rating={r.rating} />
                             <span style={{ fontSize:'0.72rem', color:'#9ca3af' }}>
@@ -348,7 +350,7 @@ export default function ServicePage() {
                           </div>
                         </div>
                       </div>
-                      {r.comment && <p style={{ fontSize:'0.875rem', color:'#374151', lineHeight:1.65 }}>{r.comment}</p>}
+                      {(r.review_text || r.comment) && <p style={{ fontSize:'0.875rem', color:'#374151', lineHeight:1.65 }}>{r.review_text || r.comment}</p>}
                     </div>
                   ))}
                 </div>
