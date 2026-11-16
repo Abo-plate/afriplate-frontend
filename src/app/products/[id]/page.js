@@ -1,5 +1,7 @@
 'use client';
 import { listingCampus } from '../../lib/listingCampus';
+import { cartAPI } from '../../lib/services';
+import AccountLinks from '@/components/AccountLinks';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -107,8 +109,10 @@ export default function ProductPage() {
   }, [product]);
 
   const placeOrder = async () => {
-    if (!getToken()) { window.location.href = '/login'; return; }
-    window.location.href = `/checkout?type=product&id=${id}`;
+    if (!user) { window.location.href = '/login?next='+encodeURIComponent('/products/'+id); return; }
+    setOrderState('loading');setOrderMsg('');
+    try{await cartAPI.add({product_id:product.id,quantity:Number(qty),expected_unit_price:product.price});window.dispatchEvent(new Event('afriplate:cart'));setOrderState('success');setOrderMsg('Added to your cart. Review it from Cart.');}
+    catch(error){setOrderState('error');setOrderMsg(error.response?.data?.message||'Could not save to cart. Please try again.');}
   };
 
   const messagesSeller = () => {
@@ -141,8 +145,8 @@ export default function ProductPage() {
   // fee breakdown
   const BUYER_FEE_RATE = 0.005;
   const price = parseFloat(product.price || 0);
-  const buyerFee = parseFloat((price * BUYER_FEE_RATE).toFixed(2));
-  const total = parseFloat((price + buyerFee).toFixed(2));
+  const buyerFee = Math.round(price * 100 * Number(qty || 1) * BUYER_FEE_RATE) / 100;
+  const total = price * Number(qty || 1) + buyerFee;
 
   return (
     <>
@@ -374,6 +378,8 @@ export default function ProductPage() {
                 </button>
               </div>
 
+              <p style={{marginBottom:12,color:'#176d35',fontWeight:700}}>{product.availability==='paused'?'Paused':product.stock_quantity==null?'Stock awaiting seller confirmation':product.stock_quantity===0?'Sold out':product.stock_quantity+' available'}</p>
+              <label style={{display:'block',marginBottom:16}}>Quantity <input aria-label="Quantity" type="number" min="1" max={product.stock_quantity||1} step="1" value={qty} onChange={e=>setQty(e.target.value)} style={{width:80,padding:8,border:'1px solid #cbd5cf',borderRadius:8}}/></label>
               {/* Fee breakdown */}
               <div style={{ background:'#f8fafc', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
                 <div className="fee-row"><span>Item price</span><span style={{ fontWeight:700, color:'#111' }}>₦{fmt(price)}</span></div>
@@ -399,9 +405,9 @@ export default function ProductPage() {
                   <button
                     className="order-btn order-primary"
                     onClick={placeOrder}
-                    disabled={orderState === 'loading'}
+                    disabled={orderState === 'loading' || product.availability==='paused' || product.stock_quantity==null || product.stock_quantity===0 || !Number.isInteger(Number(qty)) || Number(qty)<1 || Number(qty)>product.stock_quantity}
                   >
-                    {orderState === 'loading' ? <><span className="btn-spinner" /> Processing...</> : 'Buy Now — Pay with Paystack'}
+                    {orderState === 'loading' ? <><span className="btn-spinner" /> Processing...</> : 'Add to cart'}
                   </button>
                   <button className="order-btn order-secondary" onClick={messagesSeller}>
                     Ask Seller a Question
@@ -418,8 +424,8 @@ export default function ProductPage() {
             <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:16, padding:18 }}>
               <div style={{ fontSize:'0.78rem', fontWeight:800, color:'#374151', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Buyer Protection</div>
               {[
-                ['Secure payment via Paystack', 'Your money is held in escrow until delivery is confirmed'],
-                ['Verified campus seller', 'All sellers are verified university students'],
+                ['Payments currently unavailable', 'You can save items in your cart; no money is collected'],
+                ['Check listing details', 'Confirm availability and delivery details with the seller'],
                 ['Dispute resolution', 'Contact support if anything goes wrong'],
               ].map(([title, sub]) => (
                 <div key={title} style={{ display:'flex', gap:10, marginBottom:10 }}>
@@ -463,26 +469,4 @@ export default function ProductPage() {
 }
 
 // ── NAV ────────────────────────────────────────────────────────────────────────
-function Nav() {
-  const { user } = useSession();
-  return (
-    <nav style={{
-      background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px',
-      height:62, display:'flex', alignItems:'center', justifyContent:'space-between',
-      position:'sticky', top:0, zIndex:100, fontFamily:'Inter,sans-serif',
-    }}>
-      <a href="/" style={{ fontSize:'1.45rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em', textDecoration:'none' }}>
-        Afri<span style={{ color:'#1f8f43' }}>Plate</span>
-      </a>
-      <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-        <a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Products</a>
-        <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Services</a>
-        <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Jobs</a>
-        {user
-          ? <a href="/dashboard" style={{ padding:'8px 16px', borderRadius:10, fontSize:'0.84rem', fontWeight:800, color:'#fff', background:'#1f8f43' }}>Dashboard</a>
-          : <a href="/login"     style={{ padding:'8px 16px', borderRadius:10, fontSize:'0.84rem', fontWeight:800, color:'#fff', background:'#1f8f43' }}>Sign In</a>
-        }
-      </div>
-    </nav>
-  );
-}
+function Nav(){return <nav style={{background:'#fff',padding:16,display:'flex',gap:12,flexWrap:'wrap',justifyContent:'space-between',alignItems:'center'}}><a href="/" style={{fontWeight:900,color:'#176d35'}}>AfriPlate</a><div style={{display:'flex',gap:8,flexWrap:'wrap'}}><AccountLinks /></div></nav>;}

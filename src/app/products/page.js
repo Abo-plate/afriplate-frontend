@@ -13,7 +13,6 @@ const SORT_OPTIONS = [
   { value: 'oldest',   label: 'Oldest First' },
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'popular',  label: 'Most Popular' },
 ];
 const PRICE_RANGES = [
   { label: 'Any price', min: 0, max: Infinity },
@@ -50,6 +49,9 @@ export default function ProductsPage() {
   const [search, setSearch]         = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage]             = useState(1);
+  const [ready,setReady]=useState(false);
+  const requestVersion=useRef(0);
+  const [total,setTotal]=useState(0);
   const [hasMore, setHasMore]       = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -60,48 +62,28 @@ export default function ProductsPage() {
     const q = params.get('q') || '';
     const selectedCategory = params.get('category');
     const selectedUniversity = params.get('university');
+    setReady(true);
+    const requestedSort=params.get("sort");if(SORT_OPTIONS.some(o=>o.value===requestedSort))setSort(requestedSort);
+    const requestedRange=Number(params.get("priceRange")||0);if(PRICE_RANGES[requestedRange])setPriceRange(requestedRange);
+    const requestedPage=Number(params.get("page")||1);if(Number.isSafeInteger(requestedPage)&&requestedPage>0)setPage(requestedPage);
     setSearch(q);
     setSearchInput(q);
     if (CATEGORIES.includes(selectedCategory)) setCategory(selectedCategory);
     if (UNIVERSITIES.includes(selectedUniversity)) setUniversity(selectedUniversity);
   }, []);
 
-  const fetchProducts = useCallback(async (reset = true) => {
-    if (reset) { setLoading(true); setError(''); setPage(1); }
-    try {
-      const params = {
-        limit: 12, page: reset ? 1 : page,
-        ...(category !== 'All' && { category }),
-        ...(university !== 'All Universities' && { university }),
-        ...(sort && { sort }),
-        ...(search && { q: search }),
-        ...(PRICE_RANGES[priceRange].max !== Infinity && { max_price: PRICE_RANGES[priceRange].max }),
-        ...(PRICE_RANGES[priceRange].min > 0 && { min_price: PRICE_RANGES[priceRange].min }),
-      };
-      const res = await productsAPI.getAll(params);
-      const data = res.data?.products || res.data?.data || res.data || [];
-      if (reset) { setItems(data); } else { setItems(p => [...p, ...data]); }
-      setHasMore(data.length === 12);
-    } catch { setError('Failed to load products. Please try again.'); }
-    finally { setLoading(false); setLoadingMore(false); }
-  }, [category, university, sort, priceRange, search, page]);
-
-  useEffect(() => { fetchProducts(true); }, [category, university, sort, priceRange, search]);
-
-  // infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(async ([entry]) => {
-      if (entry.isIntersecting && !loadingMore && hasMore && !loading) {
-        setLoadingMore(true);
-        setPage(p => p + 1);
-        await fetchProducts(false);
-      }
-    }, { threshold: 0.1 });
-    if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => observer.disconnect();
-  }, [loadingMore, hasMore, loading]);
-
-  const handleSearch = () => setSearch(searchInput.trim());
+  const fetchProducts = useCallback(async () => {
+    if(!ready)return;
+    const version=++requestVersion.current;
+    setLoading(true);setError('');
+    const params={limit:12,page,sort,...(category!=='All'&&{category}),...(university!=='All Universities'&&{university}),...(search&&{q:search}),...(PRICE_RANGES[priceRange].max!==Infinity&&{max_price:PRICE_RANGES[priceRange].max}),...(PRICE_RANGES[priceRange].min>0&&{min_price:PRICE_RANGES[priceRange].min})};
+    const url=new URLSearchParams(params);url.set('priceRange',priceRange);window.history.replaceState(null,'','/products?'+url);
+    try{const res=await productsAPI.getAll(params);if(version!==requestVersion.current)return;setItems(res.data.products);setTotal(res.data.total);setHasMore(res.data.has_more);}
+    catch{if(version===requestVersion.current)setError('Failed to load products. Please try again.');}
+    finally{if(version===requestVersion.current)setLoading(false);}
+  },[ready,category,university,sort,priceRange,search,page]);
+  useEffect(()=>{fetchProducts();return()=>{requestVersion.current++;};},[fetchProducts]);
+  const handleSearch=()=>{setPage(1);setSearch(searchInput.trim());};
 
   const selectedRange = PRICE_RANGES[priceRange];
 
@@ -161,8 +143,8 @@ export default function ProductsPage() {
         /* MAIN */
         .main { min-width:0; }
         .top-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
-        .search-wrap { display:flex; gap:8px; flex:1; min-width:200px; }
-        .search-input { flex:1; padding:11px 16px; border:1.5px solid #e5e7eb; border-radius:12px; font-size:0.875rem; color:#111; outline:none; background:#fff; }
+        .search-wrap { flex-wrap:wrap; display:flex; gap:8px; flex:1; min-width:200px; }
+        .search-input { min-width:0; flex:1; padding:11px 16px; border:1.5px solid #e5e7eb; border-radius:12px; font-size:0.875rem; color:#111; outline:none; background:#fff; }
         .search-input:focus { border-color:#1f8f43; box-shadow:0 0 0 3px rgba(31,143,67,0.08); }
         .search-btn { padding:11px 20px; background:#1f8f43; color:#fff; border-radius:12px; font-size:0.875rem; font-weight:700; transition:background 0.2s; }
         .search-btn:hover { background:#187536; }
@@ -280,8 +262,8 @@ export default function ProductsPage() {
       <div className={`sidebar-mobile ${sidebarOpen ? 'open' : ''}`}>
         <button className="close-sidebar" onClick={() => setSidebarOpen(false)}>✕</button>
         <div style={{ marginTop:32 }}>
-          <SidebarContent category={category} setCategory={setCategory} university={university} setUniversity={setUniversity} priceRange={priceRange} setPriceRange={setPriceRange}
-            onClear={() => { setCategory('All'); setUniversity('All Universities'); setPriceRange(0); }} />
+          <SidebarContent setPage={setPage} category={category} setCategory={setCategory} university={university} setUniversity={setUniversity} priceRange={priceRange} setPriceRange={setPriceRange}
+            onClear={() => { setPage(1);setSearch('');setSearchInput('');setCategory('All'); setUniversity('All Universities'); setPriceRange(0); }} />
         </div>
       </div>
 
@@ -289,8 +271,8 @@ export default function ProductsPage() {
         {/* SIDEBAR DESKTOP */}
         <aside className="sidebar">
           <div className="sidebar-title">Filters</div>
-          <SidebarContent category={category} setCategory={setCategory} university={university} setUniversity={setUniversity} priceRange={priceRange} setPriceRange={setPriceRange}
-            onClear={() => { setCategory('All'); setUniversity('All Universities'); setPriceRange(0); }} />
+          <SidebarContent setPage={setPage} category={category} setCategory={setCategory} university={university} setUniversity={setUniversity} priceRange={priceRange} setPriceRange={setPriceRange}
+            onClear={() => { setPage(1);setSearch('');setSearchInput('');setCategory('All'); setUniversity('All Universities'); setPriceRange(0); }} />
         </aside>
 
         {/* MAIN */}
@@ -299,12 +281,12 @@ export default function ProductsPage() {
             <div className="search-wrap">
               <button className="filter-toggle" onClick={() => setSidebarOpen(true)}>⚙️ Filters</button>
               <input className="search-input" placeholder="Search products..." value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
+                onChange={e => {setSearchInput(e.target.value);if(!e.target.value){setSearch('');setPage(1);}}}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()} />
               <button className="search-btn" onClick={handleSearch}>Search</button>
             </div>
             <div className="right-bar">
-              <select className="sort-select" value={sort} onChange={e => setSort(e.target.value)}>
+              <select className="sort-select" value={sort} onChange={e => {setPage(1);setSort(e.target.value);}}>
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               <button className={`view-btn ${view === 'grid' ? 'active' : ''}`} onClick={() => setView('grid')}>⊞</button>
@@ -358,25 +340,21 @@ export default function ProductsPage() {
             </div>
           )}
 
-          <div ref={loaderRef} className="loader">
-            {loadingMore ? <><div className="spinner" /><p>Loading more...</p></> :
-             hasMore && items.length > 0 ? <p>Scroll for more</p> :
-             items.length > 0 ? <p style={{ color:'#d1d5db' }}>— End of results —</p> : null}
-          </div>
+          {!loading&&!error&&<nav aria-label="Product pages" style={{display:'flex',gap:16,alignItems:'center',padding:'24px 0'}}><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><span>Page {page} · {total} products</span><button disabled={!hasMore} onClick={()=>setPage(p=>p+1)}>Next</button></nav>}
         </main>
       </div>
     </>
   );
 }
 
-function SidebarContent({ category, setCategory, university, setUniversity, priceRange, setPriceRange, onClear }) {
+function SidebarContent({ setPage, category, setCategory, university, setUniversity, priceRange, setPriceRange, onClear }) {
   return (
     <>
       <div className="filter-group">
         <span className="filter-label">Category</span>
         <div className="filter-pills">
           {CATEGORIES.map(c => (
-            <button key={c} className={`f-pill ${category === c ? 'active' : ''}`} onClick={() => setCategory(c)}>{c}</button>
+            <button key={c} className={`f-pill ${category === c ? 'active' : ''}`} onClick={() => {setPage(1);setCategory(c);}}>{c}</button>
           ))}
         </div>
       </div>
@@ -384,7 +362,7 @@ function SidebarContent({ category, setCategory, university, setUniversity, pric
         <span className="filter-label">Price Range</span>
         <div className="price-options">
           {PRICE_RANGES.map((r, i) => (
-            <button key={r.label} className={`price-opt ${priceRange === i ? 'active' : ''}`} onClick={() => setPriceRange(i)}>
+            <button key={r.label} className={`price-opt ${priceRange === i ? 'active' : ''}`} onClick={() => {setPage(1);setPriceRange(i);}}>
               <span className="price-dot" />{r.label}
             </button>
           ))}
@@ -392,7 +370,7 @@ function SidebarContent({ category, setCategory, university, setUniversity, pric
       </div>
       <div className="filter-group">
         <span className="filter-label">University</span>
-        <select className="uni-select" value={university} onChange={e => setUniversity(e.target.value)}>
+        <select className="uni-select" value={university} onChange={e => {setPage(1);setUniversity(e.target.value);}}>
           {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
         </select>
       </div>
@@ -415,7 +393,7 @@ function ProductCard({ item, delay }) {
       <div className="card-body">
         <div className="card-title">{item.title}</div>
         <div className="card-price">₦{Number(item.price).toLocaleString()}</div>
-        <div className="card-meta">
+        <p style={{fontSize:13,color:"#52665a",marginBottom:10}}>{item.availability==="paused"?"Paused":item.stock_quantity==null?"Stock not confirmed":item.stock_quantity===0?"Sold out":item.stock_quantity+" available"}</p><div className="card-meta">
           <div className="meta-avatar">{item.seller_name?.[0]?.toUpperCase() || 'S'}</div>
           <div>
             <div className="meta-name">{item.seller_name || 'Seller'}</div>

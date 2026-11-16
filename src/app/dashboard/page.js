@@ -1,4 +1,5 @@
 'use client';
+import CartEntry from '@/components/CartEntry';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { Icon } from '@/components/Marketplace';
 import PrivateMessages from '@/components/PrivateMessages';
@@ -67,9 +68,9 @@ function Field({ label, error, children }) {
   );
 }
 
-function Input({ value, onChange, placeholder, type='text', err, style={} }) {
+function Input({ value, onChange, placeholder, type='text', err, style={}, ...props }) {
   return (
-    <input value={value} onChange={onChange} placeholder={placeholder} type={type} style={{
+    <input {...props} value={value} onChange={onChange} placeholder={placeholder} type={type} style={{
       width:'100%', padding:'11px 14px', border:`1.5px solid ${err ? '#ef4444' : '#e5e7eb'}`,
       borderRadius:10, fontFamily:'Inter,sans-serif', fontSize:'0.875rem', outline:'none', boxSizing:'border-box', ...style,
     }} />
@@ -573,7 +574,7 @@ function SellerOverview({ user, setTab }) {
         const ordersArr = orders.orders || orders.data || [];
   
         setStats({
-  listings: listings.count || 0,
+  listings: listings.total ?? listings.count ?? 0,
   orders: summary.processingOrders || 0,
   balance: summary.walletBalance || 0,
   pending_balance: summary.pendingBalance || 0,
@@ -694,9 +695,12 @@ function SellerListings() {
   const [listingTab, setListingTab] = useState('products');
   useEffect(() => { const sync = () => { if (window.location.hash === '#sell-product' || window.location.hash === '#sell-service') { setListingTab(window.location.hash === '#sell-product' ? 'products' : 'services'); setShowForm(true); } }; sync(); window.addEventListener('hashchange',sync); return () => window.removeEventListener('hashchange',sync); }, []);
   const [items, setItems]   = useState([]);
+  const [listingPage,setListingPage]=useState(1);
+  const [moreListings,setMoreListings]=useState(false);
+  const [loadError,setLoadError]=useState('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm]     = useState({ title:'', description:'', price:'', category:'', condition:'used', delivery_days:'', revisions:'' });
+  const [form, setForm]     = useState({ title:'', description:'', price:'', category:'', condition:'used', stock_quantity:'', availability:'available', delivery_days:'', revisions:'' });
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -706,15 +710,17 @@ function SellerListings() {
   const load = async () => {
     setLoading(true);
     try {
-      const endpoint = listingTab === 'products' ? '/api/products?mine=true' : '/api/services?mine=true';
+      const endpoint = listingTab === 'products' ? '/api/products?mine=true&limit=20&page='+listingPage : '/api/services?mine=true';
       const res  = await authFetch(endpoint);
       const data = await res.json();
+      if(!res.ok)throw Error(data.message||'Could not load listings');
+      setMoreListings(!!data.has_more);setLoadError('');
       setItems(data.products || data.services || data.data || []);
-    } catch { setItems([]); }
+    } catch { setLoadError('Could not load listings. Please retry.'); }
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [listingTab]);
+  useEffect(() => { load(); }, [listingTab,listingPage]);
 
   const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
 
@@ -723,6 +729,7 @@ function SellerListings() {
     if (!form.title.trim())   e.title    = 'Required';
     if (!form.price || isNaN(form.price)) e.price = 'Enter a valid price';
     if (!form.category.trim()) e.category = 'Required';
+    if(listingTab==='products' && (!/^(0|[1-9]\d*)$/.test(String(form.stock_quantity)) || Number(form.stock_quantity)>2147483647))e.stock_quantity='Enter a whole number of zero or more';
     setErrors(e);
     return !Object.keys(e).length;
   };
@@ -734,12 +741,12 @@ function SellerListings() {
       const endpoint = listingTab === 'products' ? '/api/products' : '/api/services';
       const res = await authFetch(endpoint, {
         method: 'POST',
-        body: JSON.stringify({ ...form, price: Number(form.price), images }),
+        body: JSON.stringify({ ...form, ...(listingTab==='products'?{stock_quantity:Number(form.stock_quantity)}:{}), price: Number(form.price), images }),
       });
       const data = await res.json();
       if (!res.ok) { setMsg(data.message || 'Failed.'); setSaving(false); return; }
       setMsg('Listed successfully!');
-      setForm({ title:'', description:'', price:'', category:'', condition:'used', delivery_days:'', revisions:'' });
+      setForm({ title:'', description:'', price:'', category:'', condition:'used', stock_quantity:'', availability:'available', delivery_days:'', revisions:'' });
       setImages([]);
       setShowForm(false);
       load();
@@ -764,7 +771,7 @@ function SellerListings() {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div style={{ display:'flex', gap:8 }}>
           {['products','services'].map(t => (
-            <button key={t} onClick={() => { setListingTab(t); setShowForm(false); }} style={{
+            <button key={t} onClick={() => { setListingTab(t);setListingPage(1); setShowForm(false); }} style={{
               padding:'8px 18px', borderRadius:10, fontFamily:'Inter,sans-serif',
               fontSize:'0.82rem', fontWeight:700, cursor:'pointer', border:'none',
               background: listingTab === t ? '#1f8f43' : '#f3f4f6', color: listingTab === t ? '#fff' : '#374151',
@@ -776,6 +783,7 @@ function SellerListings() {
         </GreenBtn>
       </div>
 
+      {msg&&<p role="status" style={{marginBottom:16}}>{msg}</p>}
       {/* Create form */}
       {showForm && (
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:24, marginBottom:22 }}>
@@ -783,6 +791,7 @@ function SellerListings() {
           <div className="form-2col" style={{ display:'grid', gap:14 }}>
             <Field label="Title" error={errors.title}><Input value={form.title} onChange={set('title')} placeholder={listingTab === 'products' ? 'e.g. HP Laptop Core i5' : 'e.g. Logo Design'} err={errors.title} /></Field>
             <Field label="Price (₦)" error={errors.price}><Input value={form.price} onChange={set('price')} placeholder="e.g. 15000" type="number" err={errors.price} /></Field>
+            {listingTab==='products'&&<><Field label="Quantity available" error={errors.stock_quantity}><Input type="number" min="0" step="1" value={form.stock_quantity} onChange={set('stock_quantity')} /></Field><Field label="Availability"><Sel value={form.availability} onChange={set('availability')}><option value="available">Available</option><option value="paused">Paused</option></Sel></Field></>}
             <Field label="Category" error={errors.category}>
               <Sel value={form.category} onChange={set('category')} err={errors.category}>
                 <option value="">Select category</option>
@@ -843,13 +852,14 @@ function SellerListings() {
             )}
           </Field>
 
-          {msg && <div style={{ marginBottom:12, fontSize:'0.82rem', fontWeight:700, color: msg.includes('!') ? '#1f8f43' : '#ef4444' }}>{msg}</div>}
           <GreenBtn onClick={submit} disabled={saving || uploading}>{saving ? 'Publishing...' : 'Publish Listing'}</GreenBtn>
         </div>
       )}
 
+      {loadError&&<p role="alert">{loadError} <button onClick={load}>Retry</button></p>}
+      {listingTab==='products'&&<nav aria-label="Your product pages" style={{display:'flex',gap:16,alignItems:'center',marginBottom:16}}><button disabled={listingPage===1||loading} onClick={()=>setListingPage(p=>p-1)}>Previous</button><span>Page {listingPage}</span><button disabled={!moreListings||loading} onClick={()=>setListingPage(p=>p+1)}>Next</button></nav>}
       {/* Listings grid */}
-      {loading ? <Spinner /> : items.length === 0 ? (
+      {loading ? <Spinner /> : loadError ? null : items.length === 0 ? (
         <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:18, padding:'48px 24px', textAlign:'center' }}>
           <div style={{ fontSize:'2rem', marginBottom:10 }}>📋</div>
           <div style={{ fontWeight:800, color:'#111', marginBottom:6 }}>No {listingTab} yet</div>
@@ -868,6 +878,7 @@ function SellerListings() {
               <div style={{ padding:'12px 14px' }}>
                 <div style={{ fontSize:'0.83rem', fontWeight:700, color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', marginBottom:4 }}>{item.title}</div>
                 <div style={{ fontSize:'0.9rem', fontWeight:900, color:'#1f8f43', marginBottom:10 }}>₦{fmt(item.price)}</div>
+                {listingTab==='products'&&<InventoryEditor item={item} onSaved={()=>{setMsg('Inventory saved.');load();}}/>}
                 <div style={{ display:'flex', gap:8 }}>
                   <a href={`/${listingTab}/${item.id}`} style={{ flex:1, textAlign:'center', padding:'7px', background:'#f3f4f6', color:'#374151', borderRadius:8, fontSize:'0.75rem', fontWeight:700 }}>View</a>
                   <button onClick={() => deleteItem(item.id)} style={{ flex:1, padding:'7px', background:'#fef2f2', color:'#ef4444', border:'none', borderRadius:8, fontSize:'0.75rem', fontWeight:700, cursor:'pointer' }}>Remove</button>
@@ -1139,7 +1150,7 @@ export default function Dashboard() {
           Afri<span style={{ color:'#1f8f43' }}>Plate</span>
         </a>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          <a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Products</a>
+          <CartEntry /><a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Products</a>
           <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Services</a>
           <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Jobs</a>
           <a href="/notifications" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>🔔</a>
@@ -1156,4 +1167,10 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function InventoryEditor({item,onSaved}){
+ const [stock,setStock]=useState(item.stock_quantity??'');const [availability,setAvailability]=useState(item.availability||'available');const [message,setMessage]=useState('');const [saving,setSaving]=useState(false);
+ const save=async()=>{if(!/^(0|[1-9]\d*)$/.test(String(stock))||Number(stock)>2147483647){setMessage('Enter a valid whole-number quantity.');return;}setSaving(true);try{const response=await authFetch('/api/products/'+item.id,{method:'PUT',body:JSON.stringify({stock_quantity:Number(stock),availability})});const data=await response.json();if(!response.ok)throw Error(data.message||'Could not save inventory');setMessage('Inventory saved');onSaved();}catch(e){setMessage(e.message);}finally{setSaving(false);}};
+ return <div style={{marginBottom:12,display:'grid',gap:8}}><label>Quantity available<input aria-label={'Quantity available for '+item.title} type="number" min="0" step="1" value={stock} onChange={e=>setStock(e.target.value)} style={{width:'100%',padding:8,border:'1px solid #ccd6cf',borderRadius:8}}/></label>{item.stock_quantity==null&&<small>Stock not yet confirmed</small>}<select aria-label={'Availability for '+item.title} value={availability} onChange={e=>setAvailability(e.target.value)}><option value="available">Available</option><option value="paused">Paused</option></select><button onClick={save} disabled={saving}>Save inventory</button><p role="status">{message}</p></div>;
 }

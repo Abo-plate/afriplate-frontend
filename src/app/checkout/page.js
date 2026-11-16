@@ -75,6 +75,7 @@ function CheckoutPageInner() {
           body: JSON.stringify({
             [`${type}_id`]: itemId,
             type,
+            ...(type==='product'?{quantity:1,expected_unit_price:item?.price}:{}),
           }),
         });
         const oData = await oRes.json();

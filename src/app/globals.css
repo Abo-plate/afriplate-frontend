@@ -72,3 +72,8 @@ body {
   .ap-header-actions .account-logout { display: none; }
   .ap-mobile-menu .account-logout { padding: 8px 0; background: none; }
 }
+
+.cart-entry{display:inline-flex;align-items:center;gap:6px;color:#176d35;background:#edf8f0;padding:8px 10px;border-radius:10px;font-size:14px;font-weight:700;white-space:nowrap;text-decoration:none}.cart-entry strong{background:#176d35;color:white;border-radius:20px;min-width:20px;text-align:center;padding:1px 4px}.mobile-cart-entry{display:none}
+@media(max-width:768px){.mobile-cart-entry{display:block;position:fixed;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:110}.app-content{padding-bottom:calc(var(--mobile-nav-space) + 64px)}.mobile-input-active .mobile-cart-entry{display:none}.nav-right{flex-wrap:wrap}.nav-inner{height:auto!important;min-height:70px;padding-top:10px!important;padding-bottom:10px!important}.nav-btn{padding:8px!important}.nav-right .cart-entry{display:none}}
+
+@media(max-width:768px){.app-content .cart-entry{display:none}}
