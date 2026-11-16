@@ -3,7 +3,7 @@ import { listingCampus } from '../../lib/listingCampus';
 import { cartAPI } from '../../lib/services';
 import AccountLinks from '@/components/AccountLinks';
 import { useSession } from '../../lib/SessionProvider';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -74,7 +74,8 @@ export default function ProductPage() {
   const [orderState, setOrderState]   = useState('idle'); // idle | loading | success | error
   const [orderMsg, setOrderMsg]       = useState('');
   const [tab, setTab]                 = useState('description'); // description | reviews
-  const { user } = useSession();
+  const { user, status, refresh } = useSession();
+  const adding = useRef(false);
 
   useEffect(() => {
     if (!id) return;
@@ -109,10 +110,17 @@ export default function ProductPage() {
   }, [product]);
 
   const placeOrder = async () => {
-    if (!user) { window.location.href = '/login?next='+encodeURIComponent('/products/'+id); return; }
-    setOrderState('loading');setOrderMsg('');
-    try{await cartAPI.add({product_id:product.id,quantity:Number(qty),expected_unit_price:product.price});window.dispatchEvent(new Event('afriplate:cart'));setOrderState('success');setOrderMsg('Added to your cart. Review it from Cart.');}
-    catch(error){setOrderState('error');setOrderMsg(error.response?.data?.message||'Could not save to cart. Please try again.');}
+    if (adding.current) return;
+    if (status === 'guest') { window.location.href = '/login?next='+encodeURIComponent('/products/'+id); return; }
+    if (!user || status !== 'authenticated') { setOrderState('error');setOrderMsg('Your account could not be verified. Retry account verification before saving to cart.');return; }
+    adding.current = true;setOrderState('loading');setOrderMsg('');
+    try {
+      const {data} = await cartAPI.add({product_id:product.id,quantity:Number(qty),expected_unit_price:product.price});
+      if (!Number.isSafeInteger(data.item?.id) || data.item.product_id !== product.id || !Number.isSafeInteger(data.item.quantity) || data.item.quantity < 1) throw new Error('Invalid cart confirmation');
+      window.dispatchEvent(new Event('afriplate:cart'));setOrderState('success');setOrderMsg('Added to your cart. Review it from Cart.');
+    } catch(error) {
+      setOrderState('error');setOrderMsg(error.response?.status === 401 ? 'Your session expired. Log in again to save this item.' : error.response?.data?.message || 'Could not confirm the cart update. Check your cart before retrying.');
+    } finally { adding.current = false; }
   };
 
   const messagesSeller = () => {
@@ -378,7 +386,7 @@ export default function ProductPage() {
                 </button>
               </div>
 
-              <p style={{marginBottom:12,color:'#176d35',fontWeight:700}}>{product.availability==='paused'?'Paused':product.stock_quantity==null?'Stock awaiting seller confirmation':product.stock_quantity===0?'Sold out':product.stock_quantity+' available'}</p>
+              <p id="cart-availability" role="status" style={{marginBottom:12,color:'#176d35',fontWeight:700}}>{product.availability==='paused'?'Paused':product.stock_quantity==null?'Stock awaiting seller confirmation. This item cannot be added to your cart until the seller enters a quantity. Message the seller to ask about availability.':product.stock_quantity===0?'Sold out':product.stock_quantity+' available'}</p>
               <label style={{display:'block',marginBottom:16}}>Quantity <input aria-label="Quantity" type="number" min="1" max={product.stock_quantity||1} step="1" value={qty} onChange={e=>setQty(e.target.value)} style={{width:80,padding:8,border:'1px solid #cbd5cf',borderRadius:8}}/></label>
               {/* Fee breakdown */}
               <div style={{ background:'#f8fafc', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
@@ -392,7 +400,7 @@ export default function ProductPage() {
                 <div style={{ background:'#eaf8ee', border:'1px solid #bbf7d0', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'#1f8f43', marginBottom:14 }}>{orderMsg}</div>
               )}
               {orderState === 'error' && (
-                <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'#dc2626', marginBottom:14 }}>{orderMsg}</div>
+                <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'#dc2626', marginBottom:14 }}>{orderMsg}{status === 'unavailable' && <button onClick={refresh}>Retry account verification</button>}{status === 'guest' && <a href={'/login?next='+encodeURIComponent('/products/'+id)}>Log in</a>}</div>
               )}
 
               {/* Action buttons */}
@@ -403,6 +411,7 @@ export default function ProductPage() {
               ) : product.status === 'active' || product.is_active !== false ? (
                 <>
                   <button
+                    aria-describedby="cart-availability"
                     className="order-btn order-primary"
                     onClick={placeOrder}
                     disabled={orderState === 'loading' || product.availability==='paused' || product.stock_quantity==null || product.stock_quantity===0 || !Number.isInteger(Number(qty)) || Number(qty)<1 || Number(qty)>product.stock_quantity}

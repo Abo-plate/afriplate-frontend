@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useSession } from '../app/lib/SessionProvider';
 import { cartAPI } from '../app/lib/services';
 const CartContext = createContext(null);
@@ -13,20 +13,22 @@ export function CartProvider({
     user
   } = useSession();
   const [cart, setCart] = useState(null);
+  const latest = useRef(0);
   useEffect(() => {
     if (!isAuthed) return;
     let active = true;
     const refresh = async () => {
+      const request = ++latest.current;
       try {
         const {
           data
         } = await cartAPI.get();
-        if (active) setCart({
+        if (active && request === latest.current) setCart({
           userId: user.id,
           count: data.summary?.item_count
         });
       } catch {
-        if (active) setCart(null);
+        if (active && request === latest.current) setCart(null);
       }
     };
     refresh();

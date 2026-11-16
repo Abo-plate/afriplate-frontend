@@ -1,0 +1,4 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync(require('node:path').join(__dirname,'../src/app/lib/conversationLabel.js'),'utf8').replace('export function','function')+';module.exports=conversationLabel;';
+const context={module:{exports:{}}};vm.runInNewContext(source,context);const label=context.module.exports;
+test('threads clearly distinguish products, services and direct chats',()=>{assert.equal(label({product_id:2,product_title:'Laptop'}),'Product: Laptop (#2)');assert.equal(label({product_id:3,product_title:'Laptop'}),'Product: Laptop (#3)');assert.equal(label({service_id:2,service_title:'Repair'}),'Service: Repair (#2)');assert.equal(label({}),'Direct conversation');assert.equal(label({product_id:4}),'Product: Listing (#4)');});

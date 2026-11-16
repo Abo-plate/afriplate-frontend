@@ -45,7 +45,7 @@ async function main() {
   }
 
   const product={id:9302,seller_id:9003,title:'Silver laptop',description:'Isolated browser fixture',price:'2000.00',category:'Electronics',university:'Campus A',stock_quantity:4,availability:'available',status:'active',images:[]};
-  let cartItems=[],nextId=1,failCart=false;
+  let cartItems=[],nextId=1,failCart=false,failAdd=0,malformedConfirmation=false;
   const mutations=[];
   const items=()=>cartItems.map(item=>({...item,title:product.title,seller_name:'Fixture Seller',price:product.price,stock_quantity:product.stock_quantity,available:true,subtotal_kobo:200000*item.quantity,fee_kobo:1000*item.quantity,total_kobo:201000*item.quantity}));
   ws.onmessage=async message=>{
@@ -70,7 +70,7 @@ async function main() {
         if(failCart){responseCode=503;data={message:'Fixture unavailable'};}
         else{const n=cartItems.reduce((sum,item)=>sum+item.quantity,0);data={items:items(),summary:{item_count:n,subtotal_kobo:200000*n,fee_kobo:1000*n,total_kobo:201000*n}};}
       }
-      if(url.pathname==='/api/cart'&&request.method==='POST'){const payload=JSON.parse(request.postData);let item=cartItems.find(item=>item.product_id===payload.product_id);if(item)item.quantity+=payload.quantity;else{item={id:nextId++,product_id:payload.product_id,quantity:payload.quantity};cartItems.push(item);}data={item};}
+      if(url.pathname==='/api/cart'&&request.method==='POST'){if(failAdd){responseCode=failAdd;data={message:failAdd===409?'The price has changed. Refresh and review the current price.':'Session expired'};}else if(malformedConfirmation){data={message:'Not a saved cart item'};}else{const payload=JSON.parse(request.postData);let item=cartItems.find(item=>item.product_id===payload.product_id);if(item)item.quantity+=payload.quantity;else{item={id:nextId++,product_id:payload.product_id,quantity:payload.quantity};cartItems.push(item);}data={item};}}
       if(/^\/api\/cart\/\d+$/.test(url.pathname)){const id=Number(url.pathname.split('/').pop());if(request.method==='DELETE')cartItems=cartItems.filter(item=>item.id!==id);else if(request.method==='PUT'){cartItems.find(item=>item.id===id).quantity=JSON.parse(request.postData).quantity;}data={message:'Saved'};}
       if(request.method==='OPTIONS')responseCode=200;
       await send('Fetch.fulfillRequest',{requestId,responseCode,responseHeaders:[{name:'Content-Type',value:'application/json'},{name:'Access-Control-Allow-Origin',value:'*'},{name:'Access-Control-Allow-Headers',value:'*'},{name:'Access-Control-Allow-Methods',value:'*'}],body:Buffer.from(request.method==='OPTIONS'?'':JSON.stringify(data)).toString('base64')});
@@ -122,6 +122,19 @@ async function main() {
     assert.ok(requests.some(url=>url.includes('/api/products?')&&url.includes('q=laptop')&&url.includes('category=Electronics')&&url.includes('university=FUTA')&&url.includes('sort=price_desc')));
     await evaluate(`const el=document.querySelector('.search-input');const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;set.call(el,'');el.dispatchEvent(new Event('input',{bubbles:true}));`);await sleep(500);
     assert.equal(await evaluate('new URLSearchParams(location.search).has("q")'),false);
+  });
+  await check('unknown stock explains why Add to cart is disabled and sends no request',async()=>{
+    product.stock_quantity=null;await navigate('/products/9302');await until(`document.body.innerText.includes('until the seller enters a quantity')`,'unknown-stock explanation');
+    const before=mutations.filter(m=>m.path==='/api/cart').length;
+    await click('Add to cart');await sleep(300);assert.equal(mutations.filter(m=>m.path==='/api/cart').length,before);assert.equal(cartItems.length,0);
+    assert.ok(await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Add to cart').disabled`));product.stock_quantity=4;
+  });
+  await check('failed and malformed cart confirmations show errors without success or badge events',async()=>{
+    await navigate('/products/9302');await until(`!!document.querySelector('[aria-label="Quantity"]')`,'product ready');
+    await evaluate(`window.cartEvents=0;window.addEventListener('afriplate:cart',()=>window.cartEvents++);`);
+    failAdd=409;await click('Add to cart');await until(`document.body.innerText.includes('The price has changed')`,'server rejection');assert.equal(await evaluate('window.cartEvents'),0);assert.equal(cartItems.length,0);
+    failAdd=0;malformedConfirmation=true;await click('Add to cart');await until(`document.body.innerText.includes('Could not confirm the cart update')`,'malformed acknowledgement');assert.equal(await evaluate('window.cartEvents'),0);assert.equal(cartItems.length,0);malformedConfirmation=false;
+    failAdd=401;await click('Add to cart');await until(`document.body.innerText.includes('Your session expired')`,'expired session');assert.equal(await evaluate('window.cartEvents'),0);assert.equal(cartItems.length,0);failAdd=0;await evaluate('localStorage.setItem("token","navigation-test-session")');
   });
   await check('add quantity, cart persistence, badge, quantity update and remove',async()=>{
     await navigate('/products/9302');await until(`!!document.querySelector('[aria-label="Quantity"]')`,'quantity input');
