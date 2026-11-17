@@ -3,6 +3,7 @@ import AccountLinks from "./AccountLinks";
 import { listingCampus } from "../app/lib/listingCampus";
 import { useState } from "react";
 import Link from "next/link";
+import "./marketplace-header.css";
 
 export function Icon({ name = "arrow", ...props }) {
   const paths = {
@@ -61,6 +62,7 @@ export function MarketplaceHeader() {
         <div className="ap-header-actions">
           <AccountLinks variant="home" />
           <button
+            type="button"
             className="ap-menu-button"
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
@@ -77,9 +79,9 @@ export function MarketplaceHeader() {
           className="ap-mobile-menu"
           aria-label="Mobile navigation"
         >
-          <Link href="/products">Products</Link>
-          <Link href="/services">Services</Link>
-          <Link href="/jobs">Jobs</Link>
+          <Link href="/products" onClick={() => setOpen(false)}>Products</Link>
+          <Link href="/services" onClick={() => setOpen(false)}>Services</Link>
+          <Link href="/jobs" onClick={() => setOpen(false)}>Jobs</Link>
           <AccountLinks variant="menu" onNavigate={() => setOpen(false)} />
         </nav>
       )}

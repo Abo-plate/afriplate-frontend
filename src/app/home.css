@@ -44,52 +44,6 @@
   padding-left: 40px;
   padding-right: 40px;
 }
-.ap-header {
-  border-bottom: 1px solid var(--ap-line);
-  background: white;
-}
-.ap-header-inner {
-  height: 94px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 30px;
-}
-.ap-brand {
-  display: inline-flex;
-  align-items: center;
-  font-size: 26px;
-  font-weight: var(--ap-weight-heading);
-  letter-spacing: -1.2px;
-  white-space: nowrap;
-}
-.ap-brand > span:not(.ap-brand-mark) {
-  color: var(--ap-color-primary);
-}
-.ap-brand-mark {
-  width: 35px;
-  height: 37px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: var(--ap-green);
-  color: #fff;
-  margin-right: 9px;
-}
-.ap-brand-dot {
-  font-size: 32px;
-}
-.ap-desktop-nav,
-.ap-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-}
-.ap-desktop-nav a,
-.ap-login {
-  font-size: 14px;
-  font-weight: 600;
-}
 .ap-home a:hover {
   color: var(--ap-color-primary-hover);
 }
@@ -118,9 +72,6 @@
   background: var(--ap-color-primary-hover);
   color: #fff;
   transform: translateY(-2px);
-}
-.ap-menu-button {
-  display: none;
 }
 .ap-hero {
   background: var(--ap-paper);
@@ -767,9 +718,6 @@
 .ap-skip:focus {
   transform: translateY(0);
 }
-.ap-mobile-menu {
-  display: none;
-}
 @media (min-width: 768px) {
   body {
     padding-bottom: 0;
@@ -779,13 +727,6 @@
   .ap-container {
     padding-left: 28px;
     padding-right: 28px;
-  }
-  .ap-header-inner {
-    gap: 15px;
-  }
-  .ap-desktop-nav,
-  .ap-header-actions {
-    gap: 20px;
   }
   .ap-hero-grid {
     gap: 25px;
@@ -824,53 +765,6 @@
   .ap-container {
     padding-left: 22px;
     padding-right: 22px;
-  }
-  .ap-header-inner {
-    height: 76px;
-  }
-  .ap-brand {
-    font-size: 23px;
-  }
-  .ap-brand-mark {
-    width: 30px;
-    height: 32px;
-    border-radius: 8px;
-  }
-  .ap-header-actions {
-    gap: 10px;
-  }
-  .ap-header-actions > .ap-button {
-    padding: 9px 12px;
-    min-height: 42px;
-    font-size: 12px;
-  }
-  .ap-header-actions > .ap-button svg {
-    display: none;
-  }
-  .ap-desktop-nav,
-  .ap-login {
-    display: none;
-  }
-  .ap-menu-button {
-    display: grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    border: 1px solid var(--ap-line);
-    background: #fff;
-    border-radius: var(--ap-radius-control);
-    color: var(--ap-green);
-  }
-  .ap-mobile-menu {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 12px 22px;
-    gap: 8px 24px;
-    border-top: 1px solid var(--ap-line);
-    font-size: 13px;
-  }
-  .ap-mobile-menu a {
-    padding: 8px 0;
   }
   .ap-hero-grid {
     grid-template-columns: 1fr;
@@ -1154,9 +1048,6 @@ body:has(.ap-home) {
   font-weight: var(--ap-weight-button);
 }
 @media (max-width: 767px) {
-  .ap-header-actions > .ap-button {
-    font-size: 0.8rem;
-  }
   .ap-hero-actions {
     flex-wrap: wrap;
     gap: 12px 22px;

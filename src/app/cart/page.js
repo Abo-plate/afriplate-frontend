@@ -1,6 +1,5 @@
 "use client";
 
-import '../home.css';
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from '../lib/SessionProvider';
 import { cartAPI } from '../lib/services';

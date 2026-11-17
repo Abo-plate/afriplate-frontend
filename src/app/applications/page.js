@@ -1,15 +1,139 @@
 "use client";
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import Link from 'next/link';
 import api from '../lib/api';
 import {useSession} from '../lib/SessionProvider';
 import {useWorkflowCommand} from '../lib/useWorkflowCommand';
-import {MarketplaceHeader} from '@/components/Marketplace';
+import {statusLabel} from '../lib/statusLabel';
+import {Icon, MarketplaceHeader} from '@/components/Marketplace';
 import {PortfolioReferences} from '@/components/JobApplicationsPanel';
-export default function MyApplications(){
- const {status,refresh,user}=useSession();const [applications,setApplications]=useState([]),[jobs,setJobs]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');const {command,busy}=useWorkflowCommand();
- const version=useRef(0);const [loadedUser,setLoadedUser]=useState(null);
- const load=useCallback(async()=>{if(status!=='authenticated')return;const request=++version.current;setLoading(true);try{const [a,j]=await Promise.all([api.get('/jobs/applications/mine'),api.get('/jobs/posted/mine')]);if(request!==version.current)return;setLoadedUser(user.id);setApplications(a.data.applications);setJobs(j.data.jobs);setError('');}catch(e){if(request===version.current)setError(e.response?.data?.message||'Could not load your applications and jobs.');}finally{if(request===version.current)setLoading(false);}},[status,user?.id]);
- useEffect(()=>{setApplications([]);setJobs([]);load();return()=>{version.current++;};},[load]);
- const withdraw=async a=>{setError('');setNotice('');try{await command('/jobs/'+a.job_id+'/applications/withdraw',{application_id:a.id});await load();setNotice('Application withdrawn.');}catch(e){setError(e.response?.data?.message||e.message);}};
- return <><MarketplaceHeader/><main><h1>My applications and posted jobs</h1>{status==='authenticated'&&<button disabled={loading||busy} onClick={load}>Refresh applications and jobs</button>}{status==='checking'?<p>Checking account...</p>:status==='guest'?<p><a href="/login?next=%2Fapplications">Log in</a> to view private applications.</p>:status!=='authenticated'?<p role="alert">Account unavailable. <button onClick={refresh}>Retry</button></p>:<>{error&&<p role="alert">{error} <button onClick={load}>Retry</button></p>}{notice&&<p role="status">{notice}</p>}{loading?<p role="status">Loading applications...</p>:!error&&loadedUser===user.id&&<><section><h2>Applications I submitted</h2>{applications.length===0?<p>No applications yet. <a href="/jobs">Browse jobs</a>.</p>:applications.map(a=><article key={a.id}><h3><a href={'/jobs/'+a.job_id}>{a.job_title}</a></h3><p>Status: {a.status}</p><p className="proposal">{a.proposal}</p><PortfolioReferences items={a.portfolio_snapshot}/>{a.status==='applied'&&<button disabled={busy} onClick={()=>withdraw(a)}>Withdraw</button>}{a.order_id&&<a href={'/orders/'+a.order_id}>Open order workspace #{a.order_id}</a>}</article>)}</section><section><h2>Jobs I posted</h2><p>Select a job to review private applications and choose one applicant. Selecting an applicant does not pay them.</p>{jobs.length===0?<p>No posted jobs.</p>:jobs.map(j=><article key={j.id}><h3><a href={'/jobs/'+j.id}>{j.title}</a></h3><p>{j.application_count} applications; {j.is_filled?'filled':j.is_active?'open':'closed'}</p><a href={'/jobs/'+j.id}>Review applications</a></article>)}</section></>}</>}</main><style jsx>{`main{max-width:1100px;margin:auto;padding:28px 24px 100px;font:15px/1.65 Inter,sans-serif;color:#243b2c}h1{font-size:26px;font-weight:800;margin-bottom:24px}h2{font-size:21px;font-weight:800;margin-bottom:16px}h3{font-size:17px;font-weight:700}section{padding:24px;background:#fff;border:1px solid #dce5df;border-radius:16px;margin-bottom:24px}article{padding:16px 0;border-top:1px solid #dce5df}p{margin:10px 0;color:#53655a}.proposal{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#176d35;font-weight:700}button{padding:9px 13px;border:1px solid #bdd3c4;border-radius:9px;background:#edf8f0;color:#176d35;font-weight:700;margin-right:12px;cursor:pointer}button:disabled{opacity:.5}@media(max-width:650px){main{padding:20px 16px 100px}section{padding:18px}}`}</style></>;
+import styles from './applications.module.css';
+
+const tabs = ['sent', 'posted'];
+const applicationStatus = {applied: 'Application sent', withdrawn: 'Withdrawn', rejected: 'Not selected', hired: 'Selected'};
+const formatDate = value => {
+  if (!value || !Number.isFinite(Date.parse(value))) return null;
+  return new Date(value).toLocaleDateString('en-NG', {day: 'numeric', month: 'short', year: 'numeric'});
+};
+const postedStatus = job => job.is_filled === true ? 'Position filled' : job.is_active === false ? 'Closed'
+  : job.deadline && Date.parse(job.deadline) <= Date.now() ? 'Deadline passed' : job.is_active === true ? 'Open' : 'Status unavailable';
+
+export default function MyApplications() {
+  const {status, refresh, user} = useSession();
+  const [applications, setApplications] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [tab, setTab] = useState('sent');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [loadedUser, setLoadedUser] = useState(null);
+  const {command, busy} = useWorkflowCommand();
+  const version = useRef(0);
+
+  const load = useCallback(async () => {
+    if (status !== 'authenticated') return;
+    const request = ++version.current;
+    setLoading(true);
+    try {
+      const [sent, posted] = await Promise.all([
+        api.get('/jobs/applications/mine'), api.get('/jobs/posted/mine'),
+      ]);
+      if (!Array.isArray(sent.data.applications) || !Array.isArray(posted.data.jobs)) throw Error('Invalid application response');
+      if (request !== version.current) return;
+      setLoadedUser(user.id);
+      setApplications(sent.data.applications);
+      setJobs(posted.data.jobs);
+      setError('');
+    } catch (problem) {
+      if (request === version.current) setError(problem.response?.data?.message || 'Could not load your applications and jobs. Please retry.');
+    } finally {
+      if (request === version.current) setLoading(false);
+    }
+  }, [status, user?.id]);
+
+  useEffect(() => {
+    setApplications([]); setJobs([]); setLoadedUser(null); setNotice(''); setError('');
+    load();
+    return () => { version.current++; };
+  }, [load]);
+  useEffect(() => {
+    const sync = () => setTab(window.location.hash === '#posted' ? 'posted' : 'sent');
+    sync(); window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+
+  const selectTab = next => {
+    setTab(next);
+    window.history.replaceState(null, '', '#'+next);
+  };
+  const navigateTabs = event => {
+    const next = event.key === 'ArrowRight' || event.key === 'ArrowLeft' ? tabs[1-tabs.indexOf(tab)]
+      : event.key === 'Home' ? 'sent' : event.key === 'End' ? 'posted' : null;
+    if (!next) return;
+    event.preventDefault(); selectTab(next);
+    document.getElementById('applications-'+next+'-tab')?.focus();
+  };
+  const withdraw = async application => {
+    setError(''); setNotice('');
+    try {
+      await command('/jobs/'+application.job_id+'/applications/withdraw', {application_id: application.id});
+      setNotice('Application withdrawn.');
+      await load();
+    } catch (problem) {
+      setError(problem.response?.data?.message || problem.message || 'Withdrawal was not confirmed. Please retry.');
+    }
+  };
+  const ready = status === 'authenticated' && loadedUser === user?.id && !loading && !error;
+  const ownName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'You';
+
+  return <div className={styles.page}>
+    <MarketplaceHeader/>
+    <main className={styles.container}>
+      <header className={styles.pageHeader}>
+        <div><p className={styles.eyebrow}>YOUR OPPORTUNITIES</p><h1>My applications</h1><p>Keep up with jobs you applied for and manage the jobs you posted.</p></div>
+        {status === 'authenticated' && <button type="button" className={styles.button} disabled={loading || busy} onClick={load}>{loading ? 'Refreshing...' : 'Refresh'}</button>}
+      </header>
+      {status === 'checking' ? <p className={styles.feedback} role="status">Checking your account...</p>
+        : status === 'guest' ? <div className={styles.feedback}><p>Log in to view your private applications and posted jobs.</p><Link className={styles.textLink} href="/login?next=%2Fapplications">Log in</Link></div>
+        : status !== 'authenticated' ? <div className={styles.feedback} role="alert"><p>Your account is unavailable.</p><button className={styles.button} onClick={refresh}>Retry account</button></div>
+        : <>
+          <div className={styles.tabs} role="tablist" aria-label="Applications and jobs" onKeyDown={navigateTabs}>
+            {tabs.map((key, index) => <button key={key} type="button" role="tab" id={'applications-'+key+'-tab'} aria-controls={'applications-'+key+'-panel'} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} onClick={() => selectTab(key)}>
+              {index === 0 ? 'Applications sent' : 'Jobs posted'}{ready && <span className={styles.count}>{index === 0 ? applications.length : jobs.length}</span>}
+            </button>)}
+          </div>
+          {notice && <p className={styles.notice} role="status">{notice}</p>}
+          {error && <div className={styles.feedback} role="alert"><p>{error}</p><button className={styles.button} disabled={busy || loading} onClick={load}>Retry</button></div>}
+          {loading && <p className={styles.feedback} role="status">Loading {tab === 'sent' ? 'your applications' : 'your posted jobs'}...</p>}
+          <section className={styles.panel} role="tabpanel" id={'applications-'+tab+'-panel'} aria-labelledby={'applications-'+tab+'-tab'} tabIndex={0} aria-busy={loading}>
+            {ready && (tab === 'sent' ? applications.length === 0
+              ? <EmptyState icon="search" title="You haven’t applied for a job yet" description="Find an opportunity that matches your skills and send your first application." href="/jobs" action="Browse jobs"/>
+              : <div className={styles.list}>{applications.map(application => {
+                const sentDate = formatDate(application.created_at);
+                return <article className={styles.card} key={application.id}>
+                  <div className={styles.cardHeading}><div><h2><Link href={'/jobs/'+application.job_id}>{application.job_title}</Link></h2><p className={styles.meta}>{application.company || application.poster_name || 'Job poster #'+application.poster_id}{sentDate && <> <span aria-hidden="true">&middot;</span> Applied {sentDate}</>}</p></div><span className={styles.status} data-success={application.status === 'hired'}>{applicationStatus[application.status] || statusLabel(application.status)}</span></div>
+                  <div className={styles.actions}>
+                    <Link className={`${styles.button} ${styles.primary}`} href={application.order_id ? '/orders/'+application.order_id : '/jobs/'+application.job_id}>{application.order_id ? 'Open order workspace' : 'View job'}<Icon name="arrow"/></Link>
+                    {application.status === 'applied' && <button className={styles.textButton} disabled={busy} onClick={() => withdraw(application)}>Withdraw application</button>}
+                  </div>
+                  <details className={styles.details}><summary>View your proposal and portfolio references</summary><p className={styles.proposal}>{application.proposal}</p><PortfolioReferences items={application.portfolio_snapshot}/></details>
+                </article>;
+              })}</div>
+              : jobs.length === 0
+                ? <EmptyState icon="work" title="You haven’t posted a job yet" description="Share what you need help with and find someone with the right skills." href="/jobs/create" action="Post a job"/>
+                : <div className={styles.list}>{jobs.map(job => {
+                  const postedDate = formatDate(job.created_at);
+                  const count = Number.isSafeInteger(job.application_count) && job.application_count >= 0 ? job.application_count : null;
+                  return <article className={styles.card} key={job.id}>
+                    <div className={styles.cardHeading}><div><h2><Link href={'/jobs/'+job.id}>{job.title}</Link></h2><p className={styles.meta}>Posted by {ownName}{postedDate && <> <span aria-hidden="true">&middot;</span> {postedDate}</>}</p></div><span className={styles.status}>{postedStatus(job)}</span></div>
+                    <div className={styles.cardFooter}>{count !== null && <p className={styles.applicationCount}>{count} application{count === 1 ? '' : 's'}</p>}<Link className={`${styles.button} ${styles.primary}`} href={'/jobs/'+job.id}>Review applications<Icon name="arrow"/></Link></div>
+                  </article>;
+                })}</div>)}
+          </section>
+        </>}
+    </main>
+  </div>;
+}
+function EmptyState({icon, title, description, href, action}) {
+  return <div className={styles.empty}><span className={styles.emptyIcon}><Icon name={icon} width="26" height="26"/></span><h2>{title}</h2><p>{description}</p><Link className={`${styles.button} ${styles.primary}`} href={href}>{action}<Icon name="arrow"/></Link></div>;
 }
