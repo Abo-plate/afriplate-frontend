@@ -1,10 +1,12 @@
 'use client';
+import JobApplicationsPanel from '@/components/JobApplicationsPanel';
+import {API_ORIGIN} from '../../lib/endpoints';
 import { listingCampus } from '../../lib/listingCampus';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API = API_ORIGIN;
 
 function getToken() {
   if (typeof window === 'undefined') return null;
@@ -51,10 +53,6 @@ export default function JobPage() {
   const [job, setJob]               = useState(null);
   const [related, setRelated]       = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [applyState, setApplyState] = useState('idle'); // idle | form | loading | success | error
-  const [applyMsg, setApplyMsg]     = useState('');
-  const [coverLetter, setCoverLetter] = useState('');
-  const [hasApplied, setHasApplied] = useState(false);
   const { user } = useSession();
 
   useEffect(() => {
@@ -66,16 +64,6 @@ export default function JobPage() {
         if (res.ok) {
           const d = await res.json();
           setJob(d.job || d.data || d);
-        }
-        // Check if user already applied
-        if (getToken()) {
-          const aRes = await fetch(`${API}/api/jobs/${id}/applied`, {
-            headers: { Authorization: `Bearer ${getToken()}` }
-          });
-          if (aRes.ok) {
-            const aData = await aRes.json();
-            setHasApplied(aData.applied || false);
-          }
         }
       } catch {}
       setLoading(false);
@@ -90,27 +78,6 @@ export default function JobPage() {
       .then(d => setRelated((d.jobs || d.data || []).filter(j => j.id !== job.id).slice(0, 3)))
       .catch(() => {});
   }, [job]);
-
-  const submitApplication = async () => {
-    if (!getToken()) { window.location.href = '/login'; return; }
-    if (!coverLetter.trim()) { setApplyMsg('Please write a short cover letter.'); return; }
-    setApplyState('loading');
-    try {
-      const res = await fetch(`${API}/api/jobs/${id}/apply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ cover_letter: coverLetter }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setApplyMsg(data.message || 'Application failed.'); setApplyState('error'); return; }
-      setApplyState('success');
-      setHasApplied(true);
-      setApplyMsg('Application submitted! The poster will be in touch.');
-    } catch {
-      setApplyMsg('Connection error. Please try again.');
-      setApplyState('error');
-    }
-  };
 
   const messagesPoster = () => {
     window.location.href = `/messages?to=${job?.poster_id}`;
@@ -354,78 +321,18 @@ export default function JobPage() {
                 </div>
               ) : (
                 <div style={{ background:'#f8fafc', borderRadius:12, padding:'14px 16px', marginBottom:18, textAlign:'center' }}>
-                  <div style={{ fontSize:'0.85rem', fontWeight:700, color:'#374151' }}>Budget negotiable</div>
-                  <div style={{ fontSize:'0.75rem', color:'#9ca3af', marginTop:2 }}>Discuss payment with the poster</div>
+                  <div style={{ fontSize:'0.85rem', fontWeight:700, color:'#374151' }}>Budget not provided</div>
+                  <div style={{ fontSize:'0.75rem', color:'#9ca3af', marginTop:2 }}>No payment occurs through hiring</div>
                 </div>
               )}
 
-              {/* State: owner */}
-              {isOwner ? (
-                <div style={{ textAlign:'center', padding:'16px', background:'#f8fafc', borderRadius:12 }}>
-                  <div style={{ fontSize:'0.85rem', fontWeight:700, color:'#374151', marginBottom:8 }}>This is your job posting</div>
-                  <a href={`/jobs/${id}/edit`} style={{ display:'block', padding:'11px', background:'#eaf8ee', color:'#1f8f43', borderRadius:10, fontSize:'0.85rem', fontWeight:800 }}>
-                    Edit Listing
-                  </a>
-                </div>
-
-              /* State: already applied */
-              ) : hasApplied || applyState === 'success' ? (
-                <div style={{ textAlign:'center', padding:'18px', background:'#eaf8ee', border:'1px solid #bbf7d0', borderRadius:14 }}>
-                  <div style={{ fontSize:'1.4rem', marginBottom:6 }}>✓</div>
-                  <div style={{ fontSize:'0.9rem', fontWeight:800, color:'#1f8f43', marginBottom:4 }}>Application Sent!</div>
-                  <div style={{ fontSize:'0.78rem', color:'#6b7280' }}>{applyMsg || 'The poster will review your application and reach out.'}</div>
-                </div>
-
-              /* State: expired */
-              ) : isExpired ? (
-                <div style={{ textAlign:'center', padding:'16px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:12 }}>
-                  <div style={{ fontSize:'0.85rem', fontWeight:700, color:'#ef4444' }}>This job has expired</div>
-                </div>
-
-              /* State: apply form */
-              ) : applyState === 'form' || applyState === 'loading' || applyState === 'error' ? (
-                <div>
-                  <div className="apply-title">Write a cover letter</div>
-                  <div className="apply-sub">Tell the poster why you're the right fit</div>
-                  <textarea
-                    className="apply-textarea"
-                    placeholder={`Hi, I'm interested in this ${job.type || 'job'} opportunity. I have experience in ${job.category || 'this field'} and...`}
-                    value={coverLetter}
-                    onChange={e => { setCoverLetter(e.target.value); setApplyMsg(''); }}
-                  />
-                  {applyMsg && (
-                    <div style={{ marginTop:8, marginBottom:8, fontSize:'0.8rem', fontWeight:600, color: applyState === 'error' ? '#ef4444' : '#1f8f43' }}>
-                      {applyMsg}
-                    </div>
-                  )}
-                  <button className="primary-btn" style={{ marginTop:12 }} onClick={submitApplication} disabled={applyState === 'loading'}>
-                    {applyState === 'loading' ? <><span className="btn-spinner" /> Submitting...</> : 'Submit Application'}
-                  </button>
-                  <button className="secondary-btn" onClick={() => { setApplyState('idle'); setApplyMsg(''); }}>
-                    Cancel
-                  </button>
-                </div>
-
-              /* State: idle */
-              ) : (
-                <>
-                  <button className="primary-btn" onClick={() => {
-                    if (!getToken()) { window.location.href = '/login'; return; }
-                    setApplyState('form');
-                  }}>
-                    Apply for this Job
-                  </button>
-                  <button className="secondary-btn" onClick={messagesPoster}>
-                    Message Poster First
-                  </button>
-                </>
-              )}
+              <JobApplicationsPanel job={job}/>
 
               {/* Quick stats */}
               {!isOwner && !isExpired && (
                 <div style={{ marginTop:18, paddingTop:16, borderTop:'1px solid #f3f4f6', display:'flex', justifyContent:'space-around' }}>
                   {[
-                    { label:'Applicants', value: job.applicant_count || 0 },
+                    { label:'Applications', value: 'Private' },
                     { label:'Days left',  value: daysLeft !== null ? daysLeft : '—' },
                     { label:'Type',       value: job.type || '—' },
                   ].map(s => (

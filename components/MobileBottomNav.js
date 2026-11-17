@@ -56,7 +56,7 @@ export default function MobileBottomNav() {
   }, [isAuthed, user?.id]);
   const explore = /^\/(products|services|jobs|sellers|university)(?:\/|$)/.test(pathname);
   const selling = pathname === '/dashboard' && hash.startsWith('#sell-');
-  const active = pathname === '/' ? 'Home' : explore ? 'Explore' : selling ? 'Sell' : pathname === '/messages' || hash === '#messages' ? 'Messages' : /^\/(dashboard|login|register|wallet|cart|checkout)(?:\/|$)/.test(pathname) ? 'Account' : null;
+  const active = pathname === '/' ? 'Home' : explore ? 'Explore' : selling ? 'Sell' : pathname === '/messages' || hash === '#messages' ? 'Messages' : /^\/(dashboard|login|register|wallet|cart|checkout|orders|applications)(?:\/|$)/.test(pathname) ? 'Account' : null;
   const seller = user?.user_type === 'seller' || user?.role === 'seller';
   const canSell = seller && user?.is_active !== false && !user?.is_banned;
   const unreadCount = unread && user && unread.userId === user.id ? unread.count : null;

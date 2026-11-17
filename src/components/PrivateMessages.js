@@ -21,7 +21,7 @@ const merge = (previous, incoming) => Array.from(new Map([...previous, ...incomi
 function Avatar({ name = '' }) {
   return <span className="chat-avatar">{name.charAt(0).toUpperCase() || 'U'}<style jsx>{`.chat-avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#1f8f43,#4ade80);color:white;font-weight:800;flex-shrink:0}`}</style></span>;
 }
-export default function PrivateMessages({ embedded = false }) {
+export default function PrivateMessages({ embedded = false, orderId = null }) {
   const { user, status, refresh } = useSession();
   const router = useRouter();
   const params = useSearchParams();
@@ -42,26 +42,27 @@ export default function PrivateMessages({ embedded = false }) {
   const invalidate = useCallback(() => { generation.current++; }, []);
   const loadConversations = useCallback(async () => {
     const data = await request('');
-    setConversations(data.conversations || []);
-  }, []);
+    setConversations((data.conversations || []).filter(conversation=>!orderId||conversation.order_id===Number(orderId)));
+  }, [orderId]);
   useEffect(() => {
     if (status !== 'guest') return;
+    if(orderId){router.replace('/login?next='+encodeURIComponent('/orders/'+orderId));return;}
     const context = new URLSearchParams();
     if (to) context.set('to', to);
     if (product) context.set('product_id', product);
     if (service) context.set('service_id', service);
     router.replace('/login?next=' + encodeURIComponent('/messages' + (context.size ? '?' + context : '')));
-  }, [status, router, to, product, service]);
+  }, [status, router, to, product, service, orderId]);
   useEffect(() => {
     if (status !== 'authenticated') return;
     let cancelled = false;
     const start = async () => {
       try {
         await loadConversations();
-        if (to) {
-          if (Number(to) === user.id) throw new Error('You cannot message yourself');
-          const data = await request('/conversations', { method: 'POST', body: JSON.stringify({ seller_id: to, product_id: product || undefined, service_id: service || undefined }) });
-          if (!cancelled) { setActive({ ...data.conversation, user_id: Number(to) }); await loadConversations(); }
+        if (to || orderId) {
+          if (!orderId && Number(to) === user.id) throw new Error('You cannot message yourself');
+          const data = await request('/conversations', { method: 'POST', body: JSON.stringify(orderId?{order_id:Number(orderId)}:{ seller_id: to, product_id: product || undefined, service_id: service || undefined }) });
+          if (!cancelled) { setMessages([]);setText('');setAttachments([]);setActive({ ...data.conversation, user_id: data.conversation.buyer_id===user.id?data.conversation.seller_id:data.conversation.buyer_id }); await loadConversations(); }
         }
       } catch (problem) { if (!cancelled) setError(problem.message); }
       finally { if (!cancelled) setLoading(false); }
@@ -69,7 +70,7 @@ export default function PrivateMessages({ embedded = false }) {
     start();
     const timer = setInterval(() => loadConversations().catch(() => {}), 5000);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [status, user?.id, to, product, service, loadConversations]);
+  }, [status, user?.id, to, product, service, orderId, loadConversations]);
   useEffect(() => {
     if (!activeId || status !== 'authenticated') return;
     const version = ++generation.current;

@@ -224,6 +224,7 @@ function SettingsTab() {
 const BUYER_TABS = [
   { id:'overview',  label:'Overview',  icon:'home' },
   { id:'orders',    label:'My Orders', icon:'bag' },
+  { id:'applications',label:'Applications & jobs',icon:'work',href:'/applications' },
   { id:'messages',  label:'Messages',  icon:'chat' },
   { id:'reviews',   label:'Reviews',   icon:'book' },
   { id:'settings',  label:'Settings',  icon:'user' },
@@ -233,7 +234,7 @@ function BuyerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
   const [sellRequested, setSellRequested] = useState(false);
   useEffect(() => {
-    const sync = () => { const id = window.location.hash.slice(1); setSellRequested(id.startsWith('sell-')); if (BUYER_TABS.some(item => item.id === id)) setTab(id); };
+    const sync = () => { const id = window.location.hash.slice(1); if(id==='applications'){window.location.href='/applications';return;} setSellRequested(id.startsWith('sell-')); if (BUYER_TABS.some(item => item.id === id)) setTab(id); };
     sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
@@ -242,7 +243,7 @@ function BuyerDashboard({ user }) {
   return (
     <div>
       {sellRequested && <p role="status" style={{padding:16,color:"#183d28"}}>You need an active seller account to create listings. <a href="/dashboard#settings">View account settings</a></p>}
-      <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { setTab(event.target.value); window.location.hash = event.target.value; }}>{BUYER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+      <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { if(event.target.value==='applications'){window.location.href='/applications';return;}setTab(event.target.value); window.location.hash = event.target.value; }}>{BUYER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <div className="dash-grid">
         {/* SIDEBAR — hidden on mobile */}
         <div className="dash-sidebar">
@@ -254,7 +255,7 @@ function BuyerDashboard({ user }) {
               <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eef2ff', color:'#6366f1' }}>Buyer</span>
             </div>
             {BUYER_TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
+              <button key={t.id} onClick={() => { if(t.href){window.location.href=t.href;return;} setTab(t.id); }} style={{
                 width:'100%', padding:'11px 14px', borderRadius:11, display:'flex', alignItems:'center', gap:10,
                 fontFamily:'Inter,sans-serif', fontSize:'0.84rem', fontWeight: tab === t.id ? 800 : 600,
                 background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
@@ -384,7 +385,6 @@ function BuyerOrders() {
   const [reviewDecisions,setReviewDecisions]=useState({});
   const loadReviewDecisions=()=>authFetch('/api/reviews/eligibility').then(r=>{if(!r.ok)throw Error();return r.json();}).then(data=>setReviewDecisions(Object.fromEntries(data.items.map(item=>[item.order_id,item])))).catch(()=>setReviewDecisions({}));
   const [loading, setLoading] = useState(true);
-  const [confirming, setConfirming] = useState(null);
 
   useEffect(() => {
     loadReviewDecisions();
@@ -393,15 +393,6 @@ function BuyerOrders() {
       .then(d => { setOrders(d.orders || d.data || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
-
-  const confirmDelivery = async (orderId) => {
-    setConfirming(orderId);
-    try {
-      const res = await authFetch(`/api/orders/${orderId}/confirm`, { method:'PUT' });
-      if (res.ok) setOrders(p => p.map(o => o.id === orderId ? { ...o, status:'completed' } : o));
-    } catch {}
-    setConfirming(null);
-  };
 
   if (loading) return <Spinner />;
 
@@ -430,14 +421,7 @@ function BuyerOrders() {
             </div>
             <div style={{ textAlign:'right', flexShrink:0 }}>
               <div style={{ fontSize:'1rem', fontWeight:900, color:'#1f8f43', marginBottom:8 }}>₦{fmt(o.buyer_total)}</div>
-              {o.status === 'processing' && (
-                <button onClick={() => confirmDelivery(o.id)} disabled={confirming === o.id} style={{
-                  padding:'8px 14px', background:'#1f8f43', color:'#fff', border:'none', borderRadius:9,
-                  fontSize:'0.78rem', fontWeight:800, cursor:'pointer', opacity: confirming === o.id ? 0.65 : 1,
-                }}>
-                  {confirming === o.id ? 'Confirming...' : 'Confirm Delivery'}
-                </button>
-              )}
+              <a href={'/orders/'+o.id} style={{display:'inline-block',padding:'8px 14px',background:'#edf8f0',color:'#176d35',borderRadius:9,fontWeight:700}}>Open order workspace</a>
               <PurchaseReview order={o} decision={reviewDecisions[o.id]} onSaved={loadReviewDecisions}/>
             </div>
           </div>
@@ -492,6 +476,7 @@ const SELLER_TABS = [
   { id:'overview',   label:'Overview',       icon:'home' },
   { id:'listings',   label:'My Listings',    icon:'bag' },
   { id:'received',   label:'Orders Received',icon:'work' },
+  { id:'applications',label:'Applications & jobs',icon:'work',href:'/applications' },
   { id:'wallet',     label:'Wallet',         icon:'bag' },
   { id:'purchases',  label:'My Purchases',   icon:'bag' },
   { id:'messages',   label:'Messages',       icon:'chat' },
@@ -501,7 +486,7 @@ const SELLER_TABS = [
 function SellerDashboard({ user }) {
   const [tab, setTab] = useState('overview');
   useEffect(() => {
-    const sync = () => { const id = window.location.hash.slice(1); if (id.startsWith('sell-')) setTab('listings'); else if (SELLER_TABS.some(item => item.id === id)) setTab(id); };
+    const sync = () => { const id = window.location.hash.slice(1); if(id==='applications'){window.location.href='/applications';return;} if (id.startsWith('sell-')) setTab('listings'); else if (SELLER_TABS.some(item => item.id === id)) setTab(id); };
     sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
@@ -509,7 +494,7 @@ function SellerDashboard({ user }) {
 
   return (
     <div>
-      <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { setTab(event.target.value); window.location.hash = event.target.value; }}>{SELLER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+      <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { if(event.target.value==='applications'){window.location.href='/applications';return;}setTab(event.target.value); window.location.hash = event.target.value; }}>{SELLER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <div className="dash-grid">
         {/* SIDEBAR — hidden on mobile */}
         <div className="dash-sidebar">
@@ -521,7 +506,7 @@ function SellerDashboard({ user }) {
               <span style={{ display:'inline-block', marginTop:8, padding:'3px 10px', borderRadius:50, fontSize:'0.68rem', fontWeight:800, background:'#eaf8ee', color:'#1f8f43' }}>Seller</span>
             </div>
             {SELLER_TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
+              <button key={t.id} onClick={() => { if(t.href){window.location.href=t.href;return;} setTab(t.id); }} style={{
                 width:'100%', padding:'11px 14px', borderRadius:11, display:'flex', alignItems:'center', gap:10,
                 fontFamily:'Inter,sans-serif', fontSize:'0.84rem', fontWeight: tab === t.id ? 800 : 600,
                 background: tab === t.id ? '#eaf8ee' : 'none', color: tab === t.id ? '#1f8f43' : '#374151',
@@ -928,7 +913,7 @@ function SellerOrders() {
               {o.product_id ? '📦' : '🛠'}
             </div>
             <div style={{ flex:1, minWidth:200 }}>
-              <div style={{ fontSize:'0.92rem', fontWeight:800, color:'#111', marginBottom:4 }}>{o.product_title || o.service_title || `Order #${o.id}`}</div>
+              <div style={{ fontSize:'0.92rem', fontWeight:800, color:'#111', marginBottom:4 }}>{o.product_title || o.service_title || `Order #${o.id}`} <a href={'/orders/'+o.id} style={{display:'block',color:'#176d35',fontSize:13}}>Open order workspace</a></div>
               <div style={{ fontSize:'0.75rem', color:'#9ca3af', marginBottom:6 }}>
                 From: {o.buyer_name || o.buyer_first_name || 'Buyer'} · {o.created_at ? new Date(o.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }) : 'Recent'}
               </div>
