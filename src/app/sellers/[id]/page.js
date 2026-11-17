@@ -47,7 +47,7 @@ function Stars({ rating = 0, size = 14 }) {
 function Spinner() {
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:'80px 0' }}>
-      <div style={{ width:32, height:32, border:'3px solid #e5e7eb', borderTopColor:'#1f8f43', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+      <div style={{ width:32, height:32, border:'3px solid var(--ap-border, #e5e7eb)', borderTopColor:'var(--ap-accent-border, #1f8f43)', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
     </div>
   );
 }
@@ -102,7 +102,7 @@ export default function SellerProfilePage() {
   };
 
   if (loading) return (
-    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'#f7f8fa' }}>
+    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'var(--ap-page-background, #f7f8fa)' }}>
       <style>{`@keyframes spin { to { transform:rotate(360deg); } }`}</style>
       <Nav />
       <Spinner />
@@ -110,11 +110,11 @@ export default function SellerProfilePage() {
   );
 
   if (!seller) return (
-    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'#f7f8fa' }}>
+    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'var(--ap-page-background, #f7f8fa)' }}>
       <Nav />
       <div style={{ maxWidth:640, margin:'80px auto', textAlign:'center', padding:'0 24px' }}>
-        <h2 style={{ fontSize:'1.4rem', fontWeight:900, color:'#111', marginBottom:8 }}>Seller not found</h2>
-        <p style={{ color:'#6b7280', marginBottom:24 }}>This profile may no longer exist.</p>
+        <h2 style={{ fontSize:'1.4rem', fontWeight:900, color:'var(--ap-text-strong, #111)', marginBottom:8 }}>Seller not found</h2>
+        <p style={{ color:'var(--ap-text-muted, #6b7280)', marginBottom:24 }}>This profile may no longer exist.</p>
         <a href="/" style={{ padding:'12px 24px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.9rem', textDecoration:'none' }}>Go Home</a>
       </div>
     </div>
@@ -140,7 +140,7 @@ export default function SellerProfilePage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; background:#f7f8fa; color:#1f2937; }
+        body { font-family:'Inter',sans-serif; background:var(--ap-page-background, #f7f8fa); color:var(--ap-text-strong, #1f2937); }
         a { color:inherit; text-decoration:none; }
         button { font-family:'Inter',sans-serif; cursor:pointer; border:none; }
 
@@ -160,53 +160,53 @@ export default function SellerProfilePage() {
         }
 
         /* PROFILE HEADER */
-        .profile-header { background:#fff; border:1px solid #eceff3; border-top:none; border-radius:0 0 20px 20px; padding:0 28px 24px; margin-bottom:28px; box-shadow:0 4px 20px rgba(15,23,42,0.06); }
+        .profile-header { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-top:none; border-radius:0 0 20px 20px; padding:0 28px 24px; margin-bottom:28px; box-shadow:0 4px 20px rgba(15,23,42,0.06); }
         .avatar-wrap { position:relative; display:inline-block; margin-top:-44px; margin-bottom:12px; }
-        .avatar-wrap .avatar-ring { border:4px solid #fff; border-radius:50%; display:inline-block; }
-        .bvn-badge { position:absolute; bottom:2px; right:2px; width:22px; height:22px; border-radius:50%; background:#1f8f43; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
+        .avatar-wrap .avatar-ring { border:4px solid var(--ap-surface, #fff); border-radius:50%; display:inline-block; }
+        .bvn-badge { position:absolute; bottom:2px; right:2px; width:22px; height:22px; border-radius:50%; background:#1f8f43; border:2px solid var(--ap-surface, #fff); display:flex; align-items:center; justify-content:center; }
 
         .profile-top { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:14px; }
-        .profile-name { font-size:1.5rem; font-weight:900; color:#111; letter-spacing:-0.04em; margin-bottom:4px; }
-        .profile-uni  { font-size:0.83rem; color:#6b7280; font-weight:600; }
+        .profile-name { font-size:1.5rem; font-weight:900; color:var(--ap-text-strong, #111); letter-spacing:-0.04em; margin-bottom:4px; }
+        .profile-uni  { font-size:0.83rem; color:var(--ap-text-muted, #6b7280); font-weight:600; }
         .profile-actions { display:flex; gap:10px; flex-wrap:wrap; }
 
         .msg-btn { padding:'10px 20px'; border-radius:11px; background:'#1f8f43'; color:'#fff'; font-size:'0.88rem'; font-weight:800; }
-        .edit-btn { padding:'10px 20px'; border-radius:11px; background:'#f3f4f6'; color:'#374151'; font-size:'0.88rem'; font-weight:700; }
+        .edit-btn { padding:'10px 20px'; border-radius:11px; background:'var(--ap-surface-muted, #f3f4f6)'; color:'var(--ap-text-strong, #374151)'; font-size:'0.88rem'; font-weight:700; }
 
         /* STATS STRIP */
-        .stats-strip { display:flex; gap:0; border-top:1px solid #f3f4f6; margin-top:18px; padding-top:18px; flex-wrap:wrap; }
-        .stat-item { flex:1; min-width:100px; text-align:center; padding:0 16px; border-right:1px solid #f3f4f6; }
+        .stats-strip { display:flex; gap:0; border-top:1px solid var(--ap-border, #f3f4f6); margin-top:18px; padding-top:18px; flex-wrap:wrap; }
+        .stat-item { flex:1; min-width:100px; text-align:center; padding:0 16px; border-right:1px solid var(--ap-border, #f3f4f6); }
         .stat-item:last-child { border-right:none; }
-        .stat-val { font-size:1.25rem; font-weight:900; color:#111; }
-        .stat-lbl { font-size:0.72rem; color:#9ca3af; font-weight:600; margin-top:2px; }
+        .stat-val { font-size:1.25rem; font-weight:900; color:var(--ap-text-strong, #111); }
+        .stat-lbl { font-size:0.72rem; color:var(--ap-text-subtle, #9ca3af); font-weight:600; margin-top:2px; }
 
         /* MAIN GRID */
         .main-grid { display:grid; grid-template-columns:1fr 300px; gap:24px; }
 
         /* TABS */
-        .tab-bar { display:flex; gap:0; background:#fff; border:1px solid #eceff3; border-radius:14px; padding:6px; margin-bottom:20px; }
-        .tab-btn { flex:1; padding:9px; border-radius:10px; font-size:0.84rem; font-weight:700; color:#6b7280; background:none; border:none; cursor:pointer; transition:all 0.18s; }
+        .tab-bar { display:flex; gap:0; background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:14px; padding:6px; margin-bottom:20px; }
+        .tab-btn { flex:1; padding:9px; border-radius:10px; font-size:0.84rem; font-weight:700; color:var(--ap-text-muted, #6b7280); background:none; border:none; cursor:pointer; transition:all 0.18s; }
         .tab-btn.active { background:#1f8f43; color:#fff; }
 
         /* PRODUCT / SERVICE GRID */
         .listing-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-        .listing-card { background:#fff; border:1px solid #eceff3; border-radius:16px; overflow:hidden; transition:all 0.22s; box-shadow:0 2px 8px rgba(15,23,42,0.04); }
+        .listing-card { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:16px; overflow:hidden; transition:all 0.22s; box-shadow:0 2px 8px rgba(15,23,42,0.04); }
         .listing-card:hover { transform:translateY(-4px); box-shadow:0 12px 28px rgba(15,23,42,0.1); }
-        .listing-img { height:130px; background:linear-gradient(135deg,#f8fafc,#f1f5f9); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+        .listing-img { height:130px; background:linear-gradient(135deg,var(--ap-surface-muted, #f8fafc),var(--ap-info-surface, #f1f5f9)); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
         .listing-img img { width:100%; height:100%; object-fit:cover; }
         .listing-body { padding:12px 14px; }
-        .listing-title { font-size:0.83rem; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
-        .listing-price { font-size:0.9rem; font-weight:900; color:#1f8f43; }
+        .listing-title { font-size:0.83rem; font-weight:700; color:var(--ap-text-strong, #111); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+        .listing-price { font-size:0.9rem; font-weight:900; color:var(--ap-accent-text, #1f8f43); }
 
         /* REVIEWS */
-        .review-card { background:#fff; border:1px solid #eceff3; border-radius:16px; padding:18px 20px; margin-bottom:12px; }
+        .review-card { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:16px; padding:18px 20px; margin-bottom:12px; }
 
         /* SIDEBAR */
-        .sidebar-card { background:#fff; border:1px solid #eceff3; border-radius:16px; padding:20px; margin-bottom:16px; }
-        .sidebar-title { font-size:0.72rem; font-weight:800; color:#374151; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; }
+        .sidebar-card { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:16px; padding:20px; margin-bottom:16px; }
+        .sidebar-title { font-size:0.72rem; font-weight:800; color:var(--ap-text-strong, #374151); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; }
 
         /* EMPTY */
-        .empty { text-align:center; padding:'40px 20px'; color:'#9ca3af'; }
+        .empty { text-align:center; padding:'40px 20px'; color:'var(--ap-text-subtle, #9ca3af)'; }
 
         @media (max-width:860px) { .main-grid { grid-template-columns:1fr; } }
         @media (max-width:600px) {
@@ -243,21 +243,21 @@ export default function SellerProfilePage() {
                 <div className="profile-name">{fullName}</div>
                 <div className="profile-uni">
                   {seller.university || 'AfriPlate Member'}
-                  {memberSince && <span style={{ color:'#d1d5db', margin:'0 6px' }}>·</span>}
+                  {memberSince && <span style={{ color:'var(--ap-text-subtle, #d1d5db)', margin:'0 6px' }}>·</span>}
                   {memberSince && <span>Member since {memberSince}</span>}
                 </div>
                 {avgRating && (
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:6 }}>
                     <Stars rating={avgRating} size={14} />
-                    <span style={{ fontSize:'0.82rem', fontWeight:800, color:'#374151' }}>{avgRating}</span>
-                    <span style={{ fontSize:'0.78rem', color:'#9ca3af' }}>({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
+                    <span style={{ fontSize:'0.82rem', fontWeight:800, color:'var(--ap-text-strong, #374151)' }}>{avgRating}</span>
+                    <span style={{ fontSize:'0.78rem', color:'var(--ap-text-subtle, #9ca3af)' }}>({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
                   </div>
                 )}
               </div>
 
               <div className="profile-actions">
                 {isOwnProfile ? (
-                  <a href="/dashboard#settings" style={{ padding:'10px 20px', borderRadius:11, background:'#f3f4f6', color:'#374151', fontSize:'0.88rem', fontWeight:700 }}>
+                  <a href="/dashboard#settings" style={{ padding:'10px 20px', borderRadius:11, background:'var(--ap-surface-muted, #f3f4f6)', color:'var(--ap-text-strong, #374151)', fontSize:'0.88rem', fontWeight:700 }}>
                     Edit Profile
                   </a>
                 ) : (
@@ -265,7 +265,7 @@ export default function SellerProfilePage() {
                     <button onClick={messageSeller} style={{ padding:'10px 20px', borderRadius:11, background:'#1f8f43', color:'#fff', fontSize:'0.88rem', fontWeight:800, boxShadow:'0 6px 18px rgba(31,143,67,0.2)' }}>
                       Message
                     </button>
-                    <a href={`/products?seller_id=${id}`} style={{ padding:'10px 20px', borderRadius:11, background:'#f3f4f6', color:'#374151', fontSize:'0.88rem', fontWeight:700 }}>
+                    <a href={`/products?seller_id=${id}`} style={{ padding:'10px 20px', borderRadius:11, background:'var(--ap-surface-muted, #f3f4f6)', color:'var(--ap-text-strong, #374151)', fontSize:'0.88rem', fontWeight:700 }}>
                       View All Listings
                     </a>
                   </>
@@ -279,11 +279,11 @@ export default function SellerProfilePage() {
                 { val: products.length + services.length, lbl: 'Listings' },
                 { val: reviews.length,                    lbl: 'Reviews'  },
                 { val: avgRating ? `${avgRating} / 5`  : '—', lbl: 'Rating' },
-                { val: seller.is_bvn_verified ? 'Verified' : 'Unverified', lbl: 'BVN Status', color: seller.is_bvn_verified ? '#1f8f43' : '#9ca3af' },
+                { val: seller.is_bvn_verified ? 'Verified' : 'Unverified', lbl: 'BVN Status', color: seller.is_bvn_verified ? 'var(--ap-accent-text, #1f8f43)' : 'var(--ap-text-subtle, #9ca3af)' },
                 { val: seller.level || '—',               lbl: 'Level'    },
               ].map(s => (
                 <div key={s.lbl} className="stat-item">
-                  <div className="stat-val" style={{ color: s.color || '#111' }}>{s.val}</div>
+                  <div className="stat-val" style={{ color: s.color || 'var(--ap-text-strong, #111)' }}>{s.val}</div>
                   <div className="stat-lbl">{s.lbl}</div>
                 </div>
               ))}
@@ -314,10 +314,10 @@ export default function SellerProfilePage() {
                           <div className="listing-img">
                             {p.images?.[0]
                               ? <img src={p.images[0]} alt={p.title} />
-                              : <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                              : <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ap-text-subtle, #d1d5db)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                             }
                             {p.condition && (
-                              <div style={{ position:'absolute', top:8, left:8, padding:'3px 8px', borderRadius:50, fontSize:'0.65rem', fontWeight:800, background: p.condition === 'new' ? '#eaf8ee' : '#eef2ff', color: p.condition === 'new' ? '#1f8f43' : '#6366f1' }}>
+                              <div style={{ position:'absolute', top:8, left:8, padding:'3px 8px', borderRadius:50, fontSize:'0.65rem', fontWeight:800, background: p.condition === 'new' ? 'var(--ap-accent-surface, #eaf8ee)' : 'var(--ap-info-surface, #eef2ff)', color: p.condition === 'new' ? 'var(--ap-accent-text, #1f8f43)' : 'var(--ap-info-text, #6366f1)' }}>
                                 {p.condition === 'new' ? 'New' : 'Used'}
                               </div>
                             )}
@@ -341,13 +341,13 @@ export default function SellerProfilePage() {
                           <div className="listing-img">
                             {s.images?.[0]
                               ? <img src={s.images[0]} alt={s.title} />
-                              : <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/></svg>
+                              : <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ap-text-subtle, #d1d5db)" strokeWidth="1.5"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/></svg>
                             }
                           </div>
                           <div className="listing-body">
                             <div className="listing-title">{s.title}</div>
                             <div className="listing-price">₦{fmt(s.price)}</div>
-                            {s.delivery_days && <div style={{ fontSize:'0.7rem', color:'#9ca3af', marginTop:2 }}>{s.delivery_days}d delivery</div>}
+                            {s.delivery_days && <div style={{ fontSize:'0.7rem', color:'var(--ap-text-subtle, #9ca3af)', marginTop:2 }}>{s.delivery_days}d delivery</div>}
                           </div>
                         </a>
                       ))}
@@ -365,21 +365,21 @@ export default function SellerProfilePage() {
                           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
                             <Avatar name={r.buyer_name || r.reviewer_name || r.user_name} size={38} />
                             <div style={{ flex:1 }}>
-                              <div style={{ fontSize:'0.85rem', fontWeight:800, color:'#111' }}>{r.buyer_name || r.reviewer_name || r.user_name || 'Student'}</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:800, color:'var(--ap-text-strong, #111)' }}>{r.buyer_name || r.reviewer_name || r.user_name || 'Student'}</div>
                               <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:2 }}>
                                 <Stars rating={r.rating} />
-                                <span style={{ fontSize:'0.72rem', color:'#9ca3af' }}>
+                                <span style={{ fontSize:'0.72rem', color:'var(--ap-text-subtle, #9ca3af)' }}>
                                   {r.created_at ? new Date(r.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }) : ''}
                                 </span>
                               </div>
                             </div>
                             {r.product_title || r.service_title ? (
-                              <span style={{ fontSize:'0.72rem', color:'#9ca3af', fontWeight:600, textAlign:'right', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                              <span style={{ fontSize:'0.72rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600, textAlign:'right', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                                 {r.product_title || r.service_title}
                               </span>
                             ) : null}
                           </div>
-                          {(r.review_text || r.comment) && <p style={{ fontSize:'0.875rem', color:'#374151', lineHeight:1.7 }}>{r.review_text || r.comment}</p>}
+                          {(r.review_text || r.comment) && <p style={{ fontSize:'0.875rem', color:'var(--ap-text-strong, #374151)', lineHeight:1.7 }}>{r.review_text || r.comment}</p>}
                         </div>
                       ))}
                     </div>
@@ -392,7 +392,7 @@ export default function SellerProfilePage() {
               {seller.bio && (
                 <div className="sidebar-card">
                   <div className="sidebar-title">About</div>
-                  <p style={{ fontSize:'0.875rem', color:'#374151', lineHeight:1.75 }}>{seller.bio}</p>
+                  <p style={{ fontSize:'0.875rem', color:'var(--ap-text-strong, #374151)', lineHeight:1.75 }}>{seller.bio}</p>
                 </div>
               )}
 
@@ -403,13 +403,13 @@ export default function SellerProfilePage() {
                   { icon:'🎓', label:'University', val: seller.university },
                   { icon:'📚', label:'Level',      val: seller.level },
                   { icon:'📅', label:'Joined',     val: memberSince },
-                  { icon:'✅', label:'BVN',         val: seller.is_bvn_verified ? 'Verified' : 'Not verified', color: seller.is_bvn_verified ? '#1f8f43' : '#9ca3af' },
+                  { icon:'✅', label:'BVN',         val: seller.is_bvn_verified ? 'Verified' : 'Not verified', color: seller.is_bvn_verified ? 'var(--ap-accent-text, #1f8f43)' : 'var(--ap-text-subtle, #9ca3af)' },
                 ].filter(r => r.val).map(row => (
                   <div key={row.label} style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
                     <span style={{ fontSize:'1rem', flexShrink:0 }}>{row.icon}</span>
                     <div>
-                      <div style={{ fontSize:'0.7rem', color:'#9ca3af', fontWeight:600 }}>{row.label}</div>
-                      <div style={{ fontSize:'0.83rem', fontWeight:700, color: row.color || '#111' }}>{row.val}</div>
+                      <div style={{ fontSize:'0.7rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600 }}>{row.label}</div>
+                      <div style={{ fontSize:'0.83rem', fontWeight:700, color: row.color || 'var(--ap-text-strong, #111)' }}>{row.val}</div>
                     </div>
                   </div>
                 ))}
@@ -420,10 +420,10 @@ export default function SellerProfilePage() {
                 <div className="sidebar-card">
                   <div className="sidebar-title">Rating Breakdown</div>
                   <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16 }}>
-                    <div style={{ fontSize:'2.5rem', fontWeight:900, color:'#111', lineHeight:1 }}>{avgRating}</div>
+                    <div style={{ fontSize:'2.5rem', fontWeight:900, color:'var(--ap-text-strong, #111)', lineHeight:1 }}>{avgRating}</div>
                     <div>
                       <Stars rating={avgRating} size={16} />
-                      <div style={{ fontSize:'0.75rem', color:'#9ca3af', marginTop:3 }}>{reviews.length} review{reviews.length !== 1 ? 's' : ''}</div>
+                      <div style={{ fontSize:'0.75rem', color:'var(--ap-text-subtle, #9ca3af)', marginTop:3 }}>{reviews.length} review{reviews.length !== 1 ? 's' : ''}</div>
                     </div>
                   </div>
                   {[5,4,3,2,1].map(star => {
@@ -431,12 +431,12 @@ export default function SellerProfilePage() {
                     const pct   = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
                     return (
                       <div key={star} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                        <span style={{ fontSize:'0.75rem', fontWeight:700, color:'#374151', width:8 }}>{star}</span>
-                        <svg width="12" height="12" viewBox="0 0 20 20" fill="#1f8f43"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        <div style={{ flex:1, height:6, background:'#f3f4f6', borderRadius:3, overflow:'hidden' }}>
+                        <span style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', width:8 }}>{star}</span>
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="var(--ap-accent-text, #1f8f43)"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <div style={{ flex:1, height:6, background:'var(--ap-surface-muted, #f3f4f6)', borderRadius:3, overflow:'hidden' }}>
                           <div style={{ height:'100%', width:`${pct}%`, background:'#1f8f43', borderRadius:3, transition:'width 0.4s' }} />
                         </div>
-                        <span style={{ fontSize:'0.72rem', color:'#9ca3af', fontWeight:600, width:24, textAlign:'right' }}>{count}</span>
+                        <span style={{ fontSize:'0.72rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600, width:24, textAlign:'right' }}>{count}</span>
                       </div>
                     );
                   })}
@@ -463,7 +463,7 @@ export default function SellerProfilePage() {
 
 function EmptyState({ icon, text }) {
   return (
-    <div style={{ textAlign:'center', padding:'48px 20px', color:'#9ca3af', background:'#fff', border:'1px solid #eceff3', borderRadius:16 }}>
+    <div style={{ textAlign:'center', padding:'48px 20px', color:'var(--ap-text-subtle, #9ca3af)', background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #eceff3)', borderRadius:16 }}>
       <div style={{ fontSize:'2.2rem', marginBottom:10 }}>{icon}</div>
       <p style={{ fontWeight:600, fontSize:'0.875rem' }}>{text}</p>
     </div>
@@ -474,17 +474,17 @@ function Nav() {
   const { user } = useSession();
   return (
     <nav style={{
-      background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px',
+      background:'var(--ap-surface, #fff)', borderBottom:'1px solid var(--ap-border, #e5e7eb)', padding:'0 24px',
       height:62, display:'flex', alignItems:'center', justifyContent:'space-between',
       position:'sticky', top:0, zIndex:100, fontFamily:'Inter,sans-serif',
     }}>
-      <a href="/" style={{ fontSize:'1.45rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em' }}>
-        Afri<span style={{ color:'#1f8f43' }}>Plate</span>
+      <a href="/" style={{ fontSize:'1.45rem', fontWeight:900, color:'var(--ap-text-strong, #111)', letterSpacing:'-0.04em' }}>
+        Afri<span style={{ color:'var(--ap-accent-text, #1f8f43)' }}>Plate</span>
       </a>
       <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-        <a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Products</a>
-        <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Services</a>
-        <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Jobs</a>
+        <a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Products</a>
+        <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Services</a>
+        <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Jobs</a>
         {user
           ? <a href="/dashboard" style={{ padding:'8px 16px', borderRadius:10, fontSize:'0.84rem', fontWeight:800, color:'#fff', background:'#1f8f43' }}>Dashboard</a>
           : <a href="/login"     style={{ padding:'8px 16px', borderRadius:10, fontSize:'0.84rem', fontWeight:800, color:'#fff', background:'#1f8f43' }}>Sign In</a>

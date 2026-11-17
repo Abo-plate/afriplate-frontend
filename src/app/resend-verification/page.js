@@ -18,7 +18,7 @@ export default function ResendVerificationPage() {
     >
       <section
         style={{
-          background: "#fff",
+          background: "var(--ap-surface, #fff)",
           border: "1px solid var(--ap-color-border)",
           borderRadius: 24,
           padding: "40px 24px",
@@ -33,18 +33,18 @@ export default function ResendVerificationPage() {
           style={{
             fontSize: "1.9rem",
             fontWeight: 900,
-            color: "#111",
+            color: "var(--ap-text-strong, #111)",
             letterSpacing: "-0.04em",
           }}
         >
-          Afri<span style={{ color: "var(--ap-color-primary)" }}>Plate</span>
+          Afri<span style={{ color: "var(--ap-accent-text, var(--ap-color-primary))" }}>Plate</span>
         </Link>
         <h1
           id="resend-title"
           style={{
             fontSize: "1.5rem",
             fontWeight: 900,
-            color: "#111",
+            color: "var(--ap-text-strong, #111)",
             letterSpacing: "-0.05em",
             marginTop: 24,
           }}
@@ -70,7 +70,7 @@ export default function ResendVerificationPage() {
             marginTop: 24,
             fontWeight: 700,
             fontSize: "0.875rem",
-            color: "var(--ap-color-primary)",
+            color: "var(--ap-accent-text, var(--ap-color-primary))",
           }}
         >
           Back to login

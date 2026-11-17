@@ -123,12 +123,12 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f7f8fa', fontFamily:'Inter,sans-serif' }}>
-        <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:24, padding:'48px 40px', maxWidth:440, width:'100%', textAlign:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.06)' }}>
-          <div style={{ width:64, height:64, borderRadius:'50%', background:'#eaf8ee', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.8rem' }}>✓</div>
-          <h1 style={{ fontSize:'1.5rem', fontWeight:900, color:'#111', marginBottom:10, letterSpacing:'-0.04em' }}>{verificationEmailSent ? 'Check your email!' : 'Account created'}</h1>
-          <p role="status" style={{ color:'#6b7280', fontSize:'0.9rem', lineHeight:1.7, marginBottom:24 }}>
-            {verificationEmailSent ? <>Your account was created and a verification email was requested for <strong style={{ color:'#111' }}>{form.email}</strong>. Check your inbox and spam folder, then follow the link before logging in.</> : <>Your account was created, but we could not confirm that a verification email was sent to <strong style={{ color:'#111' }}>{form.email}</strong>. Request a new email below. You do not need to register again.</>}
+      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--ap-page-background, #f7f8fa)', fontFamily:'Inter,sans-serif' }}>
+        <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #e5e7eb)', borderRadius:24, padding:'48px 40px', maxWidth:440, width:'100%', textAlign:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.06)' }}>
+          <div style={{ width:64, height:64, borderRadius:'50%', background:'var(--ap-accent-surface, #eaf8ee)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.8rem' }}>✓</div>
+          <h1 style={{ fontSize:'1.5rem', fontWeight:900, color:'var(--ap-text-strong, #111)', marginBottom:10, letterSpacing:'-0.04em' }}>{verificationEmailSent ? 'Check your email!' : 'Account created'}</h1>
+          <p role="status" style={{ color:'var(--ap-text-muted, #6b7280)', fontSize:'0.9rem', lineHeight:1.7, marginBottom:24 }}>
+            {verificationEmailSent ? <>Your account was created and a verification email was requested for <strong style={{ color:'var(--ap-text-strong, #111)' }}>{form.email}</strong>. Check your inbox and spam folder, then follow the link before logging in.</> : <>Your account was created, but we could not confirm that a verification email was sent to <strong style={{ color:'var(--ap-text-strong, #111)' }}>{form.email}</strong>. Request a new email below. You do not need to register again.</>}
           </p>
           <a href="/login" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem', textDecoration:'none' }}>
             Go to Login
@@ -160,11 +160,11 @@ export default function RegisterPage() {
         .left::after  { content:''; position:absolute; width:300px; height:300px; border-radius:50%; background:rgba(31,143,67,0.08); bottom:-80px; left:-80px; }
 
         .brand { font-size:1.9rem; font-weight:var(--ap-weight-heading); color:#fff; letter-spacing:-0.04em; position:relative; z-index:1; }
-        .brand span { color:var(--ap-color-primary); }
+        .brand span { color:var(--ap-accent-text, var(--ap-color-primary)); }
 
         .left-body { position:relative; z-index:1; }
         .left-body h2 { font-size:clamp(1.9rem,2.6vw,2.8rem); font-weight:var(--ap-weight-heading); color:#fff; line-height:1.05; letter-spacing:-0.05em; margin-bottom:14px; }
-        .left-body h2 em { font-style:normal; color:#a9e68a; }
+        .left-body h2 em { font-style:normal; color:var(--ap-accent-text, #a9e68a); }
         .left-body p { color:rgba(255,255,255,0.65); font-size:0.95rem; line-height:1.65; }
 
         .perks { display:flex; flex-direction:column; gap:12px; position:relative; z-index:1; }
@@ -172,20 +172,20 @@ export default function RegisterPage() {
         .perk-check { width:22px; height:22px; border-radius:50%; background:var(--ap-color-primary); display:flex; align-items:center; justify-content:center; font-size:0.65rem; flex-shrink:0; margin-top:2px; color:#fff; font-weight:var(--ap-weight-heading); }
         .perk-text { font-size:0.84rem; color:rgba(255,255,255,0.75); line-height:1.5; }
 
-        .right { background:#fff; display:flex; align-items:center; justify-content:center; padding:40px 52px; overflow-y:auto; }
+        .right { background:var(--ap-surface, #fff); display:flex; align-items:center; justify-content:center; padding:40px 52px; overflow-y:auto; }
         .form-box { width:100%; max-width:400px; }
 
-        .eyebrow { font-size:0.72rem; font-weight:var(--ap-weight-label); color:var(--ap-color-primary); text-transform:uppercase; letter-spacing:1.8px; margin-bottom:10px; }
-        .form-title { font-size:2.2rem; font-weight:var(--ap-weight-heading); color:#111; letter-spacing:-0.05em; margin-bottom:6px; }
+        .eyebrow { font-size:0.72rem; font-weight:var(--ap-weight-label); color:var(--ap-accent-text, var(--ap-color-primary)); text-transform:uppercase; letter-spacing:1.8px; margin-bottom:10px; }
+        .form-title { font-size:2.2rem; font-weight:var(--ap-weight-heading); color:var(--ap-text-strong, #111); letter-spacing:-0.05em; margin-bottom:6px; }
         .form-sub { font-size:0.88rem; color:var(--ap-color-muted); margin-bottom:24px; }
-        .form-sub a { color:var(--ap-color-primary); font-weight:var(--ap-weight-label); }
+        .form-sub a { color:var(--ap-accent-text, var(--ap-color-primary)); font-weight:var(--ap-weight-label); }
 
         .stepper { display:flex; align-items:center; margin-bottom:26px; }
-        .s-circle { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:var(--ap-weight-button); flex-shrink:0; border:2px solid var(--ap-color-border); background:#fff; color:#9ca3af; transition:all 0.25s; }
+        .s-circle { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:var(--ap-weight-button); flex-shrink:0; border:2px solid var(--ap-color-border); background:var(--ap-surface, #fff); color:var(--ap-text-subtle, #9ca3af); transition:all 0.25s; }
         .s-circle.done   { background:var(--ap-color-primary); border-color:var(--ap-color-primary); color:#fff; }
-        .s-circle.active { background:#fff; border-color:var(--ap-color-primary); color:var(--ap-color-primary); }
-        .s-label { font-size:0.74rem; font-weight:600; color:#9ca3af; white-space:nowrap; margin-left:7px; }
-        .s-label.active { color:var(--ap-color-primary); }
+        .s-circle.active { background:var(--ap-surface, #fff); border-color:var(--ap-color-primary); color:var(--ap-accent-text, var(--ap-color-primary)); }
+        .s-label { font-size:0.74rem; font-weight:600; color:var(--ap-text-subtle, #9ca3af); white-space:nowrap; margin-left:7px; }
+        .s-label.active { color:var(--ap-accent-text, var(--ap-color-primary)); }
         .s-line { flex:1; height:2px; background:var(--ap-color-border); margin:0 8px; min-width:20px; transition:background 0.25s; }
         .s-line.done { background:var(--ap-color-primary); }
 
@@ -195,20 +195,20 @@ export default function RegisterPage() {
         .input-wrap input,
         .input-wrap select {
           width:100%; padding:13px 16px; border:1.5px solid var(--ap-color-border);
-          border-radius:var(--ap-radius-control); font-size:0.91rem; color:#111; outline:none;
+          border-radius:var(--ap-radius-control); font-size:0.91rem; color:var(--ap-text-strong, #111); outline:none;
           background:var(--ap-color-input); transition:border-color 0.2s, box-shadow 0.2s, background 0.2s;
           appearance:none;
         }
         .input-wrap input:focus,
-        .input-wrap select:focus { border-color:var(--ap-color-primary); box-shadow:0 0 0 3px rgba(31,143,67,0.1); background:#fff; }
+        .input-wrap select:focus { border-color:var(--ap-color-primary); box-shadow:0 0 0 3px rgba(31,143,67,0.1); background:var(--ap-surface, #fff); }
         .input-wrap input.err,
-        .input-wrap select.err { border-color:#ef4444; background:#fef2f2; }
-        .field-error { color:#ef4444; font-size:0.75rem; font-weight:600; margin-top:5px; display:block; }
+        .input-wrap select.err { border-color:var(--ap-danger-border, #ef4444); background:var(--ap-danger-surface, #fef2f2); }
+        .field-error { color:var(--ap-danger-text, #ef4444); font-size:0.75rem; font-weight:600; margin-top:5px; display:block; }
 
-        .pw-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; color:#9ca3af; font-size:0.78rem; font-weight:var(--ap-weight-label); padding:4px 6px; border-radius:6px; }
+        .pw-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; color:var(--ap-text-subtle, #9ca3af); font-size:0.78rem; font-weight:var(--ap-weight-label); padding:4px 6px; border-radius:6px; }
         .pw-toggle:hover { color:var(--ap-color-label); }
 
-        .pw-bar-wrap { height:4px; background:#f3f4f6; border-radius:2px; overflow:hidden; margin-top:7px; margin-bottom:4px; }
+        .pw-bar-wrap { height:4px; background:var(--ap-surface-muted, #f3f4f6); border-radius:2px; overflow:hidden; margin-top:7px; margin-bottom:4px; }
         .pw-bar { height:100%; border-radius:2px; transition:width 0.35s, background 0.35s; }
         .pw-label { font-size:0.72rem; font-weight:var(--ap-weight-label); }
 
@@ -217,18 +217,18 @@ export default function RegisterPage() {
           border:2px solid var(--ap-color-border); border-radius:14px; padding:16px 14px;
           cursor:pointer; background:var(--ap-color-input); transition:all 0.2s; text-align:center;
         }
-        .type-card:hover { border-color:var(--ap-color-primary); background:#f0fdf4; }
-        .type-card.selected { border-color:var(--ap-color-primary); background:#eaf8ee; }
+        .type-card:hover { border-color:var(--ap-color-primary); background:var(--ap-accent-surface, #f0fdf4); }
+        .type-card.selected { border-color:var(--ap-color-primary); background:var(--ap-accent-surface, #eaf8ee); }
         .type-card.selected .tc-icon { background:var(--ap-color-primary); color:#fff; }
-        .tc-icon { width:40px; height:40px; border-radius:10px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; font-size:1.2rem; transition:all 0.2s; }
-        .tc-title { font-size:0.88rem; font-weight:var(--ap-weight-button); color:#111; margin-bottom:3px; }
+        .tc-icon { width:40px; height:40px; border-radius:10px; background:var(--ap-surface-muted, #f3f4f6); display:flex; align-items:center; justify-content:center; margin:0 auto 10px; font-size:1.2rem; transition:all 0.2s; }
+        .tc-title { font-size:0.88rem; font-weight:var(--ap-weight-button); color:var(--ap-text-strong, #111); margin-bottom:3px; }
         .tc-sub   { font-size:0.72rem; color:var(--ap-color-muted); line-height:1.4; }
 
 
 
         .btn-row { display:flex; gap:10px; margin-top:10px; }
-        .back-btn { padding:13px 18px; border:1.5px solid var(--ap-color-border); border-radius:var(--ap-radius-control); background:#fff; color:var(--ap-color-label); font-size:0.9rem; font-weight:var(--ap-weight-label); transition:all 0.2s; }
-        .back-btn:hover { background:#f9fafb; }
+        .back-btn { padding:13px 18px; border:1.5px solid var(--ap-color-border); border-radius:var(--ap-radius-control); background:var(--ap-surface, #fff); color:var(--ap-color-label); font-size:0.9rem; font-weight:var(--ap-weight-label); transition:all 0.2s; }
+        .back-btn:hover { background:var(--ap-surface-muted, #f9fafb); }
         .next-btn {
           flex:1; padding:13px; background:var(--ap-color-primary); color:#fff;
           font-size:0.95rem; font-weight:var(--ap-weight-button); border-radius:var(--ap-radius-control);
@@ -237,11 +237,11 @@ export default function RegisterPage() {
         }
         .next-btn:hover:not(:disabled) { background:var(--ap-color-primary-hover); transform:translateY(-2px); }
         .next-btn:disabled { opacity:0.65; cursor:not-allowed; }
-        .btn-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.35); border-top-color:#fff; border-radius:50%; animation:spin 0.65s linear infinite; flex-shrink:0; }
+        .btn-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.35); border-top-color:var(--ap-surface, #fff); border-radius:50%; animation:spin 0.65s linear infinite; flex-shrink:0; }
         @keyframes spin { to { transform:rotate(360deg); } }
 
         .switch-text { text-align:center; font-size:0.875rem; color:var(--ap-color-muted); margin-top:18px; }
-        .switch-text a { color:var(--ap-color-primary); font-weight:var(--ap-weight-label); }
+        .switch-text a { color:var(--ap-accent-text, var(--ap-color-primary)); font-weight:var(--ap-weight-label); }
 
         @media (max-width:768px) {
           .page { grid-template-columns:1fr; }
@@ -297,7 +297,7 @@ export default function RegisterPage() {
             {step === 0 && (
               <>
                 <div style={{ marginBottom:6 }}>
-                  <label style={{ display:'block', fontSize:'0.82rem', fontWeight:700, color:'#374151', marginBottom:10 }}>I want to</label>
+                  <label style={{ display:'block', fontSize:'0.82rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', marginBottom:10 }}>I want to</label>
                   <div className="type-toggle">
                     {[
                       { value:'buyer',  icon:'🛍', title:'Buy',  sub:'Shop products, services & jobs from students' },

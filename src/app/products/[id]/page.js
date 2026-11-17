@@ -50,7 +50,7 @@ function Badge({ children, color = '#1f8f43', bg }) {
   return (
     <span style={{
       padding: '4px 10px', borderRadius: 50, fontSize: '0.72rem', fontWeight: 800,
-      background: bg || `${color}18`, color,
+      background: bg || `color-mix(in srgb, ${color} 10%, transparent)`, color,
     }}>{children}</span>
   );
 }
@@ -58,7 +58,7 @@ function Badge({ children, color = '#1f8f43', bg }) {
 function Spinner() {
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', padding: '80px 0' }}>
-      <div style={{ width:32, height:32, border:'3px solid #e5e7eb', borderTopColor:'#1f8f43', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+      <div style={{ width:32, height:32, border:'3px solid var(--ap-border, #e5e7eb)', borderTopColor:'var(--ap-accent-border, #1f8f43)', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
     </div>
   );
 }
@@ -130,7 +130,7 @@ export default function ProductPage() {
   };
 
   if (loading) return (
-    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'#f7f8fa' }}>
+    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'var(--ap-page-background, #f7f8fa)' }}>
       <style>{`@keyframes spin { to { transform:rotate(360deg); } }`}</style>
       <Nav />
       <Spinner />
@@ -138,12 +138,12 @@ export default function ProductPage() {
   );
 
   if (!product) return (
-    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'#f7f8fa' }}>
+    <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'var(--ap-page-background, #f7f8fa)' }}>
       <Nav />
       <div style={{ maxWidth:640, margin:'80px auto', textAlign:'center', padding:'0 24px' }}>
         <div style={{ fontSize:'3rem', marginBottom:16 }}>404</div>
-        <h2 style={{ fontSize:'1.4rem', fontWeight:900, color:'#111', marginBottom:8 }}>Product not found</h2>
-        <p style={{ color:'#6b7280', marginBottom:24 }}>This listing may have been removed or is no longer active.</p>
+        <h2 style={{ fontSize:'1.4rem', fontWeight:900, color:'var(--ap-text-strong, #111)', marginBottom:8 }}>Product not found</h2>
+        <p style={{ color:'var(--ap-text-muted, #6b7280)', marginBottom:24 }}>This listing may have been removed or is no longer active.</p>
         <a href="/products" style={{ padding:'12px 24px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.9rem', textDecoration:'none' }}>Browse Products</a>
       </div>
     </div>
@@ -163,7 +163,7 @@ export default function ProductPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; background:#f7f8fa; color:#1f2937; }
+        body { font-family:'Inter',sans-serif; background:var(--ap-page-background, #f7f8fa); color:var(--ap-text-strong, #1f2937); }
         a { color:inherit; text-decoration:none; }
         button { font-family:'Inter',sans-serif; cursor:pointer; border:none; }
 
@@ -173,45 +173,45 @@ export default function ProductPage() {
         .page-wrap { max-width:1160px; margin:0 auto; padding:32px 24px 80px; animation:fadeUp 0.4s ease both; }
 
         /* BREADCRUMB */
-        .breadcrumb { display:flex; align-items:center; gap:6px; margin-bottom:24px; font-size:0.8rem; color:#9ca3af; flex-wrap:wrap; }
-        .breadcrumb a { color:#9ca3af; font-weight:600; transition:color 0.15s; }
-        .breadcrumb a:hover { color:#1f8f43; }
-        .breadcrumb span { color:#d1d5db; }
+        .breadcrumb { display:flex; align-items:center; gap:6px; margin-bottom:24px; font-size:0.8rem; color:var(--ap-text-subtle, #9ca3af); flex-wrap:wrap; }
+        .breadcrumb a { color:var(--ap-text-subtle, #9ca3af); font-weight:600; transition:color 0.15s; }
+        .breadcrumb a:hover { color:var(--ap-accent-text, #1f8f43); }
+        .breadcrumb span { color:var(--ap-text-subtle, #d1d5db); }
 
         /* MAIN GRID */
         .main-grid { display:grid; grid-template-columns:1fr 380px; gap:32px; margin-bottom:48px; }
 
         /* GALLERY */
         .gallery { display:flex; flex-direction:column; gap:12px; }
-        .main-img-wrap { width:100%; aspect-ratio:4/3; border-radius:20px; overflow:hidden; background:linear-gradient(135deg,#f8fafc,#f1f5f9); border:1px solid #eceff3; position:relative; }
+        .main-img-wrap { width:100%; aspect-ratio:4/3; border-radius:20px; overflow:hidden; background:linear-gradient(135deg,var(--ap-surface-muted, #f8fafc),var(--ap-info-surface, #f1f5f9)); border:1px solid var(--ap-border, #eceff3); position:relative; }
         .main-img-wrap img { width:100%; height:100%; object-fit:cover; }
         .img-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
         .thumbnails { display:flex; gap:8px; flex-wrap:wrap; }
-        .thumb { width:72px; height:72px; border-radius:10px; overflow:hidden; border:2px solid transparent; cursor:pointer; background:#f1f5f9; flex-shrink:0; transition:border-color 0.18s; }
-        .thumb.active { border-color:#1f8f43; }
+        .thumb { width:72px; height:72px; border-radius:10px; overflow:hidden; border:2px solid transparent; cursor:pointer; background:var(--ap-info-surface, #f1f5f9); flex-shrink:0; transition:border-color 0.18s; }
+        .thumb.active { border-color:var(--ap-accent-border, #1f8f43); }
         .thumb img { width:100%; height:100%; object-fit:cover; }
 
         /* RIGHT PANEL */
         .right-panel { display:flex; flex-direction:column; gap:20px; }
-        .product-card { background:#fff; border:1px solid #eceff3; border-radius:20px; padding:24px; box-shadow:0 4px 24px rgba(15,23,42,0.05); }
+        .product-card { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:20px; padding:24px; box-shadow:0 4px 24px rgba(15,23,42,0.05); }
 
         /* PRODUCT INFO */
-        .prod-category { font-size:0.72rem; font-weight:800; color:#1f8f43; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px; }
-        .prod-title { font-size:1.5rem; font-weight:900; color:#111; letter-spacing:-0.04em; line-height:1.2; margin-bottom:12px; }
+        .prod-category { font-size:0.72rem; font-weight:800; color:var(--ap-accent-text, #1f8f43); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px; }
+        .prod-title { font-size:1.5rem; font-weight:900; color:var(--ap-text-strong, #111); letter-spacing:-0.04em; line-height:1.2; margin-bottom:12px; }
         .prod-meta { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
-        .prod-price { font-size:2rem; font-weight:900; color:#1f8f43; letter-spacing:-0.04em; }
+        .prod-price { font-size:2rem; font-weight:900; color:var(--ap-accent-text, #1f8f43); letter-spacing:-0.04em; }
         .prod-condition { padding:'4px 10px'; }
 
         /* SELLER MINI */
-        .seller-mini { display:flex; align-items:center; gap:10px; padding:14px; background:#f8fafc; border-radius:12px; border:1px solid #eceff3; }
+        .seller-mini { display:flex; align-items:center; gap:10px; padding:14px; background:var(--ap-surface-muted, #f8fafc); border-radius:12px; border:1px solid var(--ap-border, #eceff3); }
         .seller-mini-info { flex:1; min-width:0; }
-        .seller-mini-name { font-size:0.85rem; font-weight:800; color:#111; }
-        .seller-mini-uni  { font-size:0.72rem; color:#9ca3af; }
-        .msg-btn { padding:'8px 14px'; border-radius:9px; background:'#eaf8ee'; color:'#1f8f43'; font-size:'0.78rem'; font-weight:700; }
+        .seller-mini-name { font-size:0.85rem; font-weight:800; color:var(--ap-text-strong, #111); }
+        .seller-mini-uni  { font-size:0.72rem; color:var(--ap-text-subtle, #9ca3af); }
+        .msg-btn { padding:'8px 14px'; border-radius:9px; background:'var(--ap-accent-surface, #eaf8ee)'; color:'var(--ap-accent-text, #1f8f43)'; font-size:'0.78rem'; font-weight:700; }
 
         /* FEE BREAKDOWN */
-        .fee-row { display:flex; justify-content:space-between; font-size:0.83rem; color:#6b7280; margin-bottom:6px; }
-        .fee-row.total { color:#111; font-weight:900; font-size:0.95rem; border-top:1px solid #f3f4f6; padding-top:10px; margin-top:4px; }
+        .fee-row { display:flex; justify-content:space-between; font-size:0.83rem; color:var(--ap-text-muted, #6b7280); margin-bottom:6px; }
+        .fee-row.total { color:var(--ap-text-strong, #111); font-weight:900; font-size:0.95rem; border-top:1px solid var(--ap-border, #f3f4f6); padding-top:10px; margin-top:4px; }
 
         /* ORDER BTNS */
         .order-btn {
@@ -221,31 +221,31 @@ export default function ProductPage() {
         }
         .order-primary { background:#1f8f43; color:#fff; box-shadow:0 8px 24px rgba(31,143,67,0.2); }
         .order-primary:hover { background:#187536; transform:translateY(-2px); }
-        .order-secondary { background:#f3f4f6; color:#374151; margin-top:10px; }
-        .order-secondary:hover { background:#e5e7eb; }
+        .order-secondary { background:var(--ap-surface-muted, #f3f4f6); color:var(--ap-text-strong, #374151); margin-top:10px; }
+        .order-secondary:hover { background:var(--ap-surface-muted, #e5e7eb); }
         .order-btn:disabled { opacity:0.65; cursor:not-allowed; transform:none !important; }
-        .btn-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.65s linear infinite; }
+        .btn-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:var(--ap-surface, #fff); border-radius:50%; animation:spin 0.65s linear infinite; }
 
         /* TABS */
-        .tab-row { display:flex; gap:0; border-bottom:2px solid #f3f4f6; margin-bottom:24px; }
-        .tab-btn { padding:'12px 20px'; font-size:'0.9rem'; font-weight:700; color:'#6b7280'; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.18s; }
-        .tab-btn.active { color:#1f8f43; border-bottom-color:#1f8f43; }
+        .tab-row { display:flex; gap:0; border-bottom:2px solid var(--ap-border, #f3f4f6); margin-bottom:24px; }
+        .tab-btn { padding:'12px 20px'; font-size:'0.9rem'; font-weight:700; color:'var(--ap-text-muted, #6b7280)'; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.18s; }
+        .tab-btn.active { color:var(--ap-accent-text, #1f8f43); border-bottom-color:var(--ap-accent-border, #1f8f43); }
 
         /* REVIEW */
-        .review-item { padding:20px 0; border-bottom:1px solid #f3f4f6; }
+        .review-item { padding:20px 0; border-bottom:1px solid var(--ap-border, #f3f4f6); }
         .review-item:last-child { border-bottom:none; }
         .review-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-        .review-text { font-size:0.875rem; color:#374151; line-height:1.65; }
+        .review-text { font-size:0.875rem; color:var(--ap-text-strong, #374151); line-height:1.65; }
 
         /* RELATED */
         .related-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
-        .rel-card { background:#fff; border:1px solid #eceff3; border-radius:16px; overflow:hidden; transition:all 0.22s; box-shadow:0 2px 8px rgba(15,23,42,0.04); }
+        .rel-card { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:16px; overflow:hidden; transition:all 0.22s; box-shadow:0 2px 8px rgba(15,23,42,0.04); }
         .rel-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(15,23,42,0.1); }
-        .rel-img { height:140px; background:linear-gradient(135deg,#f8fafc,#f1f5f9); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+        .rel-img { height:140px; background:linear-gradient(135deg,var(--ap-surface-muted, #f8fafc),var(--ap-info-surface, #f1f5f9)); display:flex; align-items:center; justify-content:center; overflow:hidden; }
         .rel-img img { width:100%; height:100%; object-fit:cover; }
         .rel-body { padding:12px 14px; }
-        .rel-title { font-size:0.83rem; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
-        .rel-price { font-size:0.9rem; font-weight:900; color:#1f8f43; }
+        .rel-title { font-size:0.83rem; font-weight:700; color:var(--ap-text-strong, #111); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+        .rel-price { font-size:0.9rem; font-weight:900; color:var(--ap-accent-text, #1f8f43); }
 
         @media (max-width:900px) {
           .main-grid { grid-template-columns:1fr; }
@@ -268,7 +268,7 @@ export default function ProductPage() {
           <a href="/products">Products</a>
           {product.category && <><span>/</span><a href={`/products?category=${encodeURIComponent(product.category)}`}>{product.category}</a></>}
           <span>/</span>
-          <span style={{ color:'#374151', fontWeight:600 }}>{product.title}</span>
+          <span style={{ color:'var(--ap-text-strong, #374151)', fontWeight:600 }}>{product.title}</span>
         </div>
 
         {/* MAIN GRID */}
@@ -279,7 +279,7 @@ export default function ProductPage() {
               {images[activeImg]
                 ? <img src={images[activeImg]} alt={product.title} />
                 : <div className="img-placeholder">
-                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--ap-text-subtle, #d1d5db)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                   </div>
               }
               {/* Condition badge overlay */}
@@ -295,20 +295,20 @@ export default function ProductPage() {
               <div className="thumbnails">
                 {images.map((img, i) => (
                   <div key={i} className={`thumb ${activeImg === i ? 'active' : ''}`} onClick={() => setActiveImg(i)}>
-                    {img ? <img src={img} alt={`View ${i+1}`} /> : <div style={{ width:'100%', height:'100%', background:'#f1f5f9' }} />}
+                    {img ? <img src={img} alt={`View ${i+1}`} /> : <div style={{ width:'100%', height:'100%', background:'var(--ap-info-surface, #f1f5f9)' }} />}
                   </div>
                 ))}
               </div>
             )}
 
             {/* DESCRIPTION / REVIEWS TABS */}
-            <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:20, padding:24, marginTop:8 }}>
+            <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #eceff3)', borderRadius:20, padding:24, marginTop:8 }}>
               <div className="tab-row">
                 {['description','reviews'].map(t => (
                   <button key={t} onClick={() => setTab(t)} style={{
                     padding:'12px 20px', fontSize:'0.9rem', fontWeight:700,
-                    color: tab === t ? '#1f8f43' : '#6b7280',
-                    background:'none', border:'none', borderBottom: tab === t ? '2px solid #1f8f43' : '2px solid transparent',
+                    color: tab === t ? 'var(--ap-accent-text, #1f8f43)' : 'var(--ap-text-muted, #6b7280)',
+                    background:'none', border:'none', borderBottom: tab === t ? '2px solid var(--ap-accent-border, #1f8f43)' : '2px solid transparent',
                     marginBottom:'-2px', cursor:'pointer', transition:'all 0.18s', textTransform:'capitalize',
                   }}>{t}{t === 'reviews' && reviews.length > 0 ? ` (${reviews.length})` : ''}</button>
                 ))}
@@ -316,13 +316,13 @@ export default function ProductPage() {
 
               {tab === 'description' && (
                 <div>
-                  <p style={{ fontSize:'0.9rem', color:'#374151', lineHeight:1.8, whiteSpace:'pre-wrap' }}>
+                  <p style={{ fontSize:'0.9rem', color:'var(--ap-text-strong, #374151)', lineHeight:1.8, whiteSpace:'pre-wrap' }}>
                     {product.description || 'No description provided for this listing.'}
                   </p>
                   {product.tags?.length > 0 && (
                     <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:16 }}>
                       {product.tags.map(tag => (
-                        <span key={tag} style={{ padding:'4px 10px', borderRadius:50, background:'#f3f4f6', fontSize:'0.78rem', fontWeight:600, color:'#374151' }}>{tag}</span>
+                        <span key={tag} style={{ padding:'4px 10px', borderRadius:50, background:'var(--ap-surface-muted, #f3f4f6)', fontSize:'0.78rem', fontWeight:600, color:'var(--ap-text-strong, #374151)' }}>{tag}</span>
                       ))}
                     </div>
                   )}
@@ -332,7 +332,7 @@ export default function ProductPage() {
               {tab === 'reviews' && (
                 <div>
                   {reviewsError ? <p role="alert">Purchase reviews are unavailable. <button onClick={()=>window.location.reload()}>Retry</button></p> : reviews.length === 0 ? (
-                    <div style={{ textAlign:'center', padding:'32px 0', color:'#9ca3af' }}>
+                    <div style={{ textAlign:'center', padding:'32px 0', color:'var(--ap-text-subtle, #9ca3af)' }}>
                       <div style={{ fontSize:'2rem', marginBottom:8 }}>★</div>
                       <p style={{ fontWeight:600, fontSize:'0.875rem' }}>No reviews yet for this product</p>
                     </div>
@@ -341,10 +341,10 @@ export default function ProductPage() {
                       <div className="review-header">
                         <Avatar name={r.buyer_name || r.reviewer_name || r.user_name} size={36} />
                         <div>
-                          <div style={{ fontSize:'0.85rem', fontWeight:800, color:'#111' }}>{r.buyer_name || r.reviewer_name || r.user_name || 'Student'}</div>
+                          <div style={{ fontSize:'0.85rem', fontWeight:800, color:'var(--ap-text-strong, #111)' }}>{r.buyer_name || r.reviewer_name || r.user_name || 'Student'}</div>
                           <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
                             <Stars rating={r.rating} />
-                            <span style={{ fontSize:'0.72rem', color:'#9ca3af' }}>
+                            <span style={{ fontSize:'0.72rem', color:'var(--ap-text-subtle, #9ca3af)' }}>
                               {r.created_at ? new Date(r.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }) : ''}
                             </span>
                           </div>
@@ -363,15 +363,15 @@ export default function ProductPage() {
             <div className="product-card">
               {product.category && <div className="prod-category">{product.category}</div>}
               <h1 className="prod-title">{product.title}</h1>
-              <p style={{color:"#52665a",fontSize:14,lineHeight:1.6}}>Listing campus: {listingCampus(product) || "Campus not provided"}</p>
+              <p style={{color:"var(--ap-text-muted, #52665a)",fontSize:14,lineHeight:1.6}}>Listing campus: {listingCampus(product) || "Campus not provided"}</p>
 
               <div className="prod-meta">
                 <span className="prod-price">₦{fmt(product.price)}</span>
                 {avgRating && (
                   <span style={{ display:'flex', alignItems:'center', gap:5 }}>
                     <Stars rating={avgRating} />
-                    <span style={{ fontSize:'0.8rem', fontWeight:700, color:'#374151' }}>{avgRating}</span>
-                    <span style={{ fontSize:'0.78rem', color:'#9ca3af' }}>({reviews.length})</span>
+                    <span style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--ap-text-strong, #374151)' }}>{avgRating}</span>
+                    <span style={{ fontSize:'0.78rem', color:'var(--ap-text-subtle, #9ca3af)' }}>({reviews.length})</span>
                   </span>
                 )}
               </div>
@@ -383,31 +383,31 @@ export default function ProductPage() {
                   <div className="seller-mini-name">{product.seller_name || `${product.seller_first_name || ''} ${product.seller_last_name || ''}`.trim() || 'Seller'}</div>
                   <div className="seller-mini-uni">{product.seller_university || 'AfriPlate Seller'}</div>
                 </div>
-                <button onClick={messagesSeller} style={{ padding:'8px 14px', borderRadius:9, background:'#eaf8ee', color:'#1f8f43', fontSize:'0.78rem', fontWeight:700, flexShrink:0 }}>
+                <button onClick={messagesSeller} style={{ padding:'8px 14px', borderRadius:9, background:'var(--ap-accent-surface, #eaf8ee)', color:'var(--ap-accent-text, #1f8f43)', fontSize:'0.78rem', fontWeight:700, flexShrink:0 }}>
                   Message
                 </button>
               </div>
 
-              <p id="cart-availability" role="status" style={{marginBottom:12,color:'#176d35',fontWeight:700}}>{product.availability==='paused'?'Paused':product.stock_quantity==null?'Stock awaiting seller confirmation. This item cannot be added to your cart until the seller enters a quantity. Message the seller to ask about availability.':product.stock_quantity===0?'Sold out':product.stock_quantity+' available'}</p>
-              <label style={{display:'block',marginBottom:16}}>Quantity <input aria-label="Quantity" type="number" min="1" max={product.stock_quantity||1} step="1" value={qty} onChange={e=>setQty(e.target.value)} style={{width:80,padding:8,border:'1px solid #cbd5cf',borderRadius:8}}/></label>
+              <p id="cart-availability" role="status" style={{marginBottom:12,color:'var(--ap-accent-text, #176d35)',fontWeight:700}}>{product.availability==='paused'?'Paused':product.stock_quantity==null?'Stock awaiting seller confirmation. This item cannot be added to your cart until the seller enters a quantity. Message the seller to ask about availability.':product.stock_quantity===0?'Sold out':product.stock_quantity+' available'}</p>
+              <label style={{display:'block',marginBottom:16}}>Quantity <input aria-label="Quantity" type="number" min="1" max={product.stock_quantity||1} step="1" value={qty} onChange={e=>setQty(e.target.value)} style={{width:80,padding:8,border:'1px solid var(--ap-border, #cbd5cf)',borderRadius:8}}/></label>
               {/* Fee breakdown */}
-              <div style={{ background:'#f8fafc', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
-                <div className="fee-row"><span>Item price</span><span style={{ fontWeight:700, color:'#111' }}>₦{fmt(price)}</span></div>
+              <div style={{ background:'var(--ap-surface-muted, #f8fafc)', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
+                <div className="fee-row"><span>Item price</span><span style={{ fontWeight:700, color:'var(--ap-text-strong, #111)' }}>₦{fmt(price)}</span></div>
                 <div className="fee-row"><span>Service fee (0.5%)</span><span>₦{fmt(buyerFee)}</span></div>
-                <div className="fee-row total"><span>You pay</span><span style={{ color:'#1f8f43' }}>₦{fmt(total)}</span></div>
+                <div className="fee-row total"><span>You pay</span><span style={{ color:'var(--ap-accent-text, #1f8f43)' }}>₦{fmt(total)}</span></div>
               </div>
 
               {/* Order feedback */}
               {orderState === 'success' && (
-                <div style={{ background:'#eaf8ee', border:'1px solid #bbf7d0', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'#1f8f43', marginBottom:14 }}>{orderMsg}</div>
+                <div style={{ background:'var(--ap-accent-surface, #eaf8ee)', border:'1px solid var(--ap-accent-border, #bbf7d0)', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'var(--ap-accent-text, #1f8f43)', marginBottom:14 }}>{orderMsg}</div>
               )}
               {orderState === 'error' && (
-                <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'#dc2626', marginBottom:14 }}>{orderMsg}{status === 'unavailable' && <button onClick={refresh}>Retry account verification</button>}{status === 'guest' && <a href={'/login?next='+encodeURIComponent('/products/'+id)}>Log in</a>}</div>
+                <div style={{ background:'var(--ap-danger-surface, #fef2f2)', border:'1px solid var(--ap-danger-border, #fecaca)', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'var(--ap-danger-text, #dc2626)', marginBottom:14 }}>{orderMsg}{status === 'unavailable' && <button onClick={refresh}>Retry account verification</button>}{status === 'guest' && <a href={'/login?next='+encodeURIComponent('/products/'+id)}>Log in</a>}</div>
               )}
 
               {/* Action buttons */}
               {user?.id === product.seller_id ? (
-                <div style={{ textAlign:'center', padding:'12px', background:'#f8fafc', borderRadius:12, fontSize:'0.83rem', color:'#9ca3af', fontWeight:600 }}>
+                <div style={{ textAlign:'center', padding:'12px', background:'var(--ap-surface-muted, #f8fafc)', borderRadius:12, fontSize:'0.83rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600 }}>
                   This is your listing
                 </div>
               ) : product.status === 'active' || product.is_active !== false ? (
@@ -425,27 +425,27 @@ export default function ProductPage() {
                   </button>
                 </>
               ) : (
-                <div style={{ textAlign:'center', padding:'14px', background:'#f8fafc', borderRadius:12, fontSize:'0.85rem', color:'#9ca3af', fontWeight:600 }}>
+                <div style={{ textAlign:'center', padding:'14px', background:'var(--ap-surface-muted, #f8fafc)', borderRadius:12, fontSize:'0.85rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600 }}>
                   This listing is currently unavailable
                 </div>
               )}
             </div>
 
             {/* Safety notice */}
-            <div style={{ background:'#fff', border:'1px solid #eceff3', borderRadius:16, padding:18 }}>
-              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'#374151', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Buyer Protection</div>
+            <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #eceff3)', borderRadius:16, padding:18 }}>
+              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-text-strong, #374151)', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Buyer Protection</div>
               {[
                 ['Payments currently unavailable', 'You can save items in your cart; no money is collected'],
                 ['Check listing details', 'Confirm availability and delivery details with the seller'],
                 ['Dispute resolution', 'Contact support if anything goes wrong'],
               ].map(([title, sub]) => (
                 <div key={title} style={{ display:'flex', gap:10, marginBottom:10 }}>
-                  <div style={{ width:20, height:20, borderRadius:'50%', background:'#eaf8ee', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#1f8f43" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <div style={{ width:20, height:20, borderRadius:'50%', background:'var(--ap-accent-surface, #eaf8ee)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="var(--ap-accent-text, #1f8f43)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
                   <div>
-                    <div style={{ fontSize:'0.8rem', fontWeight:700, color:'#111' }}>{title}</div>
-                    <div style={{ fontSize:'0.72rem', color:'#9ca3af', lineHeight:1.4, marginTop:1 }}>{sub}</div>
+                    <div style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--ap-text-strong, #111)' }}>{title}</div>
+                    <div style={{ fontSize:'0.72rem', color:'var(--ap-text-subtle, #9ca3af)', lineHeight:1.4, marginTop:1 }}>{sub}</div>
                   </div>
                 </div>
               ))}
@@ -456,13 +456,13 @@ export default function ProductPage() {
         {/* RELATED PRODUCTS */}
         {related.length > 0 && (
           <section>
-            <h2 style={{ fontSize:'1.15rem', fontWeight:900, color:'#111', letterSpacing:'-0.03em', marginBottom:20 }}>More from this category</h2>
+            <h2 style={{ fontSize:'1.15rem', fontWeight:900, color:'var(--ap-text-strong, #111)', letterSpacing:'-0.03em', marginBottom:20 }}>More from this category</h2>
             <div className="related-grid">
               {related.map(p => (
                 <a key={p.id} href={`/products/${p.id}`} className="rel-card">
                   <div className="rel-img">
                     {p.images?.[0] ? <img src={p.images[0]} alt={p.title} /> : (
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ap-text-subtle, #d1d5db)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                     )}
                   </div>
                   <div className="rel-body">
@@ -480,4 +480,4 @@ export default function ProductPage() {
 }
 
 // ── NAV ────────────────────────────────────────────────────────────────────────
-function Nav(){return <nav style={{background:'#fff',padding:16,display:'flex',gap:12,flexWrap:'wrap',justifyContent:'space-between',alignItems:'center'}}><a href="/" style={{fontWeight:900,color:'#176d35'}}>AfriPlate</a><div style={{display:'flex',gap:8,flexWrap:'wrap'}}><AccountLinks /></div></nav>;}
+function Nav(){return <nav style={{background:'var(--ap-surface, #fff)',padding:16,display:'flex',gap:12,flexWrap:'wrap',justifyContent:'space-between',alignItems:'center'}}><a href="/" style={{fontWeight:900,color:'var(--ap-accent-text, #176d35)'}}>AfriPlate</a><div style={{display:'flex',gap:8,flexWrap:'wrap'}}><AccountLinks /></div></nav>;}

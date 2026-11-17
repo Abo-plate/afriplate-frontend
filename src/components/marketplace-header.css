@@ -1,7 +1,7 @@
 /* Shared by the homepage, cart, applications and order workspace.
    Keep these rules with MarketplaceHeader; no route CSS or .ap-home is required. */
 .ap-header {
-  background: #fff;
+  background: var(--ap-surface, #fff);
   color: var(--ap-color-heading);
   border-bottom: 1px solid var(--ap-color-border);
   font: 400 15px/1.6 var(--ap-font);
@@ -9,7 +9,7 @@
 .ap-header *, .ap-brand { box-sizing: border-box; }
 .ap-header a, .ap-brand { text-decoration: none; color: inherit; }
 .ap-header button { font-family: inherit; cursor: pointer; }
-.ap-header a:hover { color: var(--ap-color-primary-hover); }
+.ap-header a:hover { color: var(--ap-accent-text, var(--ap-color-primary-hover)); }
 .ap-header :focus-visible, .ap-brand:focus-visible {
   outline: 3px solid var(--ap-color-primary); outline-offset: 4px;
 }
@@ -22,7 +22,7 @@
   display: inline-flex; align-items: center; flex-shrink: 0;
   font: 900 26px/1 var(--ap-font); letter-spacing: -1.2px; white-space: nowrap;
 }
-.ap-brand > span:not(.ap-brand-mark) { color: var(--ap-color-primary); }
+.ap-brand > span:not(.ap-brand-mark) { color: var(--ap-accent-text, var(--ap-color-primary)); }
 .ap-brand-mark {
   width: 35px; height: 37px; flex-shrink: 0; display: grid; place-items: center;
   border-radius: 11px; background: var(--ap-color-primary); color: #fff; margin-right: 9px;
@@ -58,8 +58,8 @@
   .ap-header .ap-header-actions > .ap-login { display: none; }
   .ap-header .ap-menu-button {
     display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0;
-    border: 1px solid var(--ap-color-border); background: #fff;
-    border-radius: var(--ap-radius-control); color: var(--ap-color-primary);
+    border: 1px solid var(--ap-color-border); background: var(--ap-surface, #fff);
+    border-radius: var(--ap-radius-control); color: var(--ap-accent-text, var(--ap-color-primary));
   }
   .ap-header .ap-mobile-menu {
     display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 12px 22px;

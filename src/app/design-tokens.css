@@ -60,7 +60,7 @@
 .ap-verification-field input:focus {
   border-color: var(--ap-color-primary);
   box-shadow: var(--ap-focus-ring);
-  background: #fff;
+  background: var(--ap-surface, #fff);
 }
 .ap-verification-button {
   width: 100%;
@@ -94,12 +94,12 @@
   border-radius: 10px;
   font-size: 0.83rem;
   font-weight: 600;
-  color: var(--ap-color-primary-hover);
+  color: var(--ap-accent-text, var(--ap-color-primary-hover));
   background: var(--ap-color-mint);
   border: 1px solid var(--ap-color-border);
 }
 .ap-verification-feedback.error {
-  color: #dc2626;
-  background: #fef2f2;
-  border-color: #fecaca;
+  color: var(--ap-danger-text, #dc2626);
+  background: var(--ap-danger-surface, #fef2f2);
+  border-color: var(--ap-danger-border, #fecaca);
 }

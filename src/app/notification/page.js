@@ -25,19 +25,19 @@ function timeAgo(dateStr) {
 function Spinner() {
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:'60px 0' }}>
-      <div style={{ width:28, height:28, border:'3px solid #e5e7eb', borderTopColor:'#1f8f43', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+      <div style={{ width:28, height:28, border:'3px solid var(--ap-border, #e5e7eb)', borderTopColor:'var(--ap-accent-border, #1f8f43)', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
     </div>
   );
 }
 
 const NOTIF_ICONS = {
-  order:    { icon:'🛍', bg:'#eaf8ee', color:'#1f8f43' },
-  payment:  { icon:'💳', bg:'#eef2ff', color:'#6366f1' },
-  message:  { icon:'💬', bg:'#f0f9ff', color:'#0284c7' },
-  review:   { icon:'⭐', bg:'#fef3c7', color:'#d97706' },
-  delivery: { icon:'📦', bg:'#f0fdf4', color:'#1f8f43' },
-  job:      { icon:'💼', bg:'#fce7f3', color:'#db2777' },
-  system:   { icon:'🔔', bg:'#f3f4f6', color:'#6b7280' },
+  order:    { icon:'🛍', bg:'var(--ap-accent-surface, #eaf8ee)', color:'var(--ap-accent-text, #1f8f43)' },
+  payment:  { icon:'💳', bg:'var(--ap-info-surface, #eef2ff)', color:'var(--ap-info-text, #6366f1)' },
+  message:  { icon:'💬', bg:'var(--ap-info-surface, #f0f9ff)', color:'var(--ap-info-text, #0284c7)' },
+  review:   { icon:'⭐', bg:'var(--ap-warning-surface, #fef3c7)', color:'var(--ap-warning-text, #d97706)' },
+  delivery: { icon:'📦', bg:'var(--ap-accent-surface, #f0fdf4)', color:'var(--ap-accent-text, #1f8f43)' },
+  job:      { icon:'💼', bg:'var(--ap-pink-surface, #fce7f3)', color:'var(--ap-pink-text, #db2777)' },
+  system:   { icon:'🔔', bg:'var(--ap-surface-muted, #f3f4f6)', color:'var(--ap-text-muted, #6b7280)' },
 };
 
 function getStyle(type) {
@@ -114,7 +114,7 @@ export default function NotificationsPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; background:#f7f8fa; color:#1f2937; }
+        body { font-family:'Inter',sans-serif; background:var(--ap-page-background, #f7f8fa); color:var(--ap-text-strong, #1f2937); }
         a { color:inherit; text-decoration:none; }
         button { font-family:'Inter',sans-serif; cursor:pointer; border:none; }
 
@@ -126,38 +126,38 @@ export default function NotificationsPage() {
 
         /* HEADER */
         .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-        .page-title  { font-size:1.5rem; font-weight:900; color:#111; letter-spacing:-0.04em; }
+        .page-title  { font-size:1.5rem; font-weight:900; color:var(--ap-text-strong, #111); letter-spacing:-0.04em; }
         .unread-badge { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#1f8f43; color:#fff; font-size:0.7rem; font-weight:900; margin-left:8px; }
 
         /* TABS + ACTIONS */
         .toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
         .tab-bar { display:flex; gap:6px; }
-        .tab-pill { padding:8px 16px; border-radius:50px; font-size:0.82rem; font-weight:700; background:#f3f4f6; color:#6b7280; cursor:pointer; transition:all 0.18s; border:none; }
+        .tab-pill { padding:8px 16px; border-radius:50px; font-size:0.82rem; font-weight:700; background:var(--ap-surface-muted, #f3f4f6); color:var(--ap-text-muted, #6b7280); cursor:pointer; transition:all 0.18s; border:none; }
         .tab-pill.active { background:#1f8f43; color:#fff; }
-        .mark-all-btn { font-size:0.8rem; font-weight:700; color:#1f8f43; background:none; border:none; cursor:pointer; padding:6px 10px; border-radius:8px; transition:background 0.18s; }
-        .mark-all-btn:hover { background:#eaf8ee; }
+        .mark-all-btn { font-size:0.8rem; font-weight:700; color:var(--ap-accent-text, #1f8f43); background:none; border:none; cursor:pointer; padding:6px 10px; border-radius:8px; transition:background 0.18s; }
+        .mark-all-btn:hover { background:var(--ap-accent-surface, #eaf8ee); }
 
         /* NOTIF CARD */
-        .notif-card { background:#fff; border:1px solid #eceff3; border-radius:16px; padding:16px 18px; margin-bottom:10px; display:flex; align-items:flex-start; gap:14px; cursor:pointer; transition:all 0.2s; position:relative; box-shadow:0 2px 8px rgba(15,23,42,0.04); }
+        .notif-card { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:16px; padding:16px 18px; margin-bottom:10px; display:flex; align-items:flex-start; gap:14px; cursor:pointer; transition:all 0.2s; position:relative; box-shadow:0 2px 8px rgba(15,23,42,0.04); }
         .notif-card:hover { box-shadow:0 6px 20px rgba(15,23,42,0.09); transform:translateY(-1px); }
-        .notif-card.unread { border-left:3px solid #1f8f43; background:#fafffe; }
+        .notif-card.unread { border-left:3px solid var(--ap-accent-border, #1f8f43); background:var(--ap-surface, #fafffe); }
         .notif-card.unread::before { content:''; position:absolute; top:18px; right:18px; width:8px; height:8px; border-radius:50%; background:#1f8f43; }
 
         .notif-icon-wrap { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
         .notif-body { flex:1; min-width:0; }
-        .notif-title { font-size:0.875rem; font-weight:700; color:#111; margin-bottom:3px; line-height:1.4; }
+        .notif-title { font-size:0.875rem; font-weight:700; color:var(--ap-text-strong, #111); margin-bottom:3px; line-height:1.4; }
         .notif-card.unread .notif-title { font-weight:900; }
-        .notif-sub  { font-size:0.78rem; color:#6b7280; line-height:1.5; margin-bottom:5px; }
-        .notif-time { font-size:0.7rem; color:#9ca3af; font-weight:600; }
+        .notif-sub  { font-size:0.78rem; color:var(--ap-text-muted, #6b7280); line-height:1.5; margin-bottom:5px; }
+        .notif-time { font-size:0.7rem; color:var(--ap-text-subtle, #9ca3af); font-weight:600; }
 
-        .delete-btn { width:28px; height:28px; border-radius:8px; background:none; display:flex; align-items:center; justify-content:center; color:#d1d5db; transition:all 0.18s; flex-shrink:0; margin-top:2px; }
-        .delete-btn:hover { background:#fef2f2; color:#ef4444; }
+        .delete-btn { width:28px; height:28px; border-radius:8px; background:none; display:flex; align-items:center; justify-content:center; color:var(--ap-text-subtle, #d1d5db); transition:all 0.18s; flex-shrink:0; margin-top:2px; }
+        .delete-btn:hover { background:var(--ap-danger-surface, #fef2f2); color:var(--ap-danger-text, #ef4444); }
 
         /* GROUP LABEL */
-        .group-label { font-size:0.72rem; font-weight:800; color:#9ca3af; text-transform:uppercase; letter-spacing:1.5px; margin:20px 0 10px; }
+        .group-label { font-size:0.72rem; font-weight:800; color:var(--ap-text-subtle, #9ca3af); text-transform:uppercase; letter-spacing:1.5px; margin:20px 0 10px; }
 
         /* EMPTY */
-        .empty-wrap { background:#fff; border:1px solid #eceff3; border-radius:20px; padding:60px 24px; text-align:center; }
+        .empty-wrap { background:var(--ap-surface, #fff); border:1px solid var(--ap-border, #eceff3); border-radius:20px; padding:60px 24px; text-align:center; }
 
         @media (max-width:480px) { .page-wrap { padding:20px 16px 60px; } }
       `}</style>
@@ -171,7 +171,7 @@ export default function NotificationsPage() {
             <span className="page-title">Notifications</span>
             {unreadCnt > 0 && <span className="unread-badge">{unreadCnt}</span>}
           </div>
-          <a href="/dashboard" style={{ fontSize:'0.83rem', fontWeight:700, color:'#6b7280', padding:'8px 14px', background:'#f3f4f6', borderRadius:10 }}>
+          <a href="/dashboard" style={{ fontSize:'0.83rem', fontWeight:700, color:'var(--ap-text-muted, #6b7280)', padding:'8px 14px', background:'var(--ap-surface-muted, #f3f4f6)', borderRadius:10 }}>
             Back to Dashboard
           </a>
         </div>
@@ -196,10 +196,10 @@ export default function NotificationsPage() {
         {loading ? <Spinner /> : filtered.length === 0 ? (
           <div className="empty-wrap">
             <div style={{ fontSize:'2.5rem', marginBottom:12 }}>🔔</div>
-            <div style={{ fontSize:'1rem', fontWeight:900, color:'#111', marginBottom:6 }}>
+            <div style={{ fontSize:'1rem', fontWeight:900, color:'var(--ap-text-strong, #111)', marginBottom:6 }}>
               {tab === 'unread' ? 'All caught up!' : 'No notifications yet'}
             </div>
-            <p style={{ fontSize:'0.875rem', color:'#9ca3af' }}>
+            <p style={{ fontSize:'0.875rem', color:'var(--ap-text-subtle, #9ca3af)' }}>
               {tab === 'unread' ? 'You have no unread notifications.' : 'Activity on your orders, messages and listings will appear here.'}
             </p>
           </div>
@@ -231,7 +231,7 @@ export default function NotificationsPage() {
                         title="Dismiss"
                       >
                         {deleting === notif.id
-                          ? <div style={{ width:12, height:12, border:'2px solid #e5e7eb', borderTopColor:'#9ca3af', borderRadius:'50%', animation:'spin 0.65s linear infinite' }} />
+                          ? <div style={{ width:12, height:12, border:'2px solid var(--ap-border, #e5e7eb)', borderTopColor:'var(--ap-border, #9ca3af)', borderRadius:'50%', animation:'spin 0.65s linear infinite' }} />
                           : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         }
                       </button>
@@ -274,17 +274,17 @@ function Nav() {
   const user = getUser();
   return (
     <nav style={{
-      background:'#fff', borderBottom:'1px solid #e5e7eb', padding:'0 24px',
+      background:'var(--ap-surface, #fff)', borderBottom:'1px solid var(--ap-border, #e5e7eb)', padding:'0 24px',
       height:62, display:'flex', alignItems:'center', justifyContent:'space-between',
       position:'sticky', top:0, zIndex:100, fontFamily:'Inter,sans-serif',
     }}>
-      <a href="/" style={{ fontSize:'1.45rem', fontWeight:900, color:'#111', letterSpacing:'-0.04em' }}>
-        Afri<span style={{ color:'#1f8f43' }}>Plate</span>
+      <a href="/" style={{ fontSize:'1.45rem', fontWeight:900, color:'var(--ap-text-strong, #111)', letterSpacing:'-0.04em' }}>
+        Afri<span style={{ color:'var(--ap-accent-text, #1f8f43)' }}>Plate</span>
       </a>
       <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-        <a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Products</a>
-        <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Services</a>
-        <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'#374151', background:'#f3f4f6' }}>Jobs</a>
+        <a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Products</a>
+        <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Services</a>
+        <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Jobs</a>
         {user
           ? <a href="/dashboard" style={{ padding:'8px 16px', borderRadius:10, fontSize:'0.84rem', fontWeight:800, color:'#fff', background:'#1f8f43' }}>Dashboard</a>
           : <a href="/login"     style={{ padding:'8px 16px', borderRadius:10, fontSize:'0.84rem', fontWeight:800, color:'#fff', background:'#1f8f43' }}>Sign In</a>

@@ -1,0 +1,2 @@
+// Runs in <head> before page content is painted. Only this preference is read.
+export const THEME_BOOTSTRAP = `(function(){var p='system';try{var v=localStorage.getItem('afriplate:theme');if(v==='light'||v==='dark')p=v;}catch(e){}var d=p==='dark'||(p==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);var t=d?'dark':'light';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;})();`;
