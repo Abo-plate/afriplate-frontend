@@ -1,4 +1,6 @@
 'use client';
+import PublicSeller,{ServiceRating} from '@/components/PublicSeller';
+import {publicSeller} from '../../lib/publicSeller';
 import {API_ORIGIN} from '../../lib/endpoints';
 import { listingCampus } from '../../lib/listingCampus';
 import { useSession } from '../../lib/SessionProvider';
@@ -77,25 +79,29 @@ export default function ServicePage() {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled=false;
     const load = async () => {
-      setLoading(true);
+      setLoading(true);setService(null);setReviews([]);setReviewsError(false);
       try {
         const [sRes, rRes] = await Promise.allSettled([
           fetch(`${API}/api/services/${id}`),
           fetch(`${API}/api/reviews/service/${id}`),
         ]);
+        if(cancelled)return;
         if (sRes.status === 'fulfilled' && sRes.value.ok) {
           const d = await sRes.value.json();
+          if(cancelled)return;
           setService(d.service || d.data || d);
         }
         if (rRes.status === 'fulfilled' && rRes.value.ok) {
           const d = await rRes.value.json();
+          if(cancelled)return;
           setReviews(d.reviews || d.data || []);setReviewsError(false);
         } else {setReviewsError(true);}
-      } catch {setReviewsError(true);}
-      setLoading(false);
+      } catch {if(!cancelled)setReviewsError(true);}
+      if(!cancelled)setLoading(false);
     };
-    load();
+    load();return()=>{cancelled=true;};
   }, [id]);
 
   useEffect(() => {
@@ -106,12 +112,8 @@ export default function ServicePage() {
       .catch(() => {});
   }, [service]);
 
-  const placeOrder = async () => {
-    if (!getToken()) { window.location.href = '/login'; return; }
-    window.location.href = `/checkout?type=service&id=${id}`;
-  };
-
   const messageSeller = () => {
+    if(user?.id===service?.seller_id){window.location.href='/dashboard#listings';return;}
     window.location.href = `/messages?to=${service?.seller_id}&service_id=${service?.id}`;
   };
 
@@ -144,8 +146,8 @@ export default function ServicePage() {
   const buyerFee = parseFloat((price * BUYER_FEE_RATE).toFixed(2));
   const total    = parseFloat((price + buyerFee).toFixed(2));
 
-  const sellerName = service.seller_name ||
-    `${service.seller_first_name || ''} ${service.seller_last_name || ''}`.trim() || 'Seller';
+  const seller=publicSeller(service);
+  const sellerName=seller.name;
 
   return (
     <>
@@ -394,15 +396,15 @@ export default function ServicePage() {
                 )}
                 <div className="d-chip">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ap-accent-text, #1f8f43)" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  Escrow protected
+                  Payments currently unavailable
                 </div>
               </div>
 
               {/* Fee breakdown */}
               <div style={{ background:'var(--ap-surface-muted, #f8fafc)', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
-                <div className="fee-row"><span>Service price</span><span style={{ fontWeight:700, color:'var(--ap-text-strong, #111)' }}>₦{fmt(price)}</span></div>
+                <div className="fee-row"><span>Public listing price</span><span style={{ fontWeight:700, color:'var(--ap-text-strong, #111)' }}>₦{fmt(price)}</span></div>
                 <div className="fee-row"><span>Service fee (2%)</span><span>₦{fmt(buyerFee)}</span></div>
-                <div className="fee-row total"><span>You pay</span><span style={{ color:'var(--ap-accent-text, #1f8f43)' }}>₦{fmt(total)}</span></div>
+                <div className="fee-row total"><span>Estimated total (no payment)</span><span style={{ color:'var(--ap-accent-text, #1f8f43)' }}>₦{fmt(total)}</span></div>
               </div>
 
               {/* Feedback */}
@@ -420,14 +422,7 @@ export default function ServicePage() {
                 </div>
               ) : service.status === 'active' || service.is_active !== false ? (
                 <>
-                  <button className="order-btn order-primary" onClick={placeOrder} disabled={orderState === 'loading'}>
-                    {orderState === 'loading'
-                      ? <><span className="btn-spinner" /> Processing...</>
-                      : `Order Now — ₦${fmt(total)}`}
-                  </button>
-                  <button className="order-btn order-secondary" onClick={messageSeller}>
-                    Message Seller First
-                  </button>
+                  <button className="order-btn order-primary" onClick={messageSeller}>Message {seller.firstName}</button>
                 </>
               ) : (
                 <div style={{ textAlign:'center', padding:'14px', background:'var(--ap-surface-muted, #f8fafc)', borderRadius:12, fontSize:'0.85rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600 }}>
@@ -438,33 +433,19 @@ export default function ServicePage() {
 
             {/* SELLER CARD */}
             <div className="seller-card">
-              <div className="seller-header">
-                <Avatar name={sellerName} size={52} />
-                <div className="seller-info">
-                  <h3>{sellerName}</h3>
-                  <p>{service.seller_university || 'AfriPlate Seller'}</p>
-                  {avgRating && (
-                    <div style={{ display:'flex', alignItems:'center', gap:5, marginTop:4 }}>
-                      <Stars rating={avgRating} size={12} />
-                      <span style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--ap-text-strong, #374151)' }}>{avgRating}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <PublicSeller seller={seller}/>
+              <ServiceRating count={reviews.length} average={avgRating}/>
 
               <div className="seller-stats">
                 <div className="stat-box">
-                  <div className="stat-val">{reviews.length}</div>
+                  <div className="stat-val">{reviewsError?'Unavailable':reviews.length}</div>
                   <div className="stat-lbl">Reviews</div>
                 </div>
                 <div className="stat-box">
                   <div className="stat-val">{service.delivery_days || '—'}</div>
                   <div className="stat-lbl">Delivery days</div>
                 </div>
-                <div className="stat-box">
-                  <div className="stat-val">{service.seller_university ? service.seller_university.split(' ')[0] : '—'}</div>
-                  <div className="stat-lbl">University</div>
-                </div>
+
               </div>
 
               <button onClick={messageSeller} style={{
@@ -472,15 +453,15 @@ export default function ServicePage() {
                 color:'var(--ap-accent-text, #1f8f43)', fontWeight:800, fontSize:'0.88rem', border:'none', cursor:'pointer',
                 transition:'background 0.18s',
               }}>
-                Message {sellerName.split(' ')[0]}
+                {user?.id===service.seller_id?'Manage service':'Message '+seller.firstName}
               </button>
             </div>
 
             {/* SAFETY NOTICE */}
             <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #eceff3)', borderRadius:16, padding:18 }}>
-              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-text-strong, #374151)', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Buyer Protection</div>
+              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-text-strong, #374151)', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Before you proceed</div>
               {[
-                ['Escrow payment', 'Funds released only after you confirm delivery'],
+                ['Payments unavailable', 'No money is collected or released. Discuss the work in chat.'],
                 ['Student identification', 'Student verification is shown only after ID approval'],
                 ['Revision guarantee', service.revisions ? `Up to ${service.revisions} revisions included` : 'Contact seller for revision policy'],
               ].map(([title, sub]) => (

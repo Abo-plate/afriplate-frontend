@@ -59,48 +59,11 @@ function CheckoutPageInner() {
       headers: { Authorization: `Bearer ${getToken()}` }
     })
       .then(r => r.json())
-      .then(d => setOrder(d.order || d.data || d))
+      .then(d => {const saved=d.order||d.data||d;setOrder(saved);if(saved.service_offer_id&&saved.id)window.location.replace('/orders/'+saved.id);})
       .catch(() => {});
   }, [orderId]);
 
-  const createOrderAndPay = async () => {
-    setStep('paying'); setMsg('');
-    try {
-      // Step 1 — create order (skip if already have one)
-      let currentOrder = order;
-      if (!currentOrder) {
-        const oRes = await fetch(`${API}/api/orders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-          body: JSON.stringify({
-            [`${type}_id`]: itemId,
-            type,
-            ...(type==='product'?{quantity:1,expected_unit_price:item?.price}:{}),
-          }),
-        });
-        const oData = await oRes.json();
-        if (!oRes.ok) { setMsg(oData.message || 'Could not create order.'); setStep('error'); return; }
-        currentOrder = oData.order;
-        setOrder(currentOrder);
-      }
-
-      // Step 2 — initiate Paystack payment
-      const pRes = await fetch(`${API}/api/payments/initiate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ order_id: currentOrder.id }),
-      });
-      const pData = await pRes.json();
-      if (!pRes.ok) { setMsg(pData.message || 'Could not initiate payment.'); setStep('error'); return; }
-
-      // Step 3 — redirect to Paystack
-      window.location.href = pData.payment_url;
-
-    } catch {
-      setMsg('Connection error. Please try again.');
-      setStep('error');
-    }
-  };
+  const createOrderAndPay=()=>{setStep('error');setMsg('Payments are currently unavailable. No payment has been taken.');};
 
   if (loading) return (
     <div style={{ minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'var(--ap-page-background, #f7f8fa)' }}>
@@ -124,9 +87,9 @@ function CheckoutPageInner() {
 
   // Compute fees from item if no order yet
   const FEE_RATES = { product: 0.005, service: 0.02, job: 0.01 };
-  const price      = parseFloat(order?.amount    || item?.price || 0);
-  const buyerFee   = parseFloat(order?.buyer_fee  || (price * (FEE_RATES[type] || 0.01)).toFixed(2));
-  const total      = parseFloat(order?.buyer_total || (price + buyerFee).toFixed(2));
+  const price      = parseFloat(order?.amount ?? item?.price ?? 0);
+  const buyerFee   = parseFloat(order?.buyer_fee ?? (price * (FEE_RATES[type] || 0.01)).toFixed(2));
+  const total      = parseFloat(order?.buyer_total ?? (price + buyerFee).toFixed(2));
   const sellerGets = parseFloat(order?.seller_amount || 0);
 
   const itemTitle = order?.product_title || order?.service_title || order?.job_title || item?.title || 'Item';
@@ -212,7 +175,7 @@ function CheckoutPageInner() {
         <div style={{ display:'flex', alignItems:'center', gap:0, marginBottom:32 }}>
           {[
             { label:'Review Order', done: true, active: step === 'summary' },
-            { label:'Pay Securely', done: step === 'success', active: step === 'paying' },
+            { label:'Payment unavailable', done: step === 'success', active: step === 'paying' },
             { label:'Confirmed',    done: false, active: step === 'success' },
           ].map((s, i, arr) => (
             <div key={s.label} style={{ display:'flex', alignItems:'center', flex: i < arr.length - 1 ? 1 : 'none' }}>
@@ -288,13 +251,13 @@ function CheckoutPageInner() {
               ))}
             </div>
 
-            {/* ESCROW NOTICE */}
+            {/* PAYMENT AVAILABILITY */}
             <div style={{ background:'var(--ap-accent-surface, #f0fdf4)', border:'1px solid var(--ap-accent-border, #bbf7d0)', borderRadius:16, padding:18 }}>
-              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-accent-text, #1f8f43)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:10 }}>How escrow works</div>
+              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-accent-text, #1f8f43)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:10 }}>Payments are currently unavailable</div>
               {[
-                'Your payment is held securely by AfriPlate',
-                'Funds are only released when you confirm delivery',
-                'If something goes wrong, contact support for a refund',
+                'No money is collected or held by this checkout',
+                'No funds are released by accepting an offer or delivery',
+                'An accepted service offer opens an unpaid order workspace',
               ].map((t, i) => (
                 <div key={i} style={{ display:'flex', gap:10, marginBottom:8 }}>
                   <div style={{ width:20, height:20, borderRadius:'50%', background:'#1f8f43', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.65rem', fontWeight:900, flexShrink:0 }}>{i + 1}</div>
@@ -333,17 +296,18 @@ function CheckoutPageInner() {
                 </div>
               )}
 
-              {/* Pay button */}
+              {/* Payment collection remains unavailable. */}
+              <p role="status" style={{fontSize:".85rem",lineHeight:1.6,color:"var(--ap-text-muted,#53655a)",marginBottom:12}}>Payments are disabled. No payment has been taken. Accepted service offers are managed in their unpaid order workspace.</p>
               <button
                 className="pay-btn"
                 onClick={createOrderAndPay}
-                disabled={step === 'paying'}
+                disabled={true}
               >
                 {step === 'paying'
                   ? <><span className="btn-spinner" /> Processing...</>
                   : <>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                      Pay ₦{fmt(total)} with Paystack
+                      Payments unavailable
                     </>
                 }
               </button>
@@ -356,8 +320,8 @@ function CheckoutPageInner() {
               <div style={{ display:'flex', justifyContent:'center', gap:16, marginTop:18, paddingTop:16, borderTop:'1px solid var(--ap-border, #f3f4f6)' }}>
                 {[
                   { icon:'🔒', label:'SSL Secure' },
-                  { icon:'🛡', label:'Escrow' },
-                  { icon:'✅', label:'Paystack' },
+                  { icon:'🛡', label:'Unpaid' },
+                  { icon:'✅', label:'Payments paused' },
                 ].map(b => (
                   <div key={b.label} style={{ textAlign:'center' }}>
                     <div style={{ fontSize:'1.1rem' }}>{b.icon}</div>
@@ -385,7 +349,7 @@ function Nav() {
       </a>
       <div style={{ fontSize:'0.82rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ap-accent-text, #1f8f43)" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Secured by Paystack
+        Payments currently unavailable
       </div>
     </nav>
   );

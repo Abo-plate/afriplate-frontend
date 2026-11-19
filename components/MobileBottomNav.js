@@ -40,20 +40,25 @@ export default function MobileBottomNav() {
   }, []);
   useEffect(() => {
     if (!isAuthed) return;
-    let cancelled = false; let controller;
-    const poll = async () => {
-      controller?.abort(); controller = new AbortController();
-      try {
-        const response = await fetch(API_BASE + '/messages/unread-count', { headers: {Authorization:'Bearer ' + localStorage.getItem('token')}, cache:'no-store', signal:controller.signal });
-        if (!response.ok) throw Error();
-        const data = await response.json();
-        const count = data.unread;
-        if (!cancelled) setUnread({ userId: user.id, count: Number.isSafeInteger(count) && count >= 0 ? count : null });
-      } catch { if (!cancelled) setUnread(null); }
+    let cancelled=false,controller,latest=0;
+    const poll=async()=>{
+      const ticket=++latest;controller?.abort();controller=new AbortController();
+      try{
+        const response=await fetch(API_BASE+'/messages/unread-count',{headers:{Authorization:'Bearer '+localStorage.getItem('token')},cache:'no-store',signal:controller.signal});
+        if(!response.ok)throw Error();
+        const data=await response.json(),count=data.unread;
+        if(!cancelled&&ticket===latest)setUnread({userId:user.id,count:Number.isSafeInteger(count)&&count>=0?count:null});
+      }catch{if(!cancelled&&ticket===latest)setUnread(null);}
     };
-    poll(); const timer = setInterval(poll, 15000);
-    return () => { cancelled = true; controller?.abort(); clearInterval(timer); };
-  }, [isAuthed, user?.id]);
+    const changed=event=>{
+      if(event.detail?.user_id!==user.id)return;
+      if(Number.isSafeInteger(event.detail.unread)&&event.detail.unread>=0){latest++;controller?.abort();setUnread({userId:user.id,count:event.detail.unread});}
+      else poll();
+    };
+    poll();const timer=setInterval(poll,15000);
+    window.addEventListener('afriplate:messages-changed',changed);window.addEventListener('focus',poll);
+    return()=>{cancelled=true;latest++;controller?.abort();clearInterval(timer);window.removeEventListener('afriplate:messages-changed',changed);window.removeEventListener('focus',poll);};
+  },[isAuthed,user?.id]);
   const explore = /^\/(products|services|jobs|sellers|university)(?:\/|$)/.test(pathname);
   const selling = pathname === '/dashboard' && hash.startsWith('#sell-');
   const active = pathname === '/' ? 'Home' : explore ? 'Explore' : selling ? 'Sell' : pathname === '/messages' || hash === '#messages' ? 'Messages' : /^\/(dashboard|login|register|wallet|cart|checkout|orders|applications)(?:\/|$)/.test(pathname) ? 'Account' : null;
@@ -66,7 +71,7 @@ export default function MobileBottomNav() {
     {menu && <section id="mobile-navigation-menu" className="mobile-nav-panel" aria-label={menu === 'Explore' ? 'Explore marketplace' : 'Start selling'}>
       <div className="mobile-panel-heading"><strong>{menu === 'Explore' ? 'Explore the marketplace' : 'What would you like to list?'}</strong><button type="button" aria-label="Close navigation menu" onClick={() => setMenu(null)}><Icon name="close" /></button></div>
       {menu === 'Explore' ? <div className="mobile-panel-links">{[['Products','bag','/products','Find what you need'],['Services','book','/services','Discover campus talent'],['Jobs','work','/jobs','Find your next opportunity']].map(([label,icon,href,detail]) => <Link key={href} href={href} onClick={() => setMenu(null)}><Icon name={icon}/><span><strong>{label}</strong><small>{detail}</small></span><Icon name="arrow"/></Link>)}</div> : <>
-        {status === 'checking' || status === 'unavailable' ? <p role="status">Your account must be verified before continuing. <Link href="/login" onClick={() => setMenu(null)}>Go to login</Link></p> : isAuthed && !canSell ? <p>You need an active seller account to create listings. <Link href="/dashboard#settings" onClick={() => setMenu(null)}>View account settings</Link></p> : <div className="mobile-panel-links">{[['product','bag','Sell a product','List an item for your campus'],['service','book','Offer a service','Share your skills']].map(([type,icon,label,detail]) => <a key={type} href={sellLink(type)} onClick={() => setMenu(null)}><Icon name={icon}/><span><strong>{label}</strong><small>{detail}{!isAuthed ? ' ? Login required' : ''}</small></span><Icon name="arrow"/></a>)}</div>}
+        {status === 'checking' || status === 'unavailable' ? <p role="status">Your account must be verified before continuing. <Link href="/login" onClick={() => setMenu(null)}>Go to login</Link></p> : isAuthed && !canSell ? <p>You need an active seller account to create listings. <Link href="/dashboard#settings" onClick={() => setMenu(null)}>View account settings</Link></p> : <div className="mobile-panel-links">{[['product','bag','Sell a product','List an item for your campus'],['service','book','List a service','Share your skills']].map(([type,icon,label,detail]) => <a key={type} href={sellLink(type)} onClick={() => setMenu(null)}><Icon name={icon}/><span><strong>{label}</strong><small>{detail}{!isAuthed ? ' ? Login required' : ''}</small></span><Icon name="arrow"/></a>)}</div>}
       </>}
     </section>}
     <nav className="mobile-nav" aria-label="Main mobile navigation">

@@ -1,6 +1,8 @@
 "use client";
 import CartEntry from "./CartEntry";
 import { usePathname } from "next/navigation";
+import PublicSeller,{ServiceRating} from "./PublicSeller";
+import {publicSeller} from "../app/lib/publicSeller";
 import AccountLinks from "./AccountLinks";
 import { listingCampus } from "../app/lib/listingCampus";
 import { useState } from "react";
@@ -93,56 +95,19 @@ export function MarketplaceHeader() {
     </header>
   );
 }
-export function ListingCard({ item, type = "products" }) {
-  const [failed, setFailed] = useState(false);
-  const photo = item.images?.[0] || item.image;
-  const seller =
-    item.seller_name ||
-    [item.seller_first_name, item.seller_last_name].filter(Boolean).join(" ") ||
-    (type === "jobs" ? item.company || item.poster_name : "");
-  const campus = listingCampus(item);
-  const price = type === "jobs" ? item.budget : item.price;
-  return (
-    <Link
-      href={`/${type}/${encodeURIComponent(item.id || item._id)}`}
-      className="ap-listing"
-    >
-      <div className="ap-listing-photo">
-        {typeof photo === "string" && photo && !failed ? (
-          <img
-            src={photo}
-            alt={item.title || item.name || "Listing"}
-            loading="lazy"
-            onError={() => setFailed(true)}
-          />
-        ) : (
-          <div className="ap-photo-empty">
-            <Icon name="bag" />
-            <span>No photo provided</span>
-          </div>
-        )}
-        {item.category && (
-          <span className="ap-listing-category">{item.category}</span>
-        )}
-      </div>
-      <div className="ap-listing-body">
-        <h3>{item.title || item.name || "Untitled listing"}</h3>
-        <p className="ap-price">
-          {price !== null &&
-          price !== undefined &&
-          price !== "" &&
-          Number.isFinite(Number(price))
-            ? `₦${Number(price).toLocaleString("en-NG")}`
-            : "Ask for price"}
-        </p>
-        <p className="ap-listing-campus">
-          <Icon name="pin" />
-          {campus || "Campus not provided"}
-        </p>
-        {seller && <p className="ap-seller">Listed by {seller}</p>}
-      </div>
-    </Link>
-  );
+export function ListingCard({item,type="products"}) {
+  const [failed,setFailed]=useState(false),photo=item.images?.[0]||item.image,isService=type==='services';
+  const seller=item.seller_name||[item.seller_first_name||item.first_name,item.seller_last_name||item.last_name].filter(Boolean).join(' ')||(type==='jobs'?item.company||item.poster_name:'');
+  const campus=listingCampus(item),price=type==='jobs'?item.budget:item.price,href='/'+type+'/'+encodeURIComponent(item.id||item._id);
+  const Card=isService?'article':Link,Photo=isService?Link:'div';
+  return <Card {...(isService?{}:{href})} className="ap-listing"><Photo {...(isService?{href}:{})} className="ap-listing-photo">
+    {typeof photo==='string'&&photo&&!failed?<img src={photo} alt={item.title||item.name||'Listing'} loading="lazy" onError={()=>setFailed(true)}/>:<div className="ap-photo-empty"><Icon name="bag"/><span>No photo provided</span></div>}
+    {item.category&&<span className="ap-listing-category">{item.category}</span>}
+  </Photo><div className="ap-listing-body"><h3>{isService?<Link href={href} style={{color:'inherit',textDecoration:'none'}}>{item.title||item.name||'Untitled listing'}</Link>:item.title||item.name||'Untitled listing'}</h3>
+  <p className="ap-price">{price!=null&&price!==''&&Number.isFinite(Number(price))?'\u20a6'+Number(price).toLocaleString('en-NG'):'Ask for price'}</p>
+  <p className="ap-listing-campus"><Icon name="pin"/>{campus||'Campus not provided'}</p>
+  {isService?<><PublicSeller seller={publicSeller(item)} compact/><ServiceRating count={item.review_count} average={item.average_rating}/></>:seller&&<p className="ap-seller">Listed by {seller}</p>}
+  </div></Card>;
 }
 export function FeedState({ status, onRetry }) {
   if (status === "loading")

@@ -1,4 +1,7 @@
 'use client';
+import PublicSeller,{ServiceRating} from '@/components/PublicSeller';
+import {publicSeller} from '../lib/publicSeller';
+import {useSession} from '../lib/SessionProvider';
 import { listingCampus } from '../lib/listingCampus';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { servicesAPI } from '../lib/services';
@@ -140,10 +143,10 @@ export default function ServicesPage() {
         .clear-btn:hover { background:var(--ap-danger-surface, #fee2e2); color:var(--ap-danger-text, #dc2626); }
         .main { min-width:0; }
         .top-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
-        .search-wrap { display:flex; gap:8px; flex:1; min-width:200px; }
-        .search-input { flex:1; padding:11px 16px; border:1.5px solid var(--ap-border, #e5e7eb); border-radius:12px; font-size:0.875rem; outline:none; background:var(--ap-surface, #fff); }
+        .search-wrap { min-width:0; display:flex; gap:8px; flex:1; }
+        .search-input { min-width:0;width:0; flex:1; padding:11px 16px; border:1.5px solid var(--ap-border, #e5e7eb); border-radius:12px; font-size:0.875rem; outline:none; background:var(--ap-surface, #fff); }
         .search-input:focus { border-color:var(--ap-accent-border, #1f8f43); box-shadow:0 0 0 3px rgba(31,143,67,0.08); }
-        .search-btn { padding:11px 20px; background:#1f8f43; color:#fff; border-radius:12px; font-size:0.875rem; font-weight:700; transition:background 0.2s; }
+        .search-btn { flex-shrink:0; padding:11px 20px; background:#1f8f43; color:#fff; border-radius:12px; font-size:0.875rem; font-weight:700; transition:background 0.2s; }
         .search-btn:hover { background:#187536; }
         .right-bar { display:flex; align-items:center; gap:8px; }
         .sort-select { padding:9px 12px; border:1.5px solid var(--ap-border, #e5e7eb); border-radius:10px; font-size:0.82rem; color:var(--ap-text-strong, #374151); outline:none; background:var(--ap-surface, #fff); }
@@ -197,6 +200,7 @@ export default function ServicesPage() {
         @media (max-width:1024px) { .page { grid-template-columns:220px 1fr; } .services-grid { grid-template-columns:repeat(2,1fr); } }
         @media (max-width:768px) { .page { grid-template-columns:1fr; } .sidebar { display:none; } .filter-toggle { display:flex; } .services-grid { grid-template-columns:repeat(2,1fr); } .nav-links { display:none; } }
         @media (max-width:480px) { .services-grid { grid-template-columns:1fr; } .page { padding:16px; } }
+        @media(max-width:480px){.toolbar{min-width:0}.search-wrap{width:100%;display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:8px}.search-wrap .filter-toggle{grid-column:1 / -1;justify-self:start}.search-input{width:100%;padding:10px;min-width:0}.search-btn{padding:10px 12px;white-space:nowrap}.svc-list-card{min-width:0;flex-wrap:wrap}.svc-list-info{min-width:0;flex:1 1 160px}.list-actions{flex-wrap:wrap;min-width:0}}
       `}</style>
 
       <nav className="nav">
@@ -220,7 +224,7 @@ export default function ServicesPage() {
             <p>Hire talented students for design, tech, tutoring and more</p>
           </div>
           {isAuthed ? (
-            <a href="/dashboard" className="post-btn">+ Offer a Service</a>
+            <a href="/dashboard" className="post-btn">+ List a service</a>
           ) : (
             <a href="/register" className="post-btn">Get Started</a>
           )}
@@ -333,6 +337,8 @@ function SvcSidebar({ category, setCategory, university, setUniversity, priceRan
 }
 
 function ServiceCard({ item, delay }) {
+  const seller=publicSeller(item);
+  const {user}=useSession();
   const icon = CATEGORY_ICONS[item.category] || '🛠️';
   return (
     <div className="svc-card" style={{ animationDelay:`${delay}s` }}>
@@ -344,17 +350,12 @@ function ServiceCard({ item, delay }) {
         <div className="svc-title">{item.title}</div>
         <div className="svc-price-row">
           <div className="svc-price">₦{Number(item.price).toLocaleString()} <span>/ service</span></div>
-          <div className="stars">Purchase reviews on service details</div>
+          <ServiceRating count={item.review_count} average={item.average_rating}/>
         </div>
-        <div className="svc-meta">
-          <div className="meta-avatar">{item.seller_name?.[0]?.toUpperCase() || 'S'}</div>
-          <div>
-            <div className="meta-name">{item.seller_name || 'Provider'}</div>
-            <div className="meta-uni">{listingCampus(item) || 'Campus not provided'}</div>
-          </div>
-        </div>
+        {item.description&&<p className="svc-summary">{item.description}</p>}
+        <div className="svc-meta"><PublicSeller seller={seller}/></div>{listingCampus(item)&&listingCampus(item)!==seller.campus&&<small className="service-location">Service location: {listingCampus(item)}</small>}
         <div className="svc-footer">
-          <a href={`/messages?to=${item.seller_id}&service_id=${item.id}`} className="btn-hire">Hire Now</a>
+          <a href={user?.id===item.seller_id?'/dashboard#listings':`/messages?to=${item.seller_id}&service_id=${item.id}`} className="btn-hire">{user?.id===item.seller_id?'Manage service':'Message '+seller.firstName}</a>
           <a href={`/services/${item.id}`} className="btn-view">Details</a>
         </div>
       </div>
@@ -363,17 +364,19 @@ function ServiceCard({ item, delay }) {
 }
 
 function ServiceListCard({ item, delay }) {
+  const seller=publicSeller(item);
+  const {user}=useSession();
   const icon = CATEGORY_ICONS[item.category] || '🛠️';
   return (
     <div className="svc-list-card" style={{ animationDelay:`${delay}s` }}>
       <div className="svc-list-icon">{icon}</div>
       <div className="svc-list-info">
         <div className="svc-list-title">{item.title}</div>
-        <div className="svc-list-sub">{item.seller_name} · {listingCampus(item) || 'Campus not provided'} · {item.category}</div>
+        <div className="svc-list-sub">{item.category}</div><PublicSeller seller={seller} compact/>{listingCampus(item)&&listingCampus(item)!==seller.campus&&<small className="service-location">Service location: {listingCampus(item)}</small>}<ServiceRating count={item.review_count} average={item.average_rating}/>
       </div>
       <div className="svc-list-price">₦{Number(item.price).toLocaleString()}</div>
       <div className="list-actions">
-        <a href={`/messages?to=${item.seller_id}&service_id=${item.id}`} className="btn-hire" style={{ padding:'8px 14px' }}>Hire</a>
+        <a href={user?.id===item.seller_id?'/dashboard#listings':`/messages?to=${item.seller_id}&service_id=${item.id}`} className="btn-hire" style={{ padding:'8px 14px' }}>{user?.id===item.seller_id?'Manage service':'Message '+seller.firstName}</a>
         <a href={`/services/${item.id}`} className="btn-view" style={{ padding:'8px 12px' }}>View</a>
       </div>
     </div>
