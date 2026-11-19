@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from '../lib/SessionProvider';
 import StudentIdentityFields from '@/components/StudentIdentityFields';
 import {useRef} from 'react';
+import {createClientId} from '../lib/clientId';
 import Link from 'next/link';
 import ResendVerification from '@/components/ResendVerification';
 
@@ -31,7 +32,9 @@ export default function RegisterPage() {
   const [step, setStep]         = useState(0);
   const [form, setForm]         = useState({ user_type:'buyer', first_name:'', last_name:'', email:'', password:'', confirm:'', phone:'', university:'', level:'', university_id:'', matric_number:'' });
   const [idPhoto,setIdPhoto]=useState(null);
-  const submissionId=useRef(null),submitLock=useRef(false);
+  const submissionId=useRef(null),submitLock=useRef(false),feedbackRef=useRef(null),confirmationRef=useRef(null),submissionController=useRef(null),mounted=useRef(true);
+  const [feedbackVersion,setFeedbackVersion]=useState(0);
+  const [verificationEmailQueued,setVerificationEmailQueued]=useState(false);
   const [verificationCode,setVerificationCode]=useState(null);
   const [success, setSuccess]   = useState(false);
   const [verificationEmailSent, setVerificationEmailSent] = useState(false);
@@ -43,6 +46,11 @@ export default function RegisterPage() {
   useEffect(() => {
     if (isAuthed) router.replace('/dashboard');
   }, [isAuthed, router]);
+
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;submissionController.current?.abort();}},[]);
+  useEffect(()=>{if(feedbackVersion>0){feedbackRef.current?.focus({preventScroll:true});feedbackRef.current?.scrollIntoView({block:'center',behavior:'smooth'});}},[feedbackVersion]);
+  useEffect(()=>{if(success){confirmationRef.current?.focus({preventScroll:true});confirmationRef.current?.scrollIntoView({block:'center'});}},[success]);
+  const showFailure=message=>{setApiError(message);setFeedbackVersion(v=>v+1);};
 
   const set = (k) => (e) => {
     setForm(p => ({ ...p, [k]: e.target.value }));
@@ -74,6 +82,7 @@ export default function RegisterPage() {
       if (!form.level)      e.level      = 'Please select your level';
     }
     setErrors(e);
+    if(Object.keys(e).length)setFeedbackVersion(v=>v+1);
     return !Object.keys(e).length;
   };
 
@@ -88,17 +97,23 @@ export default function RegisterPage() {
   const submit = async () => {
     if (submitLock.current) return;
     submitLock.current=true;setLoading(true);setApiError('');
+    const controller=new AbortController();submissionController.current=controller;
+    const timer=setTimeout(()=>controller.abort(),90000);
     try {
-      if(!submissionId.current)submissionId.current=crypto.randomUUID();
+      if(!submissionId.current)submissionId.current=createClientId();
       const body=new FormData();
       for(const key of ['user_type','first_name','last_name','email','password','phone','university','university_id','matric_number','level'])body.append(key,form[key]);
       body.append('client_id',submissionId.current);body.append('student_id',idPhoto);
-      const res=await fetch(API+'/api/auth/register',{method:'POST',body});
-      const data=await res.json();
-      if(!res.ok){setApiError(data.message||'Registration could not be completed.');return;}
-      setVerificationEmailSent(data.verification_email_sent===true);setVerificationCode(data.verification_email_code);setIdPhoto(null);setSuccess(true);
-    }catch{setApiError('We could not confirm registration. If your account was created, use Sign in or Resend verification instead of registering again.');}
-    finally{submitLock.current=false;setLoading(false);}
+      const res=await fetch(API+'/api/auth/register',{method:'POST',body,signal:controller.signal});
+      const data=await res.json().catch(()=>null);
+      if(!mounted.current)return;
+      if(!res.ok){showFailure(data?.message||(res.status===413?'The upload is too large. Choose a JPEG or PNG student ID photo up to 5 MB.':res.status===429?'Too many signup attempts. Please wait before retrying. If you already submitted, use Sign in or Resend verification.':'Registration could not be confirmed. Please retry later, or use Sign in if your account was already created.'));return;}
+      if(res.status!==201||data?.status!=='success'||!Number.isSafeInteger(data?.user?.id)||data.user.id<1){showFailure('The server response did not confirm account creation. Use Sign in or Resend verification if you already submitted.');return;}
+      setVerificationEmailSent(data.verification_email_sent===true);
+      setVerificationEmailQueued(data.verification_email_status==='queued');
+      setVerificationCode(data.verification_email_code);setIdPhoto(null);setSuccess(true);
+    }catch(error){if(mounted.current)showFailure(error.name==='AbortError'?'The connection timed out. Your submission may already be saved. Use Sign in or Resend verification before trying to register again.':error.code==='SECURE_BROWSER_REQUIRED'?'Your browser cannot create a secure submission ID. Update your browser and open the HTTPS AfriPlate website.':'We could not confirm registration. If your account was created, use Sign in or Resend verification instead of registering again.');}
+    finally{clearTimeout(timer);submissionController.current=null;submitLock.current=false;if(mounted.current)setLoading(false);}
   };
 
   const strength      = pwStrength(form.password);
@@ -106,21 +121,19 @@ export default function RegisterPage() {
   const strengthColor = ['', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#1f8f43'][strength];
 
   if (success) {
-    return (
-      <div style={{ padding:'24px 16px', minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--ap-page-background, #f7f8fa)', fontFamily:'Inter,sans-serif' }}>
-        <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #e5e7eb)', borderRadius:24, padding:'32px 24px', maxWidth:440, width:'100%', textAlign:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.06)' }}>
-          <div style={{ width:64, height:64, borderRadius:'50%', background:'var(--ap-accent-surface, #eaf8ee)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.8rem' }}>✓</div>
-          <h1 style={{ fontSize:'1.5rem', fontWeight:900, color:'var(--ap-text-strong, #111)', marginBottom:10, letterSpacing:'-0.04em' }}>{verificationEmailSent ? 'Check your email!' : 'Account created'}</h1>
-          <p role="status" style={{ color:'var(--ap-text-muted, #6b7280)', fontSize:'0.9rem', lineHeight:1.7, marginBottom:24 }}>
-            {verificationEmailSent ? <>Your account was created and a verification email was requested for <strong style={{ color:'var(--ap-text-strong, #111)' }}>{form.email}</strong>. Check your inbox and spam folder, then follow the link before logging in.</> : <>Your account was created, but we could not confirm that a verification email was sent to <strong style={{ color:'var(--ap-text-strong, #111)' }}>{form.email}</strong>. Request a new email below. You do not need to register again.</>}
-          </p>
-          <a href="/login" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem', textDecoration:'none' }}>
-            Go to Login
-          </a>
-          <p className="student-status">Student ID under review</p><p className="student-help">Email verification and student ID approval are separate. You can review your ID status in Settings after signing in.</p><ResendVerification email={form.email} initialCode={verificationCode} />
-        </div>
-      </div>
-    );
+    return <main style={{padding:'24px 16px',minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--ap-page-background,#f7f8fa)',fontFamily:'Inter,sans-serif'}}>
+      <section ref={confirmationRef} tabIndex={-1} aria-labelledby="signup-confirmation-title" style={{background:'var(--ap-surface,#fff)',border:'1px solid var(--ap-border,#e5e7eb)',borderRadius:24,padding:'32px 24px',maxWidth:460,width:'100%',textAlign:'center',outline:'none'}}>
+        <p className="student-status">Account created</p>
+        <h1 id="signup-confirmation-title" style={{fontSize:'1.5rem',fontWeight:800,color:'var(--ap-text-strong,#183d28)',margin:'12px 0'}}>Student ID under review</h1>
+        <p role="status" className="student-help">Your account and student ID have been saved. AfriPlate's administrator will check your identity and approve it or ask you for a replacement. You do not need to register again.</p>
+        <p className="student-help" style={{margin:'16px 0'}}>Sign in and open Settings to see the review result. Until approval, your student status remains under review.</p>
+        <Link href="/login" className="student-primary" style={{width:'100%'}}>Sign in to your account</Link>
+        <details style={{marginTop:24,textAlign:'left'}}><summary style={{cursor:'pointer',fontWeight:700,color:'var(--ap-text-strong,#183d28)'}}>Email verification</summary>
+          <p className="student-help" style={{marginTop:12}}>{verificationEmailSent?'A verification email request was accepted. Check your inbox and spam folder; inbox delivery is not confirmed.':verificationEmailQueued?'A verification email is being requested separately. Inbox delivery is not confirmed. If it does not arrive, request another email here.':'The verification email could not be confirmed. You can request another email here without registering again.'} Email verification is separate from student ID approval.</p>
+          <ResendVerification email={form.email} initialCode={verificationCode}/>
+        </details>
+      </section>
+    </main>;
   }
 
   return (
@@ -210,6 +223,9 @@ export default function RegisterPage() {
 
 
 
+        .signup-feedback { margin:16px 0;padding:14px;border:1px solid var(--ap-danger-border,#fecaca);border-radius:12px;background:var(--ap-danger-surface,#fef2f2);color:var(--ap-danger-text,#b42318);font-size:.9rem;line-height:1.6;overflow-wrap:anywhere;scroll-margin:24px; }
+        .signup-feedback:focus {outline:2px solid var(--ap-danger-text,#b42318);outline-offset:3px;}
+        .signup-progress {margin:12px 0;color:var(--ap-text-muted,#53655a);font-size:.85rem;line-height:1.5;}
         .btn-row { display:flex; gap:10px; margin-top:10px; }
         .back-btn { padding:13px 18px; border:1.5px solid var(--ap-color-border); border-radius:var(--ap-radius-control); background:var(--ap-surface, #fff); color:var(--ap-color-label); font-size:0.9rem; font-weight:var(--ap-weight-label); transition:all 0.2s; }
         .back-btn:hover { background:var(--ap-surface-muted, #f9fafb); }
@@ -276,7 +292,6 @@ export default function RegisterPage() {
               ))}
             </div>
 
-            {apiError && <div className="api-error" role="alert">{apiError}</div>}
 
             {step === 0 && (
               <>
@@ -393,11 +408,13 @@ export default function RegisterPage() {
               </>
             )}
 
+            {(apiError||Object.values(errors).find(Boolean))&&<div ref={feedbackRef} id="signup-feedback" tabIndex={-1} role="alert" className="signup-feedback">{apiError||Object.values(errors).find(Boolean)}</div>}
+            {loading&&<p role="status" className="signup-progress">Saving your account and private student ID. Please keep this page open.</p>}
             <div className="btn-row">
               {step > 0 && (
                 <button className="back-btn" disabled={loading} onClick={() => { setStep(s => s - 1); setErrors({}); }}>Back</button>
               )}
-              <button className="next-btn" onClick={next} disabled={loading}>
+              <button type="button" className="next-btn" onClick={next} disabled={loading} aria-describedby={apiError||Object.values(errors).find(Boolean)?"signup-feedback":undefined}>
                 {loading ? <><span className="btn-spinner" /> Creating account...</> : step < 2 ? 'Continue' : 'Create Account'}
               </button>
             </div>

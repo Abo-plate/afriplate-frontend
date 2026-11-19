@@ -3,6 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {useSession} from '../app/lib/SessionProvider';
 import api from '../app/lib/api';
+import {createClientId} from '../app/lib/clientId';
 import StudentIdentityFields from './StudentIdentityFields';
 import './student-identity.css';
 const statusText={pending:'Student ID under review',approved:'Verified student',replacement_requested:'Replacement ID requested'};
@@ -13,7 +14,7 @@ function IdentityAccount({user,refresh}){
  useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[]);
  useEffect(()=>{let active=true;setLoading(true);api.get('/auth/student-id').then(({data})=>{if(active){setSubmission(data.submission);if(data.submission)setForm(data.submission);setError('')}}).catch(()=>{if(active)setError('Could not load your student ID status. Please retry.')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[attempt]);
  const submit=async e=>{e.preventDefault();if(lock.current)return;if(!file){setError('Choose a student ID photo.');return;}lock.current=true;setBusy(true);setError('');setNotice('');
- try{if(!pending.current)pending.current=crypto.randomUUID();const data=new FormData();for(const key of ['university','university_id','matric_number'])data.append(key,form[key]||'');data.append('client_id',pending.current);data.append('student_id',file);
+ try{if(!pending.current)pending.current=createClientId();const data=new FormData();for(const key of ['university','university_id','matric_number'])data.append(key,form[key]||'');data.append('client_id',pending.current);data.append('student_id',file);
  const saved=await api.post('/auth/student-id',data,{headers:{'Content-Type':'multipart/form-data'},timeout:30000});if(alive.current){pending.current=null;setNotice(saved.data.student_id_status==='approved'?'Student ID already approved. Email verification is separate.':'Student ID under review. Email verification is separate.');setFile(null);setAttempt(x=>x+1);await refresh();}}
  catch(e){if(alive.current)setError(e.response?.data?.message||'Submission could not be confirmed. Retry with the same details; do not create another account.');}
  finally{lock.current=false;if(alive.current)setBusy(false)}};

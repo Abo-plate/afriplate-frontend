@@ -38,3 +38,18 @@ Exact Railway/Resend setup, private storage/retention limitations and parameteri
 access instructions: sibling backend docs/STUDENT_ID_AND_EMAIL_RELEASE.md.
 Railway configuration, Resend sender verification, current production conflict counts, inbox
 arrival and narrow-phone keyboard behavior remain unconfirmed. No tests were added or executed.
+
+## Signup confirmation follow-up
+
+The saved-account response is independent of email provider latency. After HTTP 201 with a
+valid account ID, signup focuses a visible Student ID under review confirmation. Errors and
+validation feedback are placed beside Create Account and focused, rather than appearing above
+the long Campus step. Pending upload/save status is shown and the request has a 90-second
+bound; a timeout explains that the account may already exist and does not retry automatically.
+Malformed/non-JSON server responses cannot silently claim success. Secure UUID creation also
+supports browsers with crypto.getRandomValues but no crypto.randomUUID.
+
+Email status queued means an unconfirmed best-effort server attempt, not a durable outbox,
+provider acceptance or inbox delivery. Student ID approval remains a separate admin action.
+The original failed signup response/server error was unavailable; its exact rejection cause
+is unconfirmed. No signup was submitted and no account or test order was created during review.
