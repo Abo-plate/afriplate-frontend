@@ -78,3 +78,5 @@
   /* Account remains available in the menu and the existing shared bottom bar. */
   .ap-header .ap-header-actions > .ap-button { display: none; }
 }
+
+@media(max-width:768px){.ap-header-actions .account-loading{display:none}.ap-header .ap-header-inner{gap:8px}.ap-header .ap-header-actions{gap:8px}.ap-header .cart-entry{padding:8px;font-size:13px}}

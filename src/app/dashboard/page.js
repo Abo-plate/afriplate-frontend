@@ -1,7 +1,7 @@
 'use client';
-import CartEntry from '@/components/CartEntry';
 import PurchaseReview from '@/components/PurchaseReview';
 import ProfilePhotoEditor from '@/components/ProfilePhotoEditor';
+import StudentIdentity from '@/components/StudentIdentity';
 import ThemeSettings from '@/components/ThemeSettings';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { Icon } from '@/components/Marketplace';
@@ -178,6 +178,7 @@ function SettingsTab() {
   return (
     <div className="settings-grid">
       <ThemeSettings/>
+      <div style={{gridColumn:"1 / -1"}}><StudentIdentity/></div>
       {/* Profile */}
       <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #eceff3)', borderRadius:18, padding:24 }}>
         <div style={{ fontSize:'0.95rem', fontWeight:900, color:'var(--ap-text-strong, #111)', marginBottom:18 }}>Profile Info</div>
@@ -1144,10 +1145,11 @@ export default function Dashboard() {
           Afri<span style={{ color:'var(--ap-accent-text, #1f8f43)' }}>Plate</span>
         </a>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          <CartEntry /><a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Products</a>
+          <a href="/products" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Products</a>
           <a href="/services" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Services</a>
           <a href="/jobs"     style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>Jobs</a>
           <a href="/notifications" style={{ padding:'8px 14px', borderRadius:10, fontSize:'0.84rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', background:'var(--ap-surface-muted, #f3f4f6)' }}>🔔</a>
+          {user?.role === 'admin' && <a href="/admin" style={{color:'var(--ap-accent-text,#176d35)',fontWeight:700}}>Admin</a>}
           <button type="button" onClick={logout} className="dashboard-logout">Log out</button>
           <Avatar name={`${user?.first_name || ''}`} size={34} img={user?.avatar}/>
         </div>

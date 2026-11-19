@@ -22,7 +22,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthed) {
       const next = new URLSearchParams(window.location.search).get('next');
-      router.replace(next && /^\/(?:messages(?:[?#]|$)|dashboard#sell-(?:product|service)$)/.test(next) ? next : '/dashboard');
+      router.replace(next && /^\/(?:messages(?:[?#].*)?|cart|admin|dashboard#(?:settings|sell-product|sell-service))$/.test(next) ? next : '/dashboard');
     }
   }, [isAuthed, router]);
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
       const next = new URLSearchParams(window.location.search).get('next');
       router.replace(next && /^\/(?:messages(?:[?#]|$)|dashboard#sell-(?:product|service)$)/.test(next) ? next : data.user?.role === 'admin' ? '/admin' : '/dashboard');
     } catch {
-      setApiError('Cannot connect to server. Make sure the backend is running on port 5000.');
+      setApiError('We could not connect. Please try again in a moment.');
     } finally { setLoading(false); }
   };
 
@@ -168,7 +168,7 @@ export default function LoginPage() {
           <div className="trust-list">
             {[
               ['01', 'Escrow payments — money moves only when you confirm delivery'],
-              ['02', '35,000+ verified Nigerian students across 20+ campuses'],
+              ['02', 'Connect with students across Nigerian campuses'],
               ['03', 'List anything in under 2 minutes — free forever'],
             ].map(([n, t]) => (
               <div key={n} className="trust-item">

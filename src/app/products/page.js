@@ -3,7 +3,7 @@ import { listingCampus } from '../lib/listingCampus';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { productsAPI } from '../lib/services';
 import { CAMPUS_DIRECTORY } from '../lib/campuses';
-import AccountLinks from '@/components/AccountLinks';
+import {MarketplaceHeader} from '@/components/Marketplace';
 import { useStoredSession } from '../lib/useStoredSession';
 
 const CATEGORIES = ['All', 'Electronics', 'Textbooks', 'Fashion', 'Food', 'Beauty', 'Furniture', 'Sports', 'Other'];
@@ -243,19 +243,7 @@ export default function ProductsPage() {
       `}</style>
 
       {/* NAV */}
-      <nav className="nav">
-        <div className="nav-inner">
-          <a href="/" className="brand">Afri<span>Plate</span></a>
-          <ul className="nav-links">
-            <li><a href="/products" className="active">Products</a></li>
-            <li><a href="/services">Services</a></li>
-            <li><a href="/jobs">Jobs</a></li>
-          </ul>
-          <div className="nav-right">
-            <AccountLinks />
-          </div>
-        </div>
-      </nav>
+      <MarketplaceHeader/>
 
       {/* MOBILE SIDEBAR OVERLAY */}
       <div className={`overlay ${sidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)} />

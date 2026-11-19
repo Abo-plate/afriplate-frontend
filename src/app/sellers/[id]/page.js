@@ -232,6 +232,7 @@ export default function SellerProfilePage() {
                   <div className="avatar-ring">
                     <Avatar name={fullName} size={88} img={seller.avatar} />
                   </div>
+                  {seller.is_student_verified && <p className="student-status">Verified student</p>}
                   {seller.is_bvn_verified && (
                     <div className="bvn-badge">
                       <svg width="11" height="11" viewBox="0 0 12 12" fill="none">

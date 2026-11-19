@@ -2,7 +2,7 @@
 import {API_ORIGIN} from '../../lib/endpoints';
 import { listingCampus } from '../../lib/listingCampus';
 import { cartAPI } from '../../lib/services';
-import AccountLinks from '@/components/AccountLinks';
+import {MarketplaceHeader} from '@/components/Marketplace';
 import { useSession } from '../../lib/SessionProvider';
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
@@ -480,4 +480,4 @@ export default function ProductPage() {
 }
 
 // ── NAV ────────────────────────────────────────────────────────────────────────
-function Nav(){return <nav style={{background:'var(--ap-surface, #fff)',padding:16,display:'flex',gap:12,flexWrap:'wrap',justifyContent:'space-between',alignItems:'center'}}><a href="/" style={{fontWeight:900,color:'var(--ap-accent-text, #176d35)'}}>AfriPlate</a><div style={{display:'flex',gap:8,flexWrap:'wrap'}}><AccountLinks /></div></nav>;}
+function Nav(){return <MarketplaceHeader/>;}

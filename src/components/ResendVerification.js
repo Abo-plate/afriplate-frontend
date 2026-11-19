@@ -3,10 +3,11 @@ import { useState } from "react";
 import api from "@/app/lib/api";
 
 // Keep verification recovery in the existing authentication visual style.
-export default function ResendVerification({ email = "" }) {
+const emailHelp=code=>({EMAIL_CONFIGURATION_MISSING:"Verification email is not configured on the server yet. Your account is saved. Please retry once AfriPlate has completed email setup.",EMAIL_OWNER_ONLY:"Email is currently limited to the owner test inbox. Student email delivery needs a verified sender domain. You do not need to register again.",EMAIL_SENDER_INVALID:"AfriPlate sender setup is incomplete. Your account is saved; please retry later.",EMAIL_PROVIDER_FORBIDDEN:"The email provider has not allowed this send. AfriPlate needs to check its sender domain and test restrictions.",EMAIL_FRONTEND_URL_INVALID:"Verification link configuration needs attention. Your account is saved."}[code]);
+export default function ResendVerification({ email = "", initialCode = null }) {
   const [address, setAddress] = useState(email);
-  const [status, setStatus] = useState("idle");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState(initialCode ? "error" : "idle");
+  const [message, setMessage] = useState(emailHelp(initialCode)||"");
   const resend = async (event) => {
     event.preventDefault();
     if (status === "loading") return;
@@ -30,7 +31,7 @@ export default function ResendVerification({ email = "" }) {
       const data = await response.json();
       if (!response.ok)
         throw new Error(
-          data.message ||
+          emailHelp(data.code) || data.message ||
             "We could not send the verification email. Please try again.",
         );
       if (data.verification_email_sent === false)
@@ -38,7 +39,7 @@ export default function ResendVerification({ email = "" }) {
           "Your account exists, but we could not confirm the verification email was sent. Please try again.",
         );
       setStatus("success");
-      setMessage("Verification email requested. Check your inbox and spam folder; delivery is not yet confirmed.");
+      setMessage(data.message || "If an eligible account exists, verification instructions have been requested. Inbox delivery is not confirmed.");
     } catch (error) {
       setStatus("error");
       setMessage(

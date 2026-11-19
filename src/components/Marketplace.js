@@ -1,4 +1,6 @@
 "use client";
+import CartEntry from "./CartEntry";
+import { usePathname } from "next/navigation";
 import AccountLinks from "./AccountLinks";
 import { listingCampus } from "../app/lib/listingCampus";
 import { useState } from "react";
@@ -49,6 +51,8 @@ export function Brand() {
   );
 }
 export function MarketplaceHeader() {
+  const pathname = usePathname();
+  const showCart = pathname === "/" || /^\/products(?:\/|$)/.test(pathname);
   const [open, setOpen] = useState(false);
   return (
     <header className="ap-header">
@@ -60,6 +64,7 @@ export function MarketplaceHeader() {
           <Link href="/jobs">Jobs</Link>
         </nav>
         <div className="ap-header-actions">
+          {showCart && <CartEntry/>}
           <AccountLinks variant="home" />
           <button
             type="button"

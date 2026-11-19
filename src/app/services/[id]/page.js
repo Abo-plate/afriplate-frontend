@@ -481,7 +481,7 @@ export default function ServicePage() {
               <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-text-strong, #374151)', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Buyer Protection</div>
               {[
                 ['Escrow payment', 'Funds released only after you confirm delivery'],
-                ['Verified campus seller', 'All sellers are verified university students'],
+                ['Student identification', 'Student verification is shown only after ID approval'],
                 ['Revision guarantee', service.revisions ? `Up to ${service.revisions} revisions included` : 'Contact seller for revision policy'],
               ].map(([title, sub]) => (
                 <div key={title} style={{ display:'flex', gap:10, marginBottom:10 }}>

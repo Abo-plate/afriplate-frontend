@@ -2,20 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '../lib/SessionProvider';
+import StudentIdentityFields from '@/components/StudentIdentityFields';
+import {useRef} from 'react';
+import Link from 'next/link';
 import ResendVerification from '@/components/ResendVerification';
 
 import { API_ORIGIN as API } from '../lib/endpoints';
-
-const UNIVERSITIES = [
-  'University of Lagos (UNILAG)', 'Obafemi Awolowo University (OAU)',
-  'University of Ibadan (UI)', 'Federal University of Technology, Akure (FUTA)',
-  'Lagos State University (LASU)', 'University of Benin (UNIBEN)',
-  'Ahmadu Bello University (ABU)', 'Bayero University Kano (BUK)',
-  'University of Port Harcourt (UNIPORT)', 'Yaba College of Technology (YABATECH)',
-  'University of Ilorin (UNILORIN)', 'University of Abuja (UNIABUJA)',
-  'Covenant University', 'Babcock University', 'Pan-Atlantic University (PAU)',
-  "Redeemer's University", 'Landmark University', 'Bowen University', 'Other',
-];
 
 const STEPS = ['Account', 'Personal', 'Campus'];
 
@@ -37,7 +29,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const { isAuthed } = useSession();
   const [step, setStep]         = useState(0);
-  const [form, setForm]         = useState({ user_type:'buyer', first_name:'', last_name:'', email:'', password:'', confirm:'', phone:'', university:'', level:'' });
+  const [form, setForm]         = useState({ user_type:'buyer', first_name:'', last_name:'', email:'', password:'', confirm:'', phone:'', university:'', level:'', university_id:'', matric_number:'' });
+  const [idPhoto,setIdPhoto]=useState(null);
+  const submissionId=useRef(null),submitLock=useRef(false);
+  const [verificationCode,setVerificationCode]=useState(null);
   const [success, setSuccess]   = useState(false);
   const [verificationEmailSent, setVerificationEmailSent] = useState(false);
   const [errors, setErrors]     = useState({});
@@ -74,6 +69,8 @@ export default function RegisterPage() {
     }
     if (step === 2) {
       if (!form.university) e.university = 'Please select your university';
+      if (!form.matric_number.trim()) e.matric_number='Enter your matric number';
+      if (!idPhoto) e.student_id='Choose a JPEG or PNG student ID photo';
       if (!form.level)      e.level      = 'Please select your level';
     }
     setErrors(e);
@@ -89,32 +86,19 @@ export default function RegisterPage() {
   };
 
   const submit = async () => {
-    if (loading) return;
-    setLoading(true); setApiError('');
+    if (submitLock.current) return;
+    submitLock.current=true;setLoading(true);setApiError('');
     try {
-      const res = await fetch(`${API}/api/auth/register`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_type:  form.user_type,
-          first_name: form.first_name.trim(),
-          last_name:  form.last_name.trim(),
-          email:      form.email.trim().toLowerCase(),
-          password:   form.password,
-          phone:      form.phone.trim(),
-          university: form.university,
-          level:      form.level,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setApiError(data.message || 'Registration failed. Please try again.'); setStep(0); return; }
-      // Backend requires email verification before login
-      setVerificationEmailSent(data.verification_email_sent === true);
-      setSuccess(true);
-    } catch {
-      setApiError('Cannot connect to server. Make sure the backend is running on port 5000.');
-      setStep(0);
-    } finally { setLoading(false); }
+      if(!submissionId.current)submissionId.current=crypto.randomUUID();
+      const body=new FormData();
+      for(const key of ['user_type','first_name','last_name','email','password','phone','university','university_id','matric_number','level'])body.append(key,form[key]);
+      body.append('client_id',submissionId.current);body.append('student_id',idPhoto);
+      const res=await fetch(API+'/api/auth/register',{method:'POST',body});
+      const data=await res.json();
+      if(!res.ok){setApiError(data.message||'Registration could not be completed.');return;}
+      setVerificationEmailSent(data.verification_email_sent===true);setVerificationCode(data.verification_email_code);setIdPhoto(null);setSuccess(true);
+    }catch{setApiError('We could not confirm registration. If your account was created, use Sign in or Resend verification instead of registering again.');}
+    finally{submitLock.current=false;setLoading(false);}
   };
 
   const strength      = pwStrength(form.password);
@@ -123,8 +107,8 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--ap-page-background, #f7f8fa)', fontFamily:'Inter,sans-serif' }}>
-        <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #e5e7eb)', borderRadius:24, padding:'48px 40px', maxWidth:440, width:'100%', textAlign:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.06)' }}>
+      <div style={{ padding:'24px 16px', minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--ap-page-background, #f7f8fa)', fontFamily:'Inter,sans-serif' }}>
+        <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #e5e7eb)', borderRadius:24, padding:'32px 24px', maxWidth:440, width:'100%', textAlign:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.06)' }}>
           <div style={{ width:64, height:64, borderRadius:'50%', background:'var(--ap-accent-surface, #eaf8ee)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.8rem' }}>✓</div>
           <h1 style={{ fontSize:'1.5rem', fontWeight:900, color:'var(--ap-text-strong, #111)', marginBottom:10, letterSpacing:'-0.04em' }}>{verificationEmailSent ? 'Check your email!' : 'Account created'}</h1>
           <p role="status" style={{ color:'var(--ap-text-muted, #6b7280)', fontSize:'0.9rem', lineHeight:1.7, marginBottom:24 }}>
@@ -133,7 +117,7 @@ export default function RegisterPage() {
           <a href="/login" style={{ display:'block', padding:'13px', background:'#1f8f43', color:'#fff', borderRadius:12, fontWeight:800, fontSize:'0.95rem', textDecoration:'none' }}>
             Go to Login
           </a>
-          <ResendVerification email={form.email} />
+          <p className="student-status">Student ID under review</p><p className="student-help">Email verification and student ID approval are separate. You can review your ID status in Settings after signing in.</p><ResendVerification email={form.email} initialCode={verificationCode} />
         </div>
       </div>
     );
@@ -265,7 +249,7 @@ export default function RegisterPage() {
             <p>Nigeria's #1 student marketplace. Safe, fast and built for your campus.</p>
           </div>
           <div className="perks">
-            {['Free to sign up — no credit card needed','Sell anything from textbooks to services','Escrow payments protect every transaction','Connect with verified students on your campus'].map(t => (
+            {['Free to sign up — no credit card needed','Sell anything from textbooks to services','Create your campus marketplace account','Student ID approval is reviewed separately'].map(t => (
               <div key={t} className="perk">
                 <div className="perk-check">&#10003;</div>
                 <span className="perk-text">{t}</span>
@@ -392,20 +376,12 @@ export default function RegisterPage() {
 
             {step === 2 && (
               <>
-                <div className="field">
-                  <label htmlFor="reg-uni">University</label>
-                  <div className="input-wrap">
-                    <select id="reg-uni" value={form.university} onChange={set('university')} className={errors.university ? 'err' : ''}>
-                      <option value="">Select your university</option>
-                      {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
-                    </select>
-                  </div>
-                  {errors.university && <span className="field-error">{errors.university}</span>}
-                </div>
+                <StudentIdentityFields value={form} file={idPhoto} disabled={loading} onChange={patch=>{submissionId.current=null;setForm(p=>({...p,...patch}));setErrors({});}} onFile={file=>{submissionId.current=null;setIdPhoto(file);setErrors({});}}/>
+                {(errors.matric_number||errors.student_id||errors.university)&&<p role="alert" className="field-error">{errors.matric_number||errors.student_id||errors.university}</p>}
                 <div className="field">
                   <label htmlFor="reg-level">Level / Year</label>
                   <div className="input-wrap">
-                    <select id="reg-level" value={form.level} onChange={set('level')} className={errors.level ? 'err' : ''}>
+                    <select disabled={loading} id="reg-level" value={form.level} onChange={set('level')} className={errors.level ? 'err' : ''}>
                       <option value="">Select your level</option>
                       <option>100 Level</option><option>200 Level</option>
                       <option>300 Level</option><option>400 Level</option>
@@ -419,14 +395,14 @@ export default function RegisterPage() {
 
             <div className="btn-row">
               {step > 0 && (
-                <button className="back-btn" onClick={() => { setStep(s => s - 1); setErrors({}); }}>Back</button>
+                <button className="back-btn" disabled={loading} onClick={() => { setStep(s => s - 1); setErrors({}); }}>Back</button>
               )}
               <button className="next-btn" onClick={next} disabled={loading}>
                 {loading ? <><span className="btn-spinner" /> Creating account...</> : step < 2 ? 'Continue' : 'Create Account'}
               </button>
             </div>
 
-            <div className="switch-text">Already have an account? <a href="/login">Sign in</a></div>
+            <div className="switch-text">Already have an account? <Link href="/login">Sign in</Link> | <Link href="/resend-verification">Resend verification</Link> | <Link href="/forgot-password">Reset password</Link></div>
           </div>
         </div>
       </div>
