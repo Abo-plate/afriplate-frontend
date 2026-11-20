@@ -543,7 +543,7 @@ function SellerDashboard({ user }) {
 
 function SellerOverview({ user, setTab }) {
   const [stats, setStats] = useState({
-  listings: 0,
+  listings: null, active_products: null, active_services: null,
   orders: 0,
   balance: 0,
   pending_balance: 0,
@@ -554,22 +554,27 @@ function SellerOverview({ user, setTab }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled=false,latest=0,controller;
     const load = async () => {
+      const ticket=++latest;controller?.abort();controller=new AbortController();
+      const options={cache:'no-store',signal:controller.signal};
       try {
-        const [wRes, oRes, lRes] = await Promise.allSettled([
-         authFetch('/api/orders/seller/dashboard-summary'),
-          authFetch('/api/orders?role=seller&limit=6'),
-          authFetch('/api/products?mine=true&limit=1'),
+        const [wRes, oRes] = await Promise.allSettled([
+         authFetch('/api/orders/seller/dashboard-summary',options),
+          authFetch('/api/orders?role=seller&limit=6',options),
         ]);
-        const wallet = wRes.status === 'fulfilled' ? await wRes.value.json() : {};
+        const wallet = wRes.status === 'fulfilled' && wRes.value.ok ? await wRes.value.json() : {};
         const summary = wallet.summary || {};
-        const orders   = oRes.status === 'fulfilled' ? await oRes.value.json() : {};
-        const listings = lRes.status === 'fulfilled' ? await lRes.value.json() : {};
+        const orders   = oRes.status === 'fulfilled' && oRes.value.ok ? await oRes.value.json() : {};
 
+        if(cancelled||ticket!==latest)return;
         const ordersArr = orders.orders || orders.data || [];
+        const validCounts=[summary.activeListings,summary.activeProducts,summary.activeServices].every(value=>Number.isSafeInteger(value)&&value>=0) && summary.activeListings===summary.activeProducts+summary.activeServices;
   
         setStats({
-  listings: listings.total ?? listings.count ?? 0,
+  listings: validCounts?summary.activeListings:null,
+  active_products: validCounts?summary.activeProducts:null,
+  active_services: validCounts?summary.activeServices:null,
   orders: summary.processingOrders || 0,
   balance: summary.walletBalance || 0,
   pending_balance: summary.pendingBalance || 0,
@@ -604,11 +609,13 @@ ordersArr.forEach((o) => {
 });
 
 setSalesData(weeklyBars);
-      } catch {}
-      setLoading(false);
+      } catch {if(!cancelled&&ticket===latest)setStats(previous=>({...previous,listings:null,active_products:null,active_services:null}));}
+      finally {if(!cancelled&&ticket===latest)setLoading(false);}
     };
-    load();
-  }, []);
+    const visible=()=>{if(!document.hidden)load();};
+    load();window.addEventListener('focus',visible);window.addEventListener('afriplate:listings-changed',visible);document.addEventListener('visibilitychange',visible);
+    return()=>{cancelled=true;latest++;controller?.abort();window.removeEventListener('focus',visible);window.removeEventListener('afriplate:listings-changed',visible);document.removeEventListener('visibilitychange',visible);};
+  }, [user.id]);
 
   if (loading) return <Spinner />;
 
@@ -629,7 +636,7 @@ setSalesData(weeklyBars);
 
       {/* Stats */}
       <div className="stats-4">
-        <StatBox label="Active Listings"    value={stats.listings}                     sub="Products & services" />
+        <StatBox label="Active Listings" value={stats.listings ?? 'Unavailable'} sub={stats.listings===null?'Listing count unavailable. Refresh to retry.':stats.active_products+' product'+(stats.active_products===1?'':'s')+' | '+stats.active_services+' service'+(stats.active_services===1?'':'s')}/>
         <StatBox label="Orders to Fulfil"   value={stats.orders}                       sub={stats.orders > 0 ? 'Needs attention' : 'All clear'} color="var(--ap-warning-text, #ff9d3f)" />
         <StatBox label="Available Balance"  value={`₦${fmt(stats.balance)}`}           sub="Ready to withdraw" color="var(--ap-info-text, #6366f1)" />
         <StatBox label="Pending Earnings"   value={`₦${fmt(stats.pending_balance)}`}  sub="Releasing soon" color="var(--ap-pink-text, #ec4899)" />
@@ -741,6 +748,7 @@ function SellerListings() {
       const data = await res.json();
       if (!res.ok) { setMsg(data.message || 'Failed.'); setSaving(false); return; }
       setMsg('Listed successfully!');
+      window.dispatchEvent(new Event('afriplate:listings-changed'));
       setForm({ title:'', description:'', price:'', category:'', condition:'used', stock_quantity:'', availability:'available', delivery_days:'', revisions:'' });
       setImages([]);
       setShowForm(false);
@@ -754,7 +762,8 @@ function SellerListings() {
     const endpoint = listingTab === 'products' ? 'products' : 'services';
     try {
       const res = await authFetch(`/api/${endpoint}/${itemId}`, { method: 'DELETE' });
-      if (res.ok) setItems(p => p.filter(i => i.id !== itemId));
+      if (res.ok) {setItems(p => p.filter(i => i.id !== itemId));window.dispatchEvent(new Event('afriplate:listings-changed'));}
+      else {const data=await res.json().catch(()=>({}));setMsg(data.message||'Could not remove listing. Please retry.');}
     } catch {}
   };
 
