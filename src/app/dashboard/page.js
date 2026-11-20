@@ -925,7 +925,7 @@ function SellerOrders() {
               {o.product_id ? '📦' : '🛠'}
             </div>
             <div style={{ flex:1, minWidth:200 }}>
-              <div style={{ fontSize:'0.92rem', fontWeight:800, color:'var(--ap-text-strong, #111)', marginBottom:4 }}>{o.product_title || o.service_title || `Order #${o.id}`} <a href={'/orders/'+o.id} style={{display:'block',color:'var(--ap-accent-text, #176d35)',fontSize:13}}>Open order workspace</a></div>
+              <div style={{ fontSize:'0.92rem', fontWeight:800, color:'var(--ap-text-strong, #111)', marginBottom:4 }}>{o.product_title || o.service_title || `Order #${o.id}`} <a href={'/orders/'+o.id+(['pending','awaiting_payment','processing'].includes(o.status)?'#order-delivery':'')} style={{display:'inline-flex',alignItems:'center',minHeight:44,padding:'8px 14px',marginTop:10,borderRadius:10,background:'var(--ap-accent-surface,#edf8f0)',border:'1px solid var(--ap-accent-border,#bdd3c4)',color:'var(--ap-accent-text,#176d35)',fontSize:13,fontWeight:700}}>{['pending','awaiting_payment','processing'].includes(o.status)?'Manage delivery':'View order'}</a></div>
               <div style={{ fontSize:'0.75rem', color:'var(--ap-text-subtle, #9ca3af)', marginBottom:6 }}>
                 From: {o.buyer_name || o.buyer_first_name || 'Buyer'} · {o.created_at ? new Date(o.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }) : 'Recent'}
               </div>

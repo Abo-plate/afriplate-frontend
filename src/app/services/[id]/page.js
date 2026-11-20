@@ -302,7 +302,7 @@ export default function ServicePage() {
 
               {tab === 'description' && (
                 <div>
-                  <p style={{ fontSize:'0.9rem', color:'var(--ap-text-strong, #374151)', lineHeight:1.8, whiteSpace:'pre-wrap' }}>
+                  <p style={{ fontSize:'0.9rem', color:'var(--ap-text-strong, #374151)', lineHeight:1.8, whiteSpace:'pre-wrap', textAlign:'justify', textAlignLast:'left', textJustify:'inter-word', overflowWrap:'anywhere' }}>
                     {service.description || 'No description provided.'}
                   </p>
                   {/* What's included */}
@@ -457,25 +457,6 @@ export default function ServicePage() {
               </button>
             </div>
 
-            {/* SAFETY NOTICE */}
-            <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #eceff3)', borderRadius:16, padding:18 }}>
-              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-text-strong, #374151)', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Before you proceed</div>
-              {[
-                ['Payments unavailable', 'No money is collected or released. Discuss the work in chat.'],
-                ['Student identification', 'Student verification is shown only after ID approval'],
-                ['Revision guarantee', service.revisions ? `Up to ${service.revisions} revisions included` : 'Contact seller for revision policy'],
-              ].map(([title, sub]) => (
-                <div key={title} style={{ display:'flex', gap:10, marginBottom:10 }}>
-                  <div style={{ width:20, height:20, borderRadius:'50%', background:'var(--ap-accent-surface, #eaf8ee)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="var(--ap-accent-text, #1f8f43)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--ap-text-strong, #111)' }}>{title}</div>
-                    <div style={{ fontSize:'0.72rem', color:'var(--ap-text-subtle, #9ca3af)', lineHeight:1.4, marginTop:1 }}>{sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
