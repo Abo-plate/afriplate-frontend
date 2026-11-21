@@ -1,4 +1,5 @@
 'use client';
+import {productAvailability} from '../../lib/productAvailability';
 import {API_ORIGIN} from '../../lib/endpoints';
 import { listingCampus } from '../../lib/listingCampus';
 import { cartAPI } from '../../lib/services';
@@ -77,12 +78,16 @@ export default function ProductPage() {
   const [orderMsg, setOrderMsg]       = useState('');
   const [tab, setTab]                 = useState('description'); // description | reviews
   const { user, status, refresh } = useSession();
-  const adding = useRef(false);
+  const adding = useRef(false),addVersion=useRef(0),alive=useRef(true),context=useRef(null);
+  context.current={id:String(id),userId:user?.id,status};
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;addVersion.current++;};},[]);
+  useEffect(()=>{addVersion.current++;adding.current=false;setOrderState('idle');setOrderMsg('');},[id,user?.id]);
 
   useEffect(() => {
     if (!id) return;
+    let cancelled=false;
     const load = async () => {
-      setLoading(true);
+      setLoading(true);setProduct(null);setQty(1);setReviews([]);setReviewsError(false);
       try {
         const [pRes, rRes] = await Promise.allSettled([
           fetch(`${API}/api/products/${id}`),
@@ -90,16 +95,16 @@ export default function ProductPage() {
         ]);
         if (pRes.status === 'fulfilled' && pRes.value.ok) {
           const d = await pRes.value.json();
-          setProduct(d.product || d.data || d);
+          if(!cancelled)setProduct(d.product || d.data || d);
         }
         if (rRes.status === 'fulfilled' && rRes.value.ok) {
           const d = await rRes.value.json();
-          setReviews(d.reviews || d.data || []);setReviewsError(false);
-        } else {setReviewsError(true);}
-      } catch {setReviewsError(true);}
-      setLoading(false);
+          if(!cancelled){setReviews(d.reviews||d.data||[]);setReviewsError(false);}
+        } else {if(!cancelled)setReviewsError(true);}
+      } catch {if(!cancelled)setReviewsError(true);}
+      if(!cancelled)setLoading(false);
     };
-    load();
+    load();return()=>{cancelled=true;};
   }, [id]);
 
   // Load related after product is known
@@ -111,18 +116,24 @@ export default function ProductPage() {
       .catch(() => {});
   }, [product]);
 
-  const placeOrder = async () => {
-    if (adding.current) return;
-    if (status === 'guest') { window.location.href = '/login?next='+encodeURIComponent('/products/'+id); return; }
-    if (!user || status !== 'authenticated') { setOrderState('error');setOrderMsg('Your account could not be verified. Retry account verification before saving to cart.');return; }
-    adding.current = true;setOrderState('loading');setOrderMsg('');
-    try {
-      const {data} = await cartAPI.add({product_id:product.id,quantity:Number(qty),expected_unit_price:product.price});
-      if (!Number.isSafeInteger(data.item?.id) || data.item.product_id !== product.id || !Number.isSafeInteger(data.item.quantity) || data.item.quantity < 1) throw new Error('Invalid cart confirmation');
-      window.dispatchEvent(new Event('afriplate:cart'));setOrderState('success');setOrderMsg('Added to your cart. Review it from Cart.');
-    } catch(error) {
-      setOrderState('error');setOrderMsg(error.response?.status === 401 ? 'Your session expired. Log in again to save this item.' : error.response?.data?.message || 'Could not confirm the cart update. Check your cart before retrying.');
-    } finally { adding.current = false; }
+  const placeOrder=async()=>{
+    if(adding.current||!product)return;
+    if(status==='guest'){window.location.href='/login?next='+encodeURIComponent('/products/'+id);return;}
+    if(!user||status!=='authenticated'){setOrderState('error');setOrderMsg('Sign in again before adding to cart.');return;}
+    const availability=productAvailability(product);if(!availability.available){setOrderState('error');setOrderMsg(availability.label);return;}
+    const count=Number(qty);if(!Number.isSafeInteger(count)||count<1||count>product.stock_quantity){setOrderState('error');setOrderMsg('Choose a quantity within available stock.');return;}
+    const ticket=++addVersion.current,viewer=user.id,listing=product.id;
+    const current=()=>alive.current&&ticket===addVersion.current&&context.current.id===String(listing)&&context.current.userId===viewer&&context.current.status==='authenticated';
+    adding.current=true;setOrderState('loading');setOrderMsg('');
+    try{
+      const {data}=await cartAPI.add({product_id:listing,quantity:count,expected_unit_price:product.price,expected_user_id:viewer});
+      if(!Number.isSafeInteger(data.item?.id)||data.item.user_id!==viewer||data.item.product_id!==listing||!Number.isSafeInteger(data.item.quantity)||data.item.quantity<count)throw Error('Invalid cart confirmation');
+      if(!current())return;
+      window.dispatchEvent(new Event('afriplate:cart'));setOrderState('success');setOrderMsg('Added to cart');
+    }catch(problem){
+      if(!current())return;setOrderState('error');setOrderMsg(problem.response?.status===401?'Your session expired. Sign in again.':problem.response?.data?.message||'Cart update not confirmed. Check your cart before retrying.');
+      if(problem.response?.status===409){try{const response=await fetch(API+'/api/products/'+listing,{cache:'no-store'});const data=await response.json();if(current()&&response.ok&&data.product?.id===listing)setProduct(data.product);}catch{}}
+    }finally{if(ticket===addVersion.current){adding.current=false;}}
   };
 
   const messagesSeller = () => {
@@ -388,8 +399,7 @@ export default function ProductPage() {
                 </button>
               </div>
 
-              <p id="cart-availability" role="status" style={{marginBottom:12,color:'var(--ap-accent-text, #176d35)',fontWeight:700}}>{product.availability==='paused'?'Paused':product.stock_quantity==null?'Stock awaiting seller confirmation. This item cannot be added to your cart until the seller enters a quantity. Message the seller to ask about availability.':product.stock_quantity===0?'Sold out':product.stock_quantity+' available'}</p>
-              <label style={{display:'block',marginBottom:16}}>Quantity <input aria-label="Quantity" type="number" min="1" max={product.stock_quantity||1} step="1" value={qty} onChange={e=>setQty(e.target.value)} style={{width:80,padding:8,border:'1px solid var(--ap-border, #cbd5cf)',borderRadius:8}}/></label>
+              <label style={{display:'block',marginBottom:16}}>Quantity <input aria-label="Quantity" type="number" min="1" max={product.stock_quantity??1} disabled={orderState==='loading'||!productAvailability(product).available} step="1" value={qty} onChange={e=>{setQty(e.target.value);setOrderState('idle');setOrderMsg('');}} style={{width:80,padding:8,border:'1px solid var(--ap-border, #cbd5cf)',borderRadius:8}}/></label>
               {/* Fee breakdown */}
               <div style={{ background:'var(--ap-surface-muted, #f8fafc)', borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
                 <div className="fee-row"><span>Item price</span><span style={{ fontWeight:700, color:'var(--ap-text-strong, #111)' }}>₦{fmt(price)}</span></div>
@@ -399,13 +409,14 @@ export default function ProductPage() {
 
               {/* Order feedback */}
               {orderState === 'success' && (
-                <div style={{ background:'var(--ap-accent-surface, #eaf8ee)', border:'1px solid var(--ap-accent-border, #bbf7d0)', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'var(--ap-accent-text, #1f8f43)', marginBottom:14 }}>{orderMsg}</div>
+                <div role="status" style={{ background:'var(--ap-accent-surface, #eaf8ee)', border:'1px solid var(--ap-accent-border, #bbf7d0)', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'var(--ap-accent-text, #1f8f43)', marginBottom:14 }}>{orderMsg} <a href="/cart">View cart</a></div>
               )}
               {orderState === 'error' && (
                 <div style={{ background:'var(--ap-danger-surface, #fef2f2)', border:'1px solid var(--ap-danger-border, #fecaca)', borderRadius:10, padding:'12px 14px', fontSize:'0.83rem', fontWeight:600, color:'var(--ap-danger-text, #dc2626)', marginBottom:14 }}>{orderMsg}{status === 'unavailable' && <button onClick={refresh}>Retry account verification</button>}{status === 'guest' && <a href={'/login?next='+encodeURIComponent('/products/'+id)}>Log in</a>}</div>
               )}
 
               {/* Action buttons */}
+              <p id="cart-availability" role="status" style={{marginBottom:8,color:'var(--ap-text-muted,#53655a)',fontWeight:650}}>{productAvailability(product).label}</p>
               {user?.id === product.seller_id ? (
                 <div style={{ textAlign:'center', padding:'12px', background:'var(--ap-surface-muted, #f8fafc)', borderRadius:12, fontSize:'0.83rem', color:'var(--ap-text-subtle, #9ca3af)', fontWeight:600 }}>
                   This is your listing
@@ -416,9 +427,9 @@ export default function ProductPage() {
                     aria-describedby="cart-availability"
                     className="order-btn order-primary"
                     onClick={placeOrder}
-                    disabled={orderState === 'loading' || product.availability==='paused' || product.stock_quantity==null || product.stock_quantity===0 || !Number.isInteger(Number(qty)) || Number(qty)<1 || Number(qty)>product.stock_quantity}
+                    disabled={orderState === 'loading' || !productAvailability(product).available || !Number.isInteger(Number(qty)) || Number(qty)<1 || Number(qty)>product.stock_quantity}
                   >
-                    {orderState === 'loading' ? <><span className="btn-spinner" /> Processing...</> : 'Add to cart'}
+                    {orderState === 'loading' ? <><span className="btn-spinner" /> Saving...</> : orderState==='success'?'Added to cart':'Add to cart'}
                   </button>
                   <button className="order-btn order-secondary" onClick={messagesSeller}>
                     Ask Seller a Question

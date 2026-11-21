@@ -1,4 +1,5 @@
 'use client';
+import {productAvailability} from '../lib/productAvailability';
 import { listingCampus } from '../lib/listingCampus';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { productsAPI } from '../lib/services';
@@ -381,7 +382,7 @@ function ProductCard({ item, delay }) {
       <div className="card-body">
         <div className="card-title">{item.title}</div>
         <div className="card-price">₦{Number(item.price).toLocaleString()}</div>
-        <p style={{fontSize:13,color:"var(--ap-text-muted, #52665a)",marginBottom:10}}>{item.availability==="paused"?"Paused":item.stock_quantity==null?"Stock not confirmed":item.stock_quantity===0?"Sold out":item.stock_quantity+" available"}</p><div className="card-meta">
+        <p style={{fontSize:13,color:"var(--ap-text-muted, #52665a)",marginBottom:10}}>{productAvailability(item).label}</p><div className="card-meta">
           <div className="meta-avatar">{item.seller_name?.[0]?.toUpperCase() || 'S'}</div>
           <div>
             <div className="meta-name">{item.seller_name || 'Seller'}</div>

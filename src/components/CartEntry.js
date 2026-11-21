@@ -25,7 +25,7 @@ export function CartProvider({
         } = await cartAPI.get();
         if (active && request === latest.current) setCart({
           userId: user.id,
-          count: data.summary?.item_count
+          count: Number.isSafeInteger(data.summary?.item_count)&&data.summary.item_count>=0?data.summary.item_count:null
         });
       } catch {
         if (active && request === latest.current) setCart(null);
