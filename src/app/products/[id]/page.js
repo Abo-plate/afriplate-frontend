@@ -442,25 +442,7 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Safety notice */}
-            <div style={{ background:'var(--ap-surface, #fff)', border:'1px solid var(--ap-border, #eceff3)', borderRadius:16, padding:18 }}>
-              <div style={{ fontSize:'0.78rem', fontWeight:800, color:'var(--ap-text-strong, #374151)', marginBottom:10, textTransform:'uppercase', letterSpacing:'1px' }}>Buyer Protection</div>
-              {[
-                ['Payments currently unavailable', 'You can save items in your cart; no money is collected'],
-                ['Check listing details', 'Confirm availability and delivery details with the seller'],
-                ['Dispute resolution', 'Contact support if anything goes wrong'],
-              ].map(([title, sub]) => (
-                <div key={title} style={{ display:'flex', gap:10, marginBottom:10 }}>
-                  <div style={{ width:20, height:20, borderRadius:'50%', background:'var(--ap-accent-surface, #eaf8ee)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="var(--ap-accent-text, #1f8f43)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--ap-text-strong, #111)' }}>{title}</div>
-                    <div style={{ fontSize:'0.72rem', color:'var(--ap-text-subtle, #9ca3af)', lineHeight:1.4, marginTop:1 }}>{sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+
           </div>
         </div>
 

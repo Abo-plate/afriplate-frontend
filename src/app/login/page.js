@@ -22,7 +22,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthed) {
       const next = new URLSearchParams(window.location.search).get('next');
-      router.replace(next && /^\/(?:messages(?:[?#].*)?|cart|admin|dashboard#(?:settings|sell-product|sell-service))$/.test(next) ? next : '/dashboard');
+      router.replace(next && /^\/(?:messages(?:[?#].*)?|cart|admin|sell|dashboard#(?:settings|sell-product|sell-service))$/.test(next) ? next : '/dashboard');
     }
   }, [isAuthed, router]);
 

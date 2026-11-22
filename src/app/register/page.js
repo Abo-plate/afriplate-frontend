@@ -6,11 +6,10 @@ import StudentIdentityFields from '@/components/StudentIdentityFields';
 import {useRef} from 'react';
 import {createClientId} from '../lib/clientId';
 import Link from 'next/link';
-import ResendVerification from '@/components/ResendVerification';
 
 import { API_ORIGIN as API } from '../lib/endpoints';
 
-const STEPS = ['Account', 'Personal', 'Campus'];
+
 
 function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
 function isValidPhone(v) { return /^(\+234|0)[7-9][0-1]\d{8}$/.test(v.replace(/\s/g, '')); }
@@ -30,14 +29,13 @@ export default function RegisterPage() {
   const router = useRouter();
   const { isAuthed } = useSession();
   const [step, setStep]         = useState(0);
-  const [form, setForm]         = useState({ user_type:'buyer', first_name:'', last_name:'', email:'', password:'', confirm:'', phone:'', university:'', level:'', university_id:'', matric_number:'' });
-  const [idPhoto,setIdPhoto]=useState(null);
+  const [form, setForm]         = useState({ is_student:'', user_type:'buyer', first_name:'', last_name:'', email:'', password:'', confirm:'', phone:'', university:'', level:'', university_id:'', matric_number:'' });
+  const [idPhoto,setIdPhoto]=useState(null),[createdStudent,setCreatedStudent]=useState(true);
+  const STEPS=form.is_student==='false'?['Account','Personal']:['Account','Personal','Campus'];
+  const chooseStudent=value=>{if(loading)return;setForm(p=>({...p,is_student:value,user_type:value==='false'?'buyer':p.user_type,...(value==='false'?{university:'',university_id:'',matric_number:'',level:''}:{})}));if(value==='false')setIdPhoto(null);submissionId.current=null;setErrors({});setApiError('');};
   const submissionId=useRef(null),submitLock=useRef(false),feedbackRef=useRef(null),confirmationRef=useRef(null),submissionController=useRef(null),mounted=useRef(true);
   const [feedbackVersion,setFeedbackVersion]=useState(0);
-  const [verificationEmailQueued,setVerificationEmailQueued]=useState(false);
-  const [verificationCode,setVerificationCode]=useState(null);
   const [success, setSuccess]   = useState(false);
-  const [verificationEmailSent, setVerificationEmailSent] = useState(false);
   const [errors, setErrors]     = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -61,6 +59,7 @@ export default function RegisterPage() {
   const validateStep = () => {
     const e = {};
     if (step === 0) {
+      if(!['true','false'].includes(form.is_student))e.is_student='Choose Yes or No.';
       if (!form.user_type)                 e.user_type = 'Please select account type';
       if (!form.email.trim())              e.email    = 'Email address is required';
       else if (!isValidEmail(form.email))  e.email    = 'Enter a valid email address (e.g. name@mail.com)';
@@ -75,7 +74,7 @@ export default function RegisterPage() {
       if (!form.phone.trim())                    e.phone = 'Phone number is required';
       else if (!isValidPhone(form.phone))        e.phone = 'Enter a valid Nigerian number (e.g. 08012345678)';
     }
-    if (step === 2) {
+    if (step === 2 && form.is_student==='true') {
       if (!form.university) e.university = 'Please select your university';
       if (!form.matric_number.trim()) e.matric_number='Enter your matric number';
       if (!idPhoto) e.student_id='Choose a JPEG or PNG student ID photo';
@@ -90,7 +89,7 @@ export default function RegisterPage() {
     if (loading) return;
     setApiError('');
     if (!validateStep()) return;
-    if (step < 2) { setStep(s => s + 1); return; }
+    if (step < STEPS.length-1) { setStep(s => s + 1); return; }
     submit();
   };
 
@@ -100,19 +99,22 @@ export default function RegisterPage() {
     const controller=new AbortController();submissionController.current=controller;
     const timer=setTimeout(()=>controller.abort(),90000);
     try {
-      if(!submissionId.current)submissionId.current=createClientId();
       const body=new FormData();
-      for(const key of ['user_type','first_name','last_name','email','password','phone','university','university_id','matric_number','level'])body.append(key,form[key]);
-      body.append('client_id',submissionId.current);body.append('student_id',idPhoto);
+      for(const key of ['is_student','user_type','first_name','last_name','email','password','phone'])body.append(key,form[key]);
+      if(form.is_student==='true'){
+        if(!submissionId.current)submissionId.current=createClientId();
+        for(const key of ['university','university_id','matric_number','level'])body.append(key,form[key]);
+        body.append('client_id',submissionId.current);body.append('student_id',idPhoto);
+      }
       const res=await fetch(API+'/api/auth/register',{method:'POST',body,signal:controller.signal});
       const data=await res.json().catch(()=>null);
       if(!mounted.current)return;
-      if(!res.ok){showFailure(data?.message||(res.status===413?'The upload is too large. Choose a JPEG or PNG student ID photo up to 5 MB.':res.status===429?'Too many signup attempts. Please wait before retrying. If you already submitted, use Sign in or Resend verification.':'Registration could not be confirmed. Please retry later, or use Sign in if your account was already created.'));return;}
-      if(res.status!==201||data?.status!=='success'||!Number.isSafeInteger(data?.user?.id)||data.user.id<1){showFailure('The server response did not confirm account creation. Use Sign in or Resend verification if you already submitted.');return;}
-      setVerificationEmailSent(data.verification_email_sent===true);
-      setVerificationEmailQueued(data.verification_email_status==='queued');
-      setVerificationCode(data.verification_email_code);setIdPhoto(null);setSuccess(true);
-    }catch(error){if(mounted.current)showFailure(error.name==='AbortError'?'The connection timed out. Your submission may already be saved. Use Sign in or Resend verification before trying to register again.':error.code==='SECURE_BROWSER_REQUIRED'?'Your browser cannot create a secure submission ID. Update your browser and open the HTTPS AfriPlate website.':'We could not confirm registration. If your account was created, use Sign in or Resend verification instead of registering again.');}
+      if(!res.ok){showFailure(data?.message||(res.status===413?'The upload is too large. Choose a JPEG or PNG student ID photo up to 5 MB.':res.status===429?'Too many signup attempts. Please wait before retrying. If you already submitted, try signing in.':'Registration could not be confirmed. Please retry later, or use Sign in if your account was already created.'));return;}
+      if(res.status!==201||data?.status!=='success'||!Number.isSafeInteger(data?.user?.id)||data.user.id<1){showFailure('The server response did not confirm account creation. Sign in to check your account before trying again.');return;}
+      if(form.is_student==='false'&&data.user.student_membership!=='non_student'){showFailure('Account type could not be confirmed. Sign in to check your account before retrying.');return;}
+      setCreatedStudent(data.user.student_membership!=='non_student');
+      setIdPhoto(null);setSuccess(true);
+    }catch(error){if(mounted.current)showFailure(error.name==='AbortError'?'The connection timed out. Sign in to check whether your account was created before trying again.':error.code==='SECURE_BROWSER_REQUIRED'?'Your browser cannot create a secure submission ID. Update your browser and open the HTTPS AfriPlate website.':'Could not confirm signup. Try signing in before registering again.');}
     finally{clearTimeout(timer);submissionController.current=null;submitLock.current=false;if(mounted.current)setLoading(false);}
   };
 
@@ -124,14 +126,11 @@ export default function RegisterPage() {
     return <main style={{padding:'24px 16px',minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--ap-page-background,#f7f8fa)',fontFamily:'Inter,sans-serif'}}>
       <section ref={confirmationRef} tabIndex={-1} aria-labelledby="signup-confirmation-title" style={{background:'var(--ap-surface,#fff)',border:'1px solid var(--ap-border,#e5e7eb)',borderRadius:24,padding:'32px 24px',maxWidth:460,width:'100%',textAlign:'center',outline:'none'}}>
         <p className="student-status">Account created</p>
-        <h1 id="signup-confirmation-title" style={{fontSize:'1.5rem',fontWeight:800,color:'var(--ap-text-strong,#183d28)',margin:'12px 0'}}>Student ID under review</h1>
-        <p role="status" className="student-help">Your account and student ID have been saved. AfriPlate's administrator will check your identity and approve it or ask you for a replacement. You do not need to register again.</p>
-        <p className="student-help" style={{margin:'16px 0'}}>Sign in and open Settings to see the review result. Until approval, your student status remains under review.</p>
+        <h1 id="signup-confirmation-title" style={{fontSize:'1.5rem',fontWeight:800,color:'var(--ap-text-strong,#183d28)',margin:'12px 0'}}>{createdStudent?'Student ID under review':'Your buyer account is ready'}</h1>
+        <p role="status" className="student-help">{createdStudent?'Your ID has been saved for review.':'You can now browse products and contact sellers.'}</p>
+        <p className="student-help" style={{margin:'16px 0'}}>{createdStudent?'Check Settings for review updates.':'You can apply to sell after signing in.'}</p>
         <Link href="/login" className="student-primary" style={{width:'100%'}}>Sign in to your account</Link>
-        <details style={{marginTop:24,textAlign:'left'}}><summary style={{cursor:'pointer',fontWeight:700,color:'var(--ap-text-strong,#183d28)'}}>Email verification</summary>
-          <p className="student-help" style={{marginTop:12}}>{verificationEmailSent?'A verification email request was accepted. Check your inbox and spam folder; inbox delivery is not confirmed.':verificationEmailQueued?'A verification email is being requested separately. Inbox delivery is not confirmed. If it does not arrive, request another email here.':'The verification email could not be confirmed. You can request another email here without registering again.'} Email verification is separate from student ID approval.</p>
-          <ResendVerification email={form.email} initialCode={verificationCode}/>
-        </details>
+
       </section>
     </main>;
   }
@@ -223,6 +222,7 @@ export default function RegisterPage() {
 
 
 
+        .student-choice{border:0;padding:0;margin:0 0 20px;min-width:0}.student-choice legend{font-weight:700;margin-bottom:12px;color:var(--ap-text-strong)}.student-choice .type-card{background:var(--ap-surface);color:var(--ap-text-strong);display:flex;flex-direction:column;align-items:flex-start;text-align:left;font:inherit}.student-choice .type-card.selected{background:var(--ap-accent-surface);border-color:var(--ap-color-primary)}.student-choice button:focus-visible{outline:2px solid var(--ap-accent-text);outline-offset:3px}
         .signup-feedback { margin:16px 0;padding:14px;border:1px solid var(--ap-danger-border,#fecaca);border-radius:12px;background:var(--ap-danger-surface,#fef2f2);color:var(--ap-danger-text,#b42318);font-size:.9rem;line-height:1.6;overflow-wrap:anywhere;scroll-margin:24px; }
         .signup-feedback:focus {outline:2px solid var(--ap-danger-text,#b42318);outline-offset:3px;}
         .signup-progress {margin:12px 0;color:var(--ap-text-muted,#53655a);font-size:.85rem;line-height:1.5;}
@@ -261,11 +261,11 @@ export default function RegisterPage() {
         <div className="left">
           <div className="brand">Afri<span>Plate</span></div>
           <div className="left-body">
-            <h2>Join 35,000+<br />students <em>hustling</em><br />on campus</h2>
-            <p>Nigeria's #1 student marketplace. Safe, fast and built for your campus.</p>
+            <h2>Buy, sell and<br /><em>connect</em><br />on AfriPlate</h2>
+            <p>Find products, services and opportunities in your campus community.</p>
           </div>
           <div className="perks">
-            {['Free to sign up — no credit card needed','Sell anything from textbooks to services','Create your campus marketplace account','Student ID approval is reviewed separately'].map(t => (
+            {['Free to sign up — no credit card needed','Sell anything from textbooks to services','Create your marketplace account','Students and approved sellers welcome'].map(t => (
               <div key={t} className="perk">
                 <div className="perk-check">&#10003;</div>
                 <span className="perk-text">{t}</span>
@@ -295,6 +295,9 @@ export default function RegisterPage() {
 
             {step === 0 && (
               <>
+                <fieldset className="student-choice" disabled={loading}><legend>Are you currently a student?</legend><div className="type-toggle">{[['true','Yes','Verify with your student ID'],['false','No','Create a buyer account']].map(([value,title,detail])=><button type="button" key={value} className={'type-card '+(form.is_student===value?'selected':'')} aria-pressed={form.is_student===value} onClick={()=>chooseStudent(value)}><span className="tc-title">{title}</span><span className="tc-sub">{detail}</span></button>)}</div>{errors.is_student&&<p className="field-error">{errors.is_student}</p>}</fieldset>
+                {form.is_student==='false'&&<p className="student-help" style={{marginBottom:18}}>You can apply to sell after signup.</p>}
+                {form.is_student==='true'&&<>
                 <div style={{ marginBottom:6 }}>
                   <label style={{ display:'block', fontSize:'0.82rem', fontWeight:700, color:'var(--ap-text-strong, #374151)', marginBottom:10 }}>I want to</label>
                   <div className="type-toggle">
@@ -314,11 +317,12 @@ export default function RegisterPage() {
                   </div>
                   {errors.user_type && <span className="field-error">{errors.user_type}</span>}
                 </div>
+                </>}
                 <div className="field">
                   <label htmlFor="reg-email">Email address</label>
                   <div className="input-wrap">
                     <input id="reg-email" type="email" autoComplete="email"
-                      placeholder="you@university.edu.ng"
+                      placeholder="you@example.com"
                       value={form.email} onChange={set('email')}
                       className={errors.email ? 'err' : ''} />
                   </div>
@@ -389,7 +393,7 @@ export default function RegisterPage() {
               </>
             )}
 
-            {step === 2 && (
+            {step === 2 && form.is_student==='true' && (
               <>
                 <StudentIdentityFields value={form} file={idPhoto} disabled={loading} onChange={patch=>{submissionId.current=null;setForm(p=>({...p,...patch}));setErrors({});}} onFile={file=>{submissionId.current=null;setIdPhoto(file);setErrors({});}}/>
                 {(errors.matric_number||errors.student_id||errors.university)&&<p role="alert" className="field-error">{errors.matric_number||errors.student_id||errors.university}</p>}
@@ -409,17 +413,17 @@ export default function RegisterPage() {
             )}
 
             {(apiError||Object.values(errors).find(Boolean))&&<div ref={feedbackRef} id="signup-feedback" tabIndex={-1} role="alert" className="signup-feedback">{apiError||Object.values(errors).find(Boolean)}</div>}
-            {loading&&<p role="status" className="signup-progress">Saving your account and private student ID. Please keep this page open.</p>}
+            {loading&&<p role="status" className="signup-progress">{form.is_student==='true'?'Saving your account and private ID...':'Creating your buyer account...'}</p>}
             <div className="btn-row">
               {step > 0 && (
                 <button className="back-btn" disabled={loading} onClick={() => { setStep(s => s - 1); setErrors({}); }}>Back</button>
               )}
               <button type="button" className="next-btn" onClick={next} disabled={loading} aria-describedby={apiError||Object.values(errors).find(Boolean)?"signup-feedback":undefined}>
-                {loading ? <><span className="btn-spinner" /> Creating account...</> : step < 2 ? 'Continue' : 'Create Account'}
+                {loading ? <><span className="btn-spinner" /> Creating account...</> : step < STEPS.length-1 ? 'Continue' : 'Create Account'}
               </button>
             </div>
 
-            <div className="switch-text">Already have an account? <Link href="/login">Sign in</Link> | <Link href="/resend-verification">Resend verification</Link> | <Link href="/forgot-password">Reset password</Link></div>
+            <div className="switch-text">Already have an account? <Link href="/login">Sign in</Link> | <Link href="/forgot-password">Reset password</Link></div>
           </div>
         </div>
       </div>

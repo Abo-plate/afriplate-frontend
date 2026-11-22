@@ -8,7 +8,7 @@ import StudentIdentityFields from './StudentIdentityFields';
 import './student-identity.css';
 const statusText={pending:'Student ID under review',approved:'Verified student',replacement_requested:'Replacement ID requested'};
 const fields=value=>({university_id:value?.university_id||'',university:value?.university||'',matric_number:value?.matric_number||''});
-export default function StudentIdentity(){const {user,status}=useSession();return status==='authenticated'?<IdentityAccount key={user.id} user={user}/>:null;}
+export default function StudentIdentity(){const {user,status}=useSession();if(status!=='authenticated')return null;if(user.student_membership==='non_student')return <section className="student-card"><h2>Selling on AfriPlate</h2><p className="student-status">{user.vendor_status==='approved'?'Approved to sell':user.vendor_status==='pending'?'Application under review':'Apply to sell on AfriPlate'}</p><Link className="student-secondary" href="/sell">View seller application</Link>{user.role==='admin'&&<Link className="student-secondary" href="/admin">Admin</Link>}</section>;return <IdentityAccount key={user.id} user={user}/>;}
 function IdentityAccount({user}){
  const [submission,setSubmission]=useState(null),[currentStatus,setCurrentStatus]=useState(user.student_id_status||'not_submitted');
  const [form,setForm]=useState(()=>fields({university:user.university})),[file,setFile]=useState(null);

@@ -3,19 +3,21 @@ import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {useSession} from '../lib/SessionProvider';
 import api from '../lib/api';
+import VendorApplicationsAdmin from '@/components/VendorApplicationsAdmin';
 import {MarketplaceHeader} from '../../components/Marketplace';
 import '../../components/student-identity.css';
 const date=value=>value?new Date(value).toLocaleString():'Not decided';
 const names={pending:'Under review',approved:'Approved',replacement_requested:'Replacement requested',superseded:'Earlier submission'};
 export default function AdminPage(){const {user,status}=useSession();if(status==='checking')return <p role="status">Checking staff access...</p>;if(status==='unavailable')return <p role="alert">Session unavailable. Reload to retry.</p>;if(status!=='authenticated')return <p><Link href="/login?next=%2Fadmin">Sign in</Link> with a staff account.</p>;if(user.role!=='admin')return <p role="alert">Staff access required. <Link href="/dashboard">Dashboard</Link></p>;return <ReviewQueue key={user.id} user={user}/>;}
 function ReviewQueue({user}){
+ const [section,setSection]=useState('students');
  const [tab,setTab]=useState('needs_review'),[status,setStatus]=useState('all'),[search,setSearch]=useState(''),[query,setQuery]=useState(''),[page,setPage]=useState(1),[data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[attempt,setAttempt]=useState(0);
- useEffect(()=>{let active=true;const controller=new AbortController();setLoading(true);setData(null);setError('');
+ useEffect(()=>{if(section!=='students')return;let active=true;const controller=new AbortController();setLoading(true);setData(null);setError('');
   // Matric/name searches are not put in URLs, browser history or storage.
   api.post('/admin/student-ids/search',{view:tab,status:tab==='needs_review'?'pending':status,q:query,page},{signal:controller.signal}).then(({data})=>{if(active)setData(data);}).catch(problem=>{if(active)setError(problem.response?.data?.message||'Could not load submissions. Refresh to retry.');}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;controller.abort();};
- },[tab,status,query,page,attempt]);
+ },[section,tab,status,query,page,attempt]);
  const changeTab=value=>{setTab(value);setPage(1);};
- return <div className="student-admin"><MarketplaceHeader/><main><h1>Student verification</h1>
+ return <div className="student-admin"><MarketplaceHeader/><main><div className="student-admin-tabs" aria-label="Admin sections"><button className={section==='students'?'student-primary':'student-secondary'} aria-pressed={section==='students'} onClick={()=>setSection('students')}>Student IDs</button><button className={section==='vendors'?'student-primary':'student-secondary'} aria-pressed={section==='vendors'} onClick={()=>setSection('vendors')}>Seller applications</button></div>{section==='vendors'?<VendorApplicationsAdmin user={user}/>:<><h1>Student verification</h1>
  <div className="student-admin-tabs" role="tablist" aria-label="Student submissions">{[['needs_review','Needs review'],['all','All submissions']].map(([id,title])=><button key={id} id={'student-tab-'+id} role="tab" type="button" aria-selected={tab===id} aria-controls="student-results" className={tab===id?'student-primary':'student-secondary'} onClick={()=>changeTab(id)}>{title}</button>)}</div>
  <form className="student-admin-controls" onSubmit={event=>{event.preventDefault();setQuery(search.trim());setPage(1);setAttempt(n=>n+1);}}><label className="student-search-label">Student name or matric number<input type="search" autoComplete="off" maxLength={120} value={search} onChange={event=>{setSearch(event.target.value);if(!event.target.value){setQuery('');setPage(1);}}}/></label><button className="student-primary">Search</button>
  <label>Status<select value={tab==='needs_review'?'pending':status} disabled={tab==='needs_review'} onChange={event=>{setStatus(event.target.value);setPage(1);}}><option value="all">All statuses</option><option value="pending">Under review</option><option value="approved">Approved</option><option value="replacement_requested">Replacement requested</option><option value="superseded">Earlier submissions</option></select></label><button className="student-secondary" type="button" disabled={loading} onClick={()=>setAttempt(n=>n+1)}>Refresh</button>{data&&<span>{data.total} submissions</span>}</form>
@@ -23,7 +25,7 @@ function ReviewQueue({user}){
  {loading?<p role="status">Loading submissions...</p>:error?<p role="alert" className="student-error">{error}</p>:!data?.submissions.length?<div className="student-card">{query?'No matching submissions.':tab==='needs_review'?'No student IDs need review.':'No submissions yet.'}</div>:<div className="student-review-list">{data.submissions.map(row=><ReviewCard key={row.id} row={row} user={user} reload={()=>setAttempt(n=>n+1)}/>)}</div>}
  </section><div className="student-review-actions"><button className="student-secondary" disabled={page===1||loading} onClick={()=>setPage(n=>n-1)}>Previous</button><span>Page {page}</span><button className="student-secondary" disabled={loading||!data||page*20>=data.total} onClick={()=>setPage(n=>n+1)}>Next</button></div>
  {data?.conflicts&&<details className="student-private-conflicts"><summary>Account checks</summary><p>Email conflicts: {data.conflicts.email_groups}. Matric conflicts: {data.conflicts.matric_groups}. Photos shared across accounts: {data.conflicts.shared_file_groups}.</p></details>}
- </main></div>;
+ </>}</main></div>;
 }
 function ReviewCard({row,user,reload}){
  const [reason,setReason]=useState(''),[ack,setAck]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[photo,setPhoto]=useState(''),[unavailable,setUnavailable]=useState(row.photo_available===false);

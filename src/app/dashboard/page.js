@@ -138,7 +138,7 @@ const STATUS_COLOR = {
 function MessagesTab(){return <Suspense fallback={<Spinner />}><PrivateMessages embedded /></Suspense>;}
 
 function SettingsTab() {
-  const { logout } = useSession();
+  const { logout, user } = useSession();
   const [form, setForm] = useState({ first_name:'', last_name:'', university:'', level:'', phone:'', bio:'' });
   const [pw, setPw]     = useState({ current:'', next:'', confirm:'' });
   const [saving, setSaving] = useState(false);
@@ -187,13 +187,14 @@ function SettingsTab() {
           <Field label="First Name"><Input value={form.first_name} onChange={set('first_name')} placeholder="First name" /></Field>
           <Field label="Last Name"><Input value={form.last_name} onChange={set('last_name')} placeholder="Last name" /></Field>
         </div>
-        <Field label="University"><Input value={form.university} onChange={set('university')} placeholder="e.g. University of Lagos" /></Field>
+        {user.student_membership!=='non_student'&&<><Field label="University"><Input value={form.university} onChange={set('university')} placeholder="e.g. University of Lagos" /></Field>
         <Field label="Level">
           <Sel value={form.level} onChange={set('level')}>
             <option value="">Select level</option>
             {['100','200','300','400','500','Postgrad'].map(l => <option key={l}>{l}</option>)}
           </Sel>
         </Field>
+        </>}
         <Field label="Phone Number"><Input value={form.phone} onChange={set('phone')} placeholder="e.g. 08012345678" /></Field>
         <Field label="Bio"><Textarea value={form.bio} onChange={set('bio')} placeholder="Tell buyers/sellers about yourself..." rows={3} /></Field>
         {msg && <div style={{ marginBottom:12, fontSize:'0.82rem', fontWeight:700, color: msg.includes('!') ? 'var(--ap-accent-text, #1f8f43)' : 'var(--ap-danger-text, #ef4444)' }}>{msg}</div>}
@@ -245,7 +246,7 @@ function BuyerDashboard({ user }) {
 
   return (
     <div>
-      {sellRequested && <p role="status" style={{padding:16,color:"var(--ap-accent-text, #183d28)"}}>You need an active seller account to create listings. <a href="/dashboard#settings">View account settings</a></p>}
+      {sellRequested && <p role="status" style={{padding:16,color:"var(--ap-accent-text, #183d28)"}}>{user.student_membership==='non_student'?<>Apply to sell on AfriPlate. <a href="/sell">View seller application</a></>:<>You need an active seller account to create listings. <a href="/dashboard#settings">View account settings</a></>}</p>}
       <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { if(event.target.value==='applications'){window.location.href='/applications';return;}setTab(event.target.value); window.location.hash = event.target.value; }}>{BUYER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <div className="dash-grid">
         {/* SIDEBAR — hidden on mobile */}
@@ -1165,7 +1166,7 @@ export default function Dashboard() {
       </nav>
 
       <div className="dash-wrap">
-        {user?.user_type === 'seller'
+        {user?.user_type === 'seller' && (user.student_membership!=='non_student'||user.vendor_status==='approved')
           ? <SellerDashboard user={user} />
           : <BuyerDashboard  user={user} />
         }
