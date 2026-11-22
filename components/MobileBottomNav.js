@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {canUseSellerTools} from "../src/app/lib/sellingAccess";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../src/components/Marketplace";
@@ -60,11 +61,10 @@ export default function MobileBottomNav() {
     return()=>{cancelled=true;latest++;controller?.abort();clearInterval(timer);window.removeEventListener('afriplate:messages-changed',changed);window.removeEventListener('focus',poll);};
   },[isAuthed,user?.id]);
   const explore = /^\/(products|services|jobs|sellers|university)(?:\/|$)/.test(pathname);
-  const needsVendor=user?.student_membership==='non_student'&&user.vendor_status!=='approved';
+  const needsReview=isAuthed&&!canUseSellerTools(user);
   const selling = pathname==='/sell'||pathname === '/dashboard' && hash.startsWith('#sell-');
   const active = pathname === '/' ? 'Home' : explore ? 'Explore' : selling ? 'Sell' : pathname === '/messages' || hash === '#messages' ? 'Messages' : /^\/(dashboard|login|register|wallet|cart|checkout|orders|applications)(?:\/|$)/.test(pathname) ? 'Account' : null;
-  const seller = user?.user_type === 'seller' || user?.role === 'seller';
-  const canSell = !needsVendor && seller && user?.is_active !== false && !user?.is_banned;
+  const canSell = canUseSellerTools(user);
   const unreadCount = unread && user && unread.userId === user.id ? unread.count : null;
   const account = isAuthed ? '/dashboard' : '/login';
   const sellLink = type => isAuthed ? '/dashboard#sell-' + type : '/login?next=' + encodeURIComponent('/dashboard#sell-' + type);
@@ -76,7 +76,7 @@ export default function MobileBottomNav() {
       </>}
     </section>}
     <nav className="mobile-nav" aria-label="Main mobile navigation">
-      {[['Home','home','/'],['Explore','search',null],['Sell','plus',isAuthed&&needsVendor?'/sell':null],['Messages','chat','/messages'],['Account','user',account]].map(([label,icon,href]) => {
+      {[['Home','home','/'],['Explore','search',null],['Sell','plus',isAuthed&&needsReview?'/sell':null],['Messages','chat','/messages'],['Account','user',account]].map(([label,icon,href]) => {
         const content = <><span className="mobile-tab-icon"><Icon name={icon}/>{label === 'Messages' && isAuthed && unreadCount > 0 && <span className="mobile-unread" aria-label={unreadCount + ' unread messages'}>{unreadCount > 99 ? '99+' : unreadCount}</span>}</span><span>{label}</span></>;
         const className = 'nav-item' + ((menu || active) === label ? ' active' : '');
         return href ? <Link key={label} className={className} href={href} aria-current={active === label ? 'page' : undefined} onClick={() => setMenu(null)}>{content}</Link> : <button type="button" key={label} className={className} aria-current={active === label ? "page" : undefined} aria-expanded={menu === label} aria-controls="mobile-navigation-menu" onClick={() => setMenu(menu === label ? null : label)}>{content}</button>;

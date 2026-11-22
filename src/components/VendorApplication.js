@@ -5,13 +5,17 @@ import {useSession} from '../app/lib/SessionProvider';
 import api from '../app/lib/api';
 import {createClientId} from '../app/lib/clientId';
 import './student-identity.css';
+import StudentIdentity from './StudentIdentity';
+import SellerNextStep from './SellerNextStep';
+import {canUseSellerTools} from '../app/lib/sellingAccess';
 const labels={not_applied:'Apply to sell on AfriPlate',pending:'Application under review',approved:'Approved to sell',declined:'Application declined'};
 export default function VendorApplication(){
  const {user,status,refresh}=useSession();
  if(status==='checking')return <p role="status">Checking your account...</p>;
  if(status==='guest')return <p><Link href="/login?next=%2Fsell">Sign in</Link> to apply.</p>;
  if(status!=='authenticated')return <p role="alert">Your account could not be checked. <button className="student-secondary" onClick={refresh}>Retry</button></p>;
- if(user.student_membership!=='non_student')return <section className="student-card"><h1>Sell on AfriPlate</h1>{user.user_type==='seller'||user.role==='seller'?<div className="student-review-actions"><a className="student-primary" href="/dashboard#sell-product">List a product</a><a className="student-secondary" href="/dashboard#sell-service">List a service</a></div>:<p>Open <a href="/dashboard#settings">Settings</a> to check your seller account.</p>}</section>;
+ if(user.student_membership==='student'&&!canUseSellerTools(user))return <><h1>Sell on AfriPlate</h1><StudentIdentity/></>;
+ if(user.student_membership!=='non_student')return <SellerNextStep/>;
  return <ApplicationForm key={user.id} user={user} refreshSession={refresh}/>;
 }
 function ApplicationForm({user,refreshSession}){

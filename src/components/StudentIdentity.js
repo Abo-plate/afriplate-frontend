@@ -6,18 +6,22 @@ import {createClientId} from '../app/lib/clientId';
 import {readStudentIdentity,uploadStudentIdentity,identityErrorMessage,identityErrorStatus,uncertainIdentityUpload} from '../app/lib/studentIdentityRequests';
 import StudentIdentityFields from './StudentIdentityFields';
 import './student-identity.css';
-const statusText={pending:'Student ID under review',approved:'Verified student',replacement_requested:'Replacement ID requested'};
+import SellerNextStep from './SellerNextStep';
+const statusText={pending:'Your ID is under review',approved:'Verified student',replacement_requested:'Upload a replacement'};
 const fields=value=>({university_id:value?.university_id||'',university:value?.university||'',matric_number:value?.matric_number||''});
-export default function StudentIdentity(){const {user,status}=useSession();if(status!=='authenticated')return null;if(user.student_membership==='non_student')return <section className="student-card"><h2>Selling on AfriPlate</h2><p className="student-status">{user.vendor_status==='approved'?'Approved to sell':user.vendor_status==='pending'?'Application under review':'Apply to sell on AfriPlate'}</p><Link className="student-secondary" href="/sell">View seller application</Link>{user.role==='admin'&&<Link className="student-secondary" href="/admin">Admin</Link>}</section>;return <IdentityAccount key={user.id} user={user}/>;}
+export default function StudentIdentity(){const {user,status}=useSession();if(status!=='authenticated')return null;if(user.student_membership==='non_student')return <SellerNextStep/>;return <IdentityAccount key={user.id} user={user}/>;}
 function IdentityAccount({user}){
  const [submission,setSubmission]=useState(null),[currentStatus,setCurrentStatus]=useState(user.student_id_status||'not_submitted');
  const [form,setForm]=useState(()=>fields({university:user.university})),[file,setFile]=useState(null);
  const [loaded,setLoaded]=useState(false),[checking,setChecking]=useState(true),[busy,setBusy]=useState(false),[uncertain,setUncertain]=useState(false),[editing,setEditing]=useState(true);
  const [error,setError]=useState(''),[warning,setWarning]=useState(''),[notice,setNotice]=useState(''),[expired,setExpired]=useState(false),[progress,setProgress]=useState(null),[phase,setPhase]=useState('');
- const attempt=useRef(null),alive=useRef(true),locked=useRef(false),dirty=useRef(false),version=useRef(0),request=useRef(null),feedback=useRef(null),hadStatus=useRef(false);
+ const attempt=useRef(null),alive=useRef(true),locked=useRef(false),dirty=useRef(false),version=useRef(0),request=useRef(null),feedback=useRef(null),hadStatus=useRef(false),lastStatus=useRef(null);
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;version.current++;request.current?.abort();locked.current=false;};},[]);
  useEffect(()=>{if(error){feedback.current?.focus({preventScroll:true});feedback.current?.scrollIntoView({block:'nearest'});}},[error]);
  const applyStatus=useCallback((data,preserveDraft=false)=>{
+  const nextStatus=data.submission?.status||data.student_id_status||'not_submitted';
+  const changed=lastStatus.current!==null&&lastStatus.current!==nextStatus;lastStatus.current=nextStatus;
+  if(changed&&!dirty.current&&!preserveDraft)window.dispatchEvent(new Event('afriplate:selling-access-changed'));
   setSubmission(data.submission);setCurrentStatus(data.submission?.status||data.student_id_status||'not_submitted');setLoaded(true);hadStatus.current=true;
   if(!preserveDraft&&!dirty.current){setForm(fields(data.submission||data.identity_details||{university:user.university}));setEditing(!data.submission||data.submission.status==='replacement_requested');}
  },[user.university]);
@@ -26,9 +30,10 @@ function IdentityAccount({user}){
   if(!matched&&!acknowledged)return false;
   const saved=data.submission||(acknowledged?{...pending.details,id:data.submission_id,client_id:pending.id,status:data.student_id_status}:null);
   const next=saved?.status||data.student_id_status||'pending';
-  setSubmission(saved);setCurrentStatus(next);setLoaded(true);hadStatus.current=true;
+  lastStatus.current=next;setSubmission(saved);setCurrentStatus(next);setLoaded(true);hadStatus.current=true;
   setForm(fields(saved||data.identity_details||pending.details));setFile(null);attempt.current=null;dirty.current=false;setUncertain(false);setError('');setWarning('');setExpired(false);
   setNotice(statusText[next]||(next==='not_submitted'?'Upload saved.':'Status updated.'));setEditing(next==='replacement_requested');
+  window.dispatchEvent(new Event('afriplate:selling-access-changed'));
   return true;
  },[]);
  const reload=useCallback(async()=>{
@@ -82,9 +87,9 @@ function IdentityAccount({user}){
  const choosePhoto=value=>{if(locked.current||uncertain)return;dirty.current=true;attempt.current=null;setFile(value);setError('');setNotice('');};
  const disabled=busy||checking||uncertain;
  return <section className="student-card"><div className="student-heading"><h2>Student identification</h2><div>{user.role==='admin'&&<Link href="/admin">Admin review</Link>} <button type="button" className="student-secondary" disabled={busy||checking} onClick={reload}>Refresh status</button></div></div>
- <p className="student-status" role="status">{loaded?(statusText[currentStatus]||'Student ID not submitted'):checking?'Checking student ID status...':'Status unavailable'}</p>
+ <p className="student-status" role="status">{loaded?(statusText[currentStatus]||'Submit your student ID'):checking?'Checking student ID status...':'Status unavailable'}</p>
  {submission?.review_reason&&<p className="student-notice">Reviewer note: {submission.review_reason}</p>}
- <details open={editing} onToggle={event=>setEditing(event.currentTarget.open)}><summary>{submission?'Update student ID':'Submit your student details'}</summary><form onSubmit={submit}>
+ <details open={editing} onToggle={event=>setEditing(event.currentTarget.open)}><summary>{currentStatus==='replacement_requested'?'Upload a replacement':submission?'Update student ID':'Submit your student ID'}</summary><form onSubmit={submit}>
  <StudentIdentityFields value={form} file={file} onChange={change} onFile={choosePhoto} disabled={disabled}/>
  {submission&&<p className="student-help">Updated details need a new review.</p>}
  <button className="student-primary" disabled={busy||checking||!loaded}>

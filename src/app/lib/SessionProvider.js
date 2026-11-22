@@ -62,11 +62,13 @@ export function SessionProvider({ children }) {
     window.addEventListener('storage', sync);
     window.addEventListener('focus', sync);
     window.addEventListener(SESSION_CLEARED, logout);
+    window.addEventListener('afriplate:selling-access-changed',sync);
     return () => {
       cancelPending();
       window.removeEventListener('storage', sync);
       window.removeEventListener('focus', sync);
       window.removeEventListener(SESSION_CLEARED, logout);
+      window.removeEventListener('afriplate:selling-access-changed',sync);
     };
   }, [refresh, logout, cancelPending]);
   return <SessionContext.Provider value={{ ...session, isAuthed: session.status === 'authenticated', completeLogin, logout, refresh }}>{children}</SessionContext.Provider>;

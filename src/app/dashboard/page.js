@@ -3,6 +3,8 @@ import PurchaseReview from '@/components/PurchaseReview';
 import ProfilePhotoEditor from '@/components/ProfilePhotoEditor';
 import StudentIdentity from '@/components/StudentIdentity';
 import ThemeSettings from '@/components/ThemeSettings';
+import SellerNextStep from '@/components/SellerNextStep';
+import {canUseSellerTools} from '../lib/sellingAccess';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { Icon } from '@/components/Marketplace';
 import PrivateMessages from '@/components/PrivateMessages';
@@ -246,7 +248,7 @@ function BuyerDashboard({ user }) {
 
   return (
     <div>
-      {sellRequested && <p role="status" style={{padding:16,color:"var(--ap-accent-text, #183d28)"}}>{user.student_membership==='non_student'?<>Apply to sell on AfriPlate. <a href="/sell">View seller application</a></>:<>You need an active seller account to create listings. <a href="/dashboard#settings">View account settings</a></>}</p>}
+      {sellRequested && <SellerNextStep/>}
       <label className="dashboard-section-menu">Dashboard section<select aria-label="Dashboard section" value={tab} onChange={event => { if(event.target.value==='applications'){window.location.href='/applications';return;}setTab(event.target.value); window.location.hash = event.target.value; }}>{BUYER_TABS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <div className="dash-grid">
         {/* SIDEBAR — hidden on mobile */}
@@ -695,6 +697,7 @@ setSalesData(weeklyBars);
 }
 
 function SellerListings() {
+  const {user}=useSession();
   const [listingTab, setListingTab] = useState('products');
   useEffect(() => { const sync = () => { if (window.location.hash === '#sell-product' || window.location.hash === '#sell-service') { setListingTab(window.location.hash === '#sell-product' ? 'products' : 'services'); setShowForm(true); } }; sync(); window.addEventListener('hashchange',sync); return () => window.removeEventListener('hashchange',sync); }, []);
   const [items, setItems]   = useState([]);
@@ -771,6 +774,7 @@ function SellerListings() {
   const PRODUCT_CATS = ['Electronics','Textbooks','Fashion','Food','Beauty','Furniture','Sports','Other'];
   const SERVICE_CATS = ['Design','Writing','Tutoring','Tutoring & Lessons','Tech','Beauty','Photography','Music','Delivery','Other'];
 
+  if(!canUseSellerTools(user))return <SellerNextStep/>;
   return (
     <div>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
@@ -1166,7 +1170,7 @@ export default function Dashboard() {
       </nav>
 
       <div className="dash-wrap">
-        {user?.user_type === 'seller' && (user.student_membership!=='non_student'||user.vendor_status==='approved')
+        {user?.user_type === 'seller' || canUseSellerTools(user)
           ? <SellerDashboard user={user} />
           : <BuyerDashboard  user={user} />
         }
